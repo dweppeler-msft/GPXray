@@ -6,6 +6,7 @@ let elevationChart = null;
 let segments = []; // Stores segment data with terrain type
 let currentMode = 'manual'; // 'manual' or 'target'
 let aidStations = []; // Stores AID station data
+let currentRouteName = ''; // Name of current loaded route
 
 // Constants
 const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
@@ -48,6 +49,7 @@ async function loadDemoGpx() {
         }
         
         const gpxContent = await response.text();
+        currentRouteName = 'ZUT Garmisch Trail';
         parseGPX(gpxContent);
         
         // Add sample AID stations for demo
@@ -115,6 +117,9 @@ function setupFileInput() {
 
 // Process GPX file
 function processFile(file) {
+    // Store filename (without extension) as default route name
+    currentRouteName = file.name.replace(/\.gpx$/i, '');
+    
     const reader = new FileReader();
     reader.onload = (e) => {
         const gpxContent = e.target.result;
@@ -133,6 +138,14 @@ function parseGPX(gpxContent) {
     if (parseError) {
         alert('Error parsing GPX file. Please check the file format.');
         return;
+    }
+    
+    // Try to extract route name from GPX metadata
+    const nameTag = xmlDoc.querySelector('metadata > name') || 
+                    xmlDoc.querySelector('trk > name') || 
+                    xmlDoc.querySelector('rte > name');
+    if (nameTag && nameTag.textContent.trim()) {
+        currentRouteName = nameTag.textContent.trim();
     }
 
     // Extract track points
@@ -340,6 +353,12 @@ function showSections() {
 
 // Display statistics
 function displayStats() {
+    // Display route name
+    const routeNameEl = document.getElementById('routeName');
+    if (routeNameEl) {
+        routeNameEl.textContent = currentRouteName || 'Unknown Route';
+    }
+    
     document.getElementById('totalDistance').textContent = `${gpxData.totalDistance.toFixed(2)} km`;
     document.getElementById('elevationGain').textContent = `${gpxData.elevationGain.toFixed(0)} m`;
     document.getElementById('elevationLoss').textContent = `${gpxData.elevationLoss.toFixed(0)} m`;
