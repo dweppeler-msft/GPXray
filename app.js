@@ -355,7 +355,10 @@ async function fetchSurfaceData() {
         // Build Overpass query for all sample points
         // Query ways near sample points in a single batch
         const bbox = calculateBoundingBox(gpxData.points);
-        const overpassQuery = buildOverpassQuery(bbox);
+        const overpassQuery = buildOverpassQuery(bbox, samplePoints);
+        
+        console.log(`Route bbox area: ${(bbox.north - bbox.south) * (bbox.east - bbox.west).toFixed(6)}`);
+        console.log(`Sample points: ${samplePoints.length}`);
         
         // Try multiple Overpass API endpoints (some may be rate-limited or down)
         const endpoints = [
@@ -444,11 +447,38 @@ function calculateBoundingBox(points) {
     };
 }
 
-// Build Overpass API query
-function buildOverpassQuery(bbox) {
-    return `[out:json][timeout:30];
+// Build Overpass API query - use around filter for better performance on long routes
+function buildOverpassQuery(bbox, samplePoints) {
+    // For large routes, query around sample points instead of full bbox
+    // This is much faster than querying the entire bounding box
+    
+    // Calculate bbox area (rough approximation)
+    const latDiff = bbox.north - bbox.south;
+    const lonDiff = bbox.east - bbox.west;
+    const bboxArea = latDiff * lonDiff;
+    
+    // If bbox is small (< ~10km x 10km), use simple bbox query
+    if (bboxArea < 0.01) {
+        return `[out:json][timeout:60];
 (
   way["highway"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});
+);
+out body geom;`;
+    }
+    
+    // For larger areas, use "around" query with sample points (much faster)
+    // Limit to ~20 points to keep query manageable
+    const step = Math.max(1, Math.floor(samplePoints.length / 20));
+    const queryPoints = samplePoints.filter((_, i) => i % step === 0);
+    
+    // Build around filter - format: around:radius,lat1,lon1,lat2,lon2,...
+    const coordString = queryPoints.map(p => `${p.lat},${p.lon}`).join(',');
+    
+    console.log(`Using around query with ${queryPoints.length} points`);
+    
+    return `[out:json][timeout:60];
+(
+  way["highway"](around:50,${coordString});
 );
 out body geom;`;
 }
