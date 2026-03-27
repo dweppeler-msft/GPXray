@@ -839,6 +839,12 @@ function setupChartSelector() {
 
 // Display statistics
 function displayStats() {
+    // Display route name
+    const routeNameEl = document.getElementById('routeName');
+    if (routeNameEl) {
+        routeNameEl.textContent = currentRouteName || 'Unknown Route';
+    }
+    
     const distanceKm = gpxData.totalDistance;
     const distanceMiles = distanceKm * KM_TO_MILES;
     
