@@ -164,31 +164,52 @@ function extractPoints(nodes) {
 
 // Calculate elevation gain/loss with smoothing to reduce GPS noise
 function calculateElevationWithSmoothing(points) {
-    // Minimum elevation change threshold (meters) to count as gain/loss
-    const ELEVATION_THRESHOLD = 2;
+    // Use distance-based segmentation to smooth out GPS noise
+    // Calculate average elevation every 50 meters, then measure gain/loss between averages
+    const SEGMENT_DISTANCE = 0.05; // km (50 meters)
+    const MIN_CHANGE_THRESHOLD = 1; // minimum meters to count
     
-    let elevationGain = 0;
-    let elevationLoss = 0;
-    let lastSignificantElevation = null;
+    if (points.length < 2) return { elevationGain: 0, elevationLoss: 0 };
+    
+    // Group points into 50m segments and average their elevation
+    const segmentElevations = [];
+    let segmentStart = 0;
+    let segmentSum = 0;
+    let segmentCount = 0;
     
     for (const point of points) {
         if (point.elevation === null) continue;
         
-        if (lastSignificantElevation === null) {
-            lastSignificantElevation = point.elevation;
-            continue;
+        segmentSum += point.elevation;
+        segmentCount++;
+        
+        // Check if we've covered enough distance for a new segment
+        if (point.distance - segmentStart >= SEGMENT_DISTANCE && segmentCount > 0) {
+            segmentElevations.push(segmentSum / segmentCount);
+            segmentStart = point.distance;
+            segmentSum = 0;
+            segmentCount = 0;
         }
+    }
+    
+    // Don't forget the last segment
+    if (segmentCount > 0) {
+        segmentElevations.push(segmentSum / segmentCount);
+    }
+    
+    // Now calculate gain/loss between smoothed segment averages
+    let elevationGain = 0;
+    let elevationLoss = 0;
+    
+    for (let i = 1; i < segmentElevations.length; i++) {
+        const change = segmentElevations[i] - segmentElevations[i - 1];
         
-        const change = point.elevation - lastSignificantElevation;
-        
-        // Only count changes above the threshold
-        if (Math.abs(change) >= ELEVATION_THRESHOLD) {
+        if (Math.abs(change) >= MIN_CHANGE_THRESHOLD) {
             if (change > 0) {
                 elevationGain += change;
             } else {
                 elevationLoss += Math.abs(change);
             }
-            lastSignificantElevation = point.elevation;
         }
     }
     
