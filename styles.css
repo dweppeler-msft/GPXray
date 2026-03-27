@@ -1132,8 +1132,8 @@ h2 {
     color: #fff;
 }
 
-/* Start Time Input */
-.start-time-input {
+/* Race Date/Time Input */
+.race-datetime-input {
     background: rgba(0, 0, 0, 0.3);
     padding: 20px;
     border-radius: 10px;
@@ -1141,7 +1141,7 @@ h2 {
     text-align: center;
 }
 
-.start-time-input label {
+.race-datetime-input label {
     display: block;
     font-size: 1rem;
     font-weight: 500;
@@ -1149,24 +1149,56 @@ h2 {
     color: #00d4ff;
 }
 
-.start-time-wrapper {
+.race-datetime-wrapper {
     display: flex;
     justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
-.start-time-wrapper input[type="time"] {
-    padding: 12px 20px;
+.race-datetime-wrapper input[type="date"],
+.race-datetime-wrapper input[type="time"] {
+    padding: 12px 16px;
     border: 2px solid #4a4a6a;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.1);
     color: #fff;
-    font-size: 1.2rem;
+    font-size: 1rem;
     text-align: center;
 }
 
-.start-time-wrapper input[type="time"]:focus {
+.race-datetime-wrapper input[type="date"]:focus,
+.race-datetime-wrapper input[type="time"]:focus {
     outline: none;
     border-color: #00d4ff;
+}
+
+.sun-times {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sun-rise, .sun-set {
+    font-size: 0.95rem;
+    color: #888;
+}
+
+.sun-rise span, .sun-set span {
+    color: #ffa500;
+    font-weight: 500;
+}
+
+/* Night section styling in splits */
+.night-section {
+    background: rgba(75, 0, 130, 0.2) !important;
+}
+
+.night-section td:first-child::before {
+    content: '🌙 ';
 }
 
 .start-time-wrapper input[type="time"]::-webkit-calendar-picker-indicator {

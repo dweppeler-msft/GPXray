@@ -11,6 +11,7 @@ let useMetric = true; // true = km, false = miles
 let surfaceData = []; // Stores surface data from OSM
 let surfaceEnabled = true; // Whether to use surface multipliers
 let currentRouteName = ''; // Name of current loaded route
+let sunTimes = null; // Sunrise/sunset times for race day
 
 // Constants
 const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
@@ -68,7 +69,33 @@ document.addEventListener('DOMContentLoaded', () => {
     setupChartSelector();
     setupHistory();
     setupDemo();
+    setupSunTimes();
 });
+
+// Sun times setup
+function setupSunTimes() {
+    const dateInput = document.getElementById('raceStartDate');
+    const timeInput = document.getElementById('raceStartTime');
+    
+    if (dateInput) {
+        // Set default to today's date
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+        dateInput.value = dateStr;
+        
+        // Update sun times when date changes
+        dateInput.addEventListener('change', updateSunTimesDisplay);
+    }
+    
+    // Update splits table when time changes (for night section highlighting)
+    if (timeInput) {
+        timeInput.addEventListener('change', () => {
+            if (segments.length > 0) {
+                generateSplitsTable();
+            }
+        });
+    }
+}
 
 // Demo GPX loading
 function setupDemo() {
@@ -228,6 +255,9 @@ function parseGPX(gpxContent) {
     
     // Fetch surface data from OSM (async, will update display when done)
     fetchSurfaceData();
+    
+    // Update sun times display based on route center
+    updateSunTimesDisplay();
 }
 
 // Extract points from XML nodes
@@ -2208,6 +2238,130 @@ function formatClockTime(totalMinutes) {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
+// Calculate sunrise/sunset times using solar position algorithm
+function calculateSunTimes(lat, lon, date) {
+    // Convert degrees to radians
+    const toRad = (deg) => deg * Math.PI / 180;
+    const toDeg = (rad) => rad * 180 / Math.PI;
+    
+    // Get day of year
+    const start = new Date(date.getFullYear(), 0, 0);
+    const diff = date - start;
+    const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    // Solar declination angle
+    const declination = toRad(-23.45 * Math.cos(toRad(360 / 365 * (dayOfYear + 10))));
+    
+    // Hour angle at sunrise/sunset (when sun is at -0.833 degrees for atmospheric refraction)
+    const latRad = toRad(lat);
+    const zenith = toRad(90.833); // 90° + 50' for refraction
+    
+    const cosHourAngle = (Math.cos(zenith) - Math.sin(latRad) * Math.sin(declination)) / 
+                         (Math.cos(latRad) * Math.cos(declination));
+    
+    // Check for polar day/night
+    if (cosHourAngle > 1) {
+        // Sun never rises (polar night)
+        return { sunrise: null, sunset: null, polarNight: true };
+    }
+    if (cosHourAngle < -1) {
+        // Sun never sets (midnight sun)
+        return { sunrise: null, sunset: null, midnightSun: true };
+    }
+    
+    const hourAngle = toDeg(Math.acos(cosHourAngle));
+    
+    // Equation of time (approximation)
+    const B = toRad(360 / 365 * (dayOfYear - 81));
+    const eot = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+    
+    // Time offset for longitude (4 minutes per degree)
+    // Using standard time zones (15° per hour)
+    const timezone = Math.round(lon / 15);
+    const timeOffset = 4 * (lon - timezone * 15) + eot;
+    
+    // Solar noon in local time
+    const solarNoon = 12 * 60 - timeOffset; // in minutes
+    
+    // Sunrise and sunset times in minutes from midnight (local time)
+    const sunriseMinutes = solarNoon - hourAngle * 4;
+    const sunsetMinutes = solarNoon + hourAngle * 4;
+    
+    return {
+        sunrise: Math.max(0, Math.min(24 * 60, sunriseMinutes)),
+        sunset: Math.max(0, Math.min(24 * 60, sunsetMinutes)),
+        polarNight: false,
+        midnightSun: false
+    };
+}
+
+// Format minutes to HH:MM string
+function formatSunTime(minutes) {
+    if (minutes === null) return '--:--';
+    const hours = Math.floor(minutes / 60);
+    const mins = Math.floor(minutes % 60);
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+}
+
+// Update sun times display based on route center and selected date
+function updateSunTimesDisplay() {
+    const dateInput = document.getElementById('raceStartDate');
+    const sunTimesContainer = document.getElementById('sunTimes');
+    
+    if (!dateInput || !sunTimesContainer || !gpxData) return;
+    
+    const dateValue = dateInput.value;
+    if (!dateValue) {
+        sunTimesContainer.style.display = 'none';
+        sunTimes = null;
+        return;
+    }
+    
+    // Get center point of the route for sun calculations
+    const points = gpxData.points;
+    const midIndex = Math.floor(points.length / 2);
+    const lat = points[midIndex].lat;
+    const lon = points[midIndex].lon;
+    
+    // Parse the date (YYYY-MM-DD format)
+    const [year, month, day] = dateValue.split('-').map(Number);
+    const raceDate = new Date(year, month - 1, day);
+    
+    // Calculate sun times
+    sunTimes = calculateSunTimes(lat, lon, raceDate);
+    
+    // Update display
+    const sunriseSpan = document.getElementById('sunriseTime');
+    const sunsetSpan = document.getElementById('sunsetTime');
+    
+    if (sunTimes.polarNight) {
+        sunriseSpan.textContent = 'Polar night';
+        sunsetSpan.textContent = '';
+    } else if (sunTimes.midnightSun) {
+        sunriseSpan.textContent = 'Midnight sun';
+        sunsetSpan.textContent = '';
+    } else {
+        sunriseSpan.textContent = formatSunTime(sunTimes.sunrise);
+        sunsetSpan.textContent = formatSunTime(sunTimes.sunset);
+    }
+    
+    sunTimesContainer.style.display = 'flex';
+    
+    // Regenerate splits table to update night sections
+    if (segments.length > 0) {
+        generateSplitsTable();
+    }
+}
+
+// Check if a given clock time (in minutes from midnight) is during night
+function isNightTime(clockMinutes) {
+    if (!sunTimes || sunTimes.polarNight) return true;
+    if (sunTimes.midnightSun) return false;
+    
+    // Night is before sunrise or after sunset
+    return clockMinutes < sunTimes.sunrise || clockMinutes > sunTimes.sunset;
+}
+
 function calculateTerrainDistances() {
     let flatDistance = 0, uphillDistance = 0, downhillDistance = 0;
     
@@ -2488,6 +2642,9 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
 
             const aidRow = document.createElement('tr');
             aidRow.classList.add('aid-station-row');
+            if (isNightTime(clockTimeMinutes % (24 * 60))) {
+                aidRow.classList.add('night-section');
+            }
             aidRow.innerHTML = `
                 <td>${displayDistance.toFixed(1)}</td>
                 <td>-</td>
@@ -2542,6 +2699,9 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         const row = document.createElement('tr');
         if (hasAidStation) {
             row.classList.add('aid-station-row');
+        }
+        if (isNightTime(clockTimeMinutes % (24 * 60))) {
+            row.classList.add('night-section');
         }
         
         // Get surface display name

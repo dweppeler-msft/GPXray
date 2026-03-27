@@ -381,10 +381,15 @@
                 </div>
             </div>
             
-            <div class="start-time-input">
-                <label>🕐 Race Start Time (optional)</label>
-                <div class="start-time-wrapper">
-                    <input type="time" id="raceStartTime" value="09:00">
+            <div class="race-datetime-input">
+                <label>🕐 Race Start (optional)</label>
+                <div class="race-datetime-wrapper">
+                    <input type="date" id="raceStartDate" title="Race date">
+                    <input type="time" id="raceStartTime" value="06:00" title="Start time">
+                </div>
+                <div class="sun-times" id="sunTimes" style="display: none;">
+                    <span class="sun-rise">🌅 <span id="sunriseTime">--:--</span></span>
+                    <span class="sun-set">🌇 <span id="sunsetTime">--:--</span></span>
                 </div>
             </div>
             
