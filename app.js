@@ -2873,6 +2873,10 @@ function exportToCsv() {
     const startTimeInput = document.getElementById('raceStartTime');
     const startTimeValue = startTimeInput ? startTimeInput.value : '09:00';
     
+    // Get race date
+    const dateInput = document.getElementById('raceStartDate');
+    const raceDateValue = dateInput ? dateInput.value : '';
+    
     // Unit settings
     const unitLabel = useMetric ? 'km' : 'mi';
     const distanceDisplay = useMetric ? gpxData.totalDistance.toFixed(2) : (gpxData.totalDistance * KM_TO_MILES).toFixed(2);
@@ -2880,7 +2884,16 @@ function exportToCsv() {
     // Add summary section
     csvContent += 'GPX RACE PLAN EXPORT\n';
     csvContent += `Mode,${currentMode === 'manual' ? 'Manual Pace' : 'Target Time'}\n`;
+    csvContent += `Race Date,${raceDateValue || 'Not set'}\n`;
     csvContent += `Race Start Time,${startTimeValue}\n`;
+    if (sunTimes && !sunTimes.polarNight && !sunTimes.midnightSun) {
+        csvContent += `Sunrise,${formatSunTime(sunTimes.sunrise)}\n`;
+        csvContent += `Sunset,${formatSunTime(sunTimes.sunset)}\n`;
+    } else if (sunTimes && sunTimes.polarNight) {
+        csvContent += `Sun,Polar night (no sunrise)\n`;
+    } else if (sunTimes && sunTimes.midnightSun) {
+        csvContent += `Sun,Midnight sun (no sunset)\n`;
+    }
     csvContent += `Units,${useMetric ? 'Metric (km)' : 'Imperial (miles)'}\n`;
     csvContent += '\n';
     csvContent += 'ROUTE STATISTICS\n';
