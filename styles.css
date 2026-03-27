@@ -2279,4 +2279,30 @@ h2 {
     .splits-actions {
         flex-direction: column;
     }
+    
+    /* Mobile splits table - hide less important columns */
+    #splitsTable th:nth-child(3),  /* Terrain */
+    #splitsTable td:nth-child(3),
+    #splitsTable th:nth-child(4),  /* Surface */
+    #splitsTable td:nth-child(4),
+    #splitsTable th:nth-child(6),  /* Stop */
+    #splitsTable td:nth-child(6),
+    #splitsTable th:nth-child(8),  /* Split Time */
+    #splitsTable td:nth-child(8) {
+        display: none;
+    }
+    
+    /* Compact table styling for mobile */
+    #splitsTable th, #splitsTable td {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+    }
+    
+    #splitsTable th {
+        font-size: 0.7rem;
+    }
+    
+    .splits-table-container {
+        margin: 0 -10px;
+    }
 }
