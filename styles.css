@@ -556,6 +556,54 @@ header h1 {
     color: #888;
 }
 
+/* Intro Section */
+.intro-section {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(0, 153, 204, 0.05) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.intro-text {
+    color: #bbb;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.feature-pills {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.feature-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    color: #ddd;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.feature-pill:hover {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: rgba(0, 212, 255, 0.3);
+    color: #00d4ff;
+    transform: translateY(-2px);
+}
+
 /* Upload Section */
 .upload-section {
     margin-bottom: 30px;
@@ -2165,6 +2213,21 @@ h2 {
 @media (max-width: 768px) {
     header h1 {
         font-size: 1.8rem;
+    }
+    
+    .intro-section {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .intro-text {
+        font-size: 1rem;
+        margin-bottom: 15px;
+    }
+    
+    .feature-pill {
+        padding: 6px 10px;
+        font-size: 0.75rem;
     }
     
     .terrain-breakdown, .time-breakdown {
