@@ -3334,11 +3334,11 @@ async function exportShareCard() {
                 
                 // Add station row
                 aidStationsList += `
-                    <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <span style="color: #00d4ff; min-width: 55px;">📍 ${station.dist}</span>
-                        <span style="flex: 1; margin: 0 8px; font-size: 14px;">${station.name}</span>
-                        <span style="color: #888; font-size: 13px; margin-right: 10px;">${station.raceTime}</span>
-                        <span style="font-weight: bold; color: #4CAF50; min-width: 70px; text-align: right;">${station.clockTime}</span>
+                    <div style="display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.15);">
+                        <span style="color: #00d4ff; min-width: 60px; font-size: 18px; font-weight: bold;">📍 ${station.dist}</span>
+                        <span style="flex: 1; margin: 0 8px; font-size: 16px; font-weight: 600;">${station.name}</span>
+                        <span style="color: #ccc; font-size: 15px; font-weight: 500; margin-right: 12px;">${station.raceTime}</span>
+                        <span style="font-weight: bold; color: #4CAF50; min-width: 80px; text-align: right; font-size: 18px;">${station.clockTime}</span>
                     </div>
                 `;
                 
@@ -3365,7 +3365,7 @@ async function exportShareCard() {
                     }
                     
                     aidStationsList += `
-                        <div style="text-align: center; padding: 6px 0; color: #666; font-size: 12px;">
+                        <div style="text-align: center; padding: 8px 0; color: #999; font-size: 14px; font-weight: 500;">
                             ↓ ${nextLegDist} ${unitLabel} · +${Math.round(nextElevGain)}m / -${Math.round(nextElevLoss)}m
                         </div>
                     `;
@@ -3380,7 +3380,7 @@ async function exportShareCard() {
         let sunTimesHtml = '';
         if (sunTimes && !sunTimes.polarNight && !sunTimes.midnightSun) {
             sunTimesHtml = `
-                <div style="display: flex; gap: 30px; justify-content: center; margin: 15px 0;">
+                <div style="display: flex; gap: 30px; justify-content: center; margin: 15px 0; font-size: 18px; font-weight: 600;">
                     <span>🌅 ${formatSunTime(sunTimes.sunrise)}</span>
                     <span>🌇 ${formatSunTime(sunTimes.sunset)}</span>
                 </div>
@@ -3405,48 +3405,48 @@ async function exportShareCard() {
 
         card.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 24px; font-weight: bold; color: #00d4ff; margin-bottom: 5px;">GPXray</div>
-                <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px;">Race Plan</div>
+                <div style="font-size: 28px; font-weight: bold; color: #00d4ff; margin-bottom: 5px;">GPXray</div>
+                <div style="font-size: 14px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; font-weight: 500;">Race Plan</div>
             </div>
             
             <div style="background: rgba(0,212,255,0.15); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                <div style="font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 15px;">${routeName}</div>
+                <div style="font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 15px;">${routeName}</div>
                 
                 <div style="display: flex; justify-content: space-around; text-align: center;">
                     <div>
-                        <div style="font-size: 28px; font-weight: bold;">${distance.toFixed(1)}</div>
-                        <div style="font-size: 12px; color: #888;">${unitLabel}</div>
+                        <div style="font-size: 32px; font-weight: bold;">${distance.toFixed(1)}</div>
+                        <div style="font-size: 14px; color: #aaa; font-weight: 500;">${unitLabel}</div>
                     </div>
                     <div>
-                        <div style="font-size: 28px; font-weight: bold;">+${gpxData.elevationGain.toFixed(0)}</div>
-                        <div style="font-size: 12px; color: #888;">m gain</div>
+                        <div style="font-size: 32px; font-weight: bold;">+${gpxData.elevationGain.toFixed(0)}</div>
+                        <div style="font-size: 14px; color: #aaa; font-weight: 500;">m gain</div>
                     </div>
                     <div>
-                        <div style="font-size: 28px; font-weight: bold;">-${gpxData.elevationLoss.toFixed(0)}</div>
-                        <div style="font-size: 12px; color: #888;">m loss</div>
+                        <div style="font-size: 32px; font-weight: bold;">-${gpxData.elevationLoss.toFixed(0)}</div>
+                        <div style="font-size: 14px; color: #aaa; font-weight: 500;">m loss</div>
                     </div>
                 </div>
             </div>
             
             <div style="text-align: center; margin-bottom: 20px;">
-                ${raceDate ? `<div style="font-size: 14px; color: #aaa;">📅 ${raceDate} at ${raceTime}</div>` : ''}
+                ${raceDate ? `<div style="font-size: 16px; color: #ccc; font-weight: 500;">📅 ${raceDate} at ${raceTime}</div>` : ''}
                 ${sunTimesHtml}
             </div>
             
             <div style="background: rgba(76,175,80,0.15); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 14px; color: #888; margin-bottom: 5px;">Estimated Finish</div>
-                <div style="font-size: 36px; font-weight: bold; color: #4CAF50;">${totalTime.split('(')[0].trim()}</div>
-                ${finishClockTime ? `<div style="font-size: 18px; color: #aaa; margin-top: 8px;">🏁 ${finishClockTime}</div>` : ''}
+                <div style="font-size: 16px; color: #aaa; margin-bottom: 5px; font-weight: 500;">Estimated Finish</div>
+                <div style="font-size: 42px; font-weight: bold; color: #4CAF50;">${totalTime.split('(')[0].trim()}</div>
+                ${finishClockTime ? `<div style="font-size: 22px; color: #ccc; margin-top: 8px; font-weight: 600;">🏁 ${finishClockTime}</div>` : ''}
             </div>
             
             ${aidStationsList ? `
                 <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
-                    <div style="font-size: 14px; color: #888; margin-bottom: 10px; text-align: center;">🚰 AID STATION SCHEDULE</div>
-                    <div style="display: flex; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 5px;">
-                        <span style="color: #555; min-width: 55px; font-size: 11px;">${unitLabel.toUpperCase()}</span>
-                        <span style="flex: 1; margin: 0 8px; font-size: 11px; color: #555;">STATION</span>
-                        <span style="color: #555; font-size: 11px; margin-right: 10px;">RACE</span>
-                        <span style="color: #555; min-width: 70px; text-align: right; font-size: 11px;">CLOCK</span>
+                    <div style="font-size: 16px; color: #aaa; margin-bottom: 12px; text-align: center; font-weight: 600;">🚰 AID STATION SCHEDULE</div>
+                    <div style="display: flex; align-items: center; padding: 6px 0; border-bottom: 2px solid rgba(255,255,255,0.2); margin-bottom: 8px;">
+                        <span style="color: #888; min-width: 60px; font-size: 12px; font-weight: 600;">${unitLabel.toUpperCase()}</span>
+                        <span style="flex: 1; margin: 0 8px; font-size: 12px; color: #888; font-weight: 600;">STATION</span>
+                        <span style="color: #888; font-size: 12px; margin-right: 12px; font-weight: 600;">RACE</span>
+                        <span style="color: #888; min-width: 80px; text-align: right; font-size: 12px; font-weight: 600;">CLOCK</span>
                     </div>
                     ${aidStationsList}
                 </div>
