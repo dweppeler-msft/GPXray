@@ -64,8 +64,7 @@ jobs:
           path: _site
 
   deploy:
-    # Only deploy from main branch (not v2-features)
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    # Deploy from both main and v2-features branches
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
