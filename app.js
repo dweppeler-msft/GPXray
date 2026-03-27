@@ -355,21 +355,55 @@ async function fetchSurfaceData() {
         // Build Overpass query for all sample points
         // Query ways near sample points in a single batch
         const bbox = calculateBoundingBox(gpxData.points);
-        const overpassQuery = buildOverpassQuery(bbox); 
+        const overpassQuery = buildOverpassQuery(bbox);
         
-        const response = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST',
-            body: overpassQuery
-        });
+        // Try multiple Overpass API endpoints (some may be rate-limited or down)
+        const endpoints = [
+            'https://overpass-api.de/api/interpreter',
+            'https://overpass.kumi.systems/api/interpreter',
+            'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+        ];
         
-        if (!response.ok) {
-            throw new Error(`Overpass API error: ${response.status}`);
+        let response = null;
+        let lastError = null;
+        
+        for (const endpoint of endpoints) {
+            try {
+                console.log(`Trying Overpass endpoint: ${endpoint}`);
+                response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'data=' + encodeURIComponent(overpassQuery)
+                });
+                
+                if (response.ok) {
+                    console.log(`Success with endpoint: ${endpoint}`);
+                    break;
+                } else {
+                    lastError = new Error(`HTTP ${response.status}`);
+                    response = null;
+                }
+            } catch (e) {
+                console.warn(`Endpoint ${endpoint} failed:`, e.message);
+                lastError = e;
+            }
+        }
+        
+        if (!response) {
+            throw lastError || new Error('All Overpass endpoints failed');
         }
         
         const data = await response.json();
         
         // Process OSM ways and build spatial index
         const ways = processOSMWays(data);
+        
+        if (ways.length === 0) {
+            updateSurfaceStatus('No OSM data found for this area. Using default surfaces.');
+            return;
+        }
         
         // Match sample points to nearest ways
         const surfaceResults = matchPointsToWays(samplePoints, ways);
@@ -384,7 +418,7 @@ async function fetchSurfaceData() {
         
     } catch (error) {
         console.error('Error fetching surface data:', error);
-        updateSurfaceStatus('Could not load surface data. Using default surfaces.');
+        updateSurfaceStatus(`Could not load surface data: ${error.message}. Using default surfaces.`);
     }
 }
 
