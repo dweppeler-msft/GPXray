@@ -118,10 +118,18 @@
                 <span class="legend-item"><span class="legend-color downhill"></span> Downhill</span>
             </div>
             <div class="surface-stats" id="surfaceStats" style="display: none;">
-                <div class="surface-stats-row" id="surfaceStatsRow">
-                    <!-- Surface percentages will be inserted here -->
+                <div class="surface-stats-header">
+                    <span class="surface-stats-title">Surface Analysis</span>
                 </div>
-                <label class="surface-toggle">
+                <div class="surface-stats-content">
+                    <div class="surface-loading" id="surfaceLoading">
+                        <span class="loading-spinner"></span> Analyzing surface data...
+                    </div>
+                    <div class="surface-stats-row" id="surfaceStatsRow" style="display: none;">
+                        <!-- Surface percentages will be inserted here -->
+                    </div>
+                </div>
+                <label class="surface-toggle" id="surfaceToggleLabel" style="display: none;">
                     <input type="checkbox" id="surfaceEnabled" checked>
                     <span>Apply surface multipliers to pace</span>
                 </label>

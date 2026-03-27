@@ -253,7 +253,8 @@ function parseGPX(gpxContent) {
     // Re-render AID stations to show leg info with GPX data
     renderAidStations();
     
-    // Fetch surface data from OSM (async, will update display when done)
+    // Show surface loading state and fetch data from OSM
+    showSurfaceLoading();
     fetchSurfaceData();
     
     // Update sun times display based on route center
@@ -544,7 +545,8 @@ async function fetchSurfaceData() {
         
     } catch (error) {
         console.error('Error fetching surface data:', error);
-        updateSurfaceStatus(`Could not load surface data: ${error.message}. Using default surfaces.`);
+        // Show stats with default/unknown surfaces
+        displaySurfaceStats();
     }
 }
 
@@ -791,10 +793,30 @@ function updateSurfaceStatus(message) {
 }
 
 // Display surface stats under map (replacing pie chart)
+// Show surface loading state
+function showSurfaceLoading() {
+    const statsContainer = document.getElementById('surfaceStats');
+    const loadingEl = document.getElementById('surfaceLoading');
+    const statsRow = document.getElementById('surfaceStatsRow');
+    const toggleLabel = document.getElementById('surfaceToggleLabel');
+    
+    if (statsContainer) statsContainer.style.display = 'block';
+    if (loadingEl) loadingEl.style.display = 'flex';
+    if (statsRow) statsRow.style.display = 'none';
+    if (toggleLabel) toggleLabel.style.display = 'none';
+}
+
+// Display surface stats under map
 function displaySurfaceStats() {
     const statsContainer = document.getElementById('surfaceStats');
     const statsRow = document.getElementById('surfaceStatsRow');
+    const loadingEl = document.getElementById('surfaceLoading');
+    const toggleLabel = document.getElementById('surfaceToggleLabel');
+    
     if (!statsContainer || !statsRow) return;
+    
+    // Hide loading
+    if (loadingEl) loadingEl.style.display = 'none';
     
     const surfaceDistances = { road: 0, trail: 0, technical: 0, unknown: 0 };
     let totalDistance = 0;
@@ -825,7 +847,9 @@ function displaySurfaceStats() {
     }
     
     statsRow.innerHTML = html;
+    statsRow.style.display = 'flex';
     statsContainer.style.display = 'block';
+    if (toggleLabel) toggleLabel.style.display = 'flex';
 }
 
 // Show hidden sections

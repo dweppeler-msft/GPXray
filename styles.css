@@ -574,6 +574,44 @@ h2 {
     border-radius: 8px;
 }
 
+.surface-stats-header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.surface-stats-title {
+    font-size: 0.85rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.surface-stats-content {
+    min-height: 24px;
+}
+
+.surface-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.loading-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(0, 212, 255, 0.3);
+    border-top-color: #00d4ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 .surface-stats-row {
     display: flex;
     justify-content: center;
