@@ -836,7 +836,7 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         
         // Check for AID station at this km
         const aidStation = getAidStationForKm(km);
-        const aidStationText = aidStation ? `🚰 ${aidStation.name}` : '-';
+        const aidStationText = aidStation ? aidStation.name : '-';
         const hasAidStation = aidStation !== undefined;
         
         const row = document.createElement('tr');
