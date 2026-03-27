@@ -367,7 +367,7 @@ async function fetchSurfaceData() {
         const endpoints = [
             'https://overpass-api.de/api/interpreter',
             'https://overpass.kumi.systems/api/interpreter',
-            'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+            'https://z.overpass-api.de/api/interpreter'
         ];
         
         let response = null;
@@ -385,6 +385,14 @@ async function fetchSurfaceData() {
                 });
                 
                 if (response.ok) {
+                    // Check content-type to ensure it's JSON, not an error page
+                    const contentType = response.headers.get('content-type') || '';
+                    if (!contentType.includes('application/json')) {
+                        console.warn(`Endpoint ${endpoint} returned non-JSON: ${contentType}`);
+                        lastError = new Error(`Non-JSON response: ${contentType}`);
+                        response = null;
+                        continue;
+                    }
                     console.log(`Success with endpoint: ${endpoint}`);
                     break;
                 } else {
@@ -401,7 +409,18 @@ async function fetchSurfaceData() {
             throw lastError || new Error('All Overpass endpoints failed');
         }
         
-        const data = await response.json();
+        // Read response text first to validate it's actually JSON
+        const responseText = await response.text();
+        if (responseText.startsWith('<?xml') || responseText.startsWith('<')) {
+            throw new Error('API returned XML error page instead of JSON');
+        }
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            throw new Error('Invalid JSON response from API');
+        }
         
         // Process OSM ways and build spatial index
         const ways = processOSMWays(data);
