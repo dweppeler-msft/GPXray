@@ -45,7 +45,7 @@ const OSM_SURFACE_MAP = {
 // OSM highway type fallback mapping (when no surface tag)
 const OSM_HIGHWAY_MAP = {
     'motorway': 'road', 'trunk': 'road', 'primary': 'road', 'secondary': 'road',
-    'tertiary': 'road', 'residential':races/ 'road', 'service': 'road', 'unclassified': 'road',
+    'tertiary': 'road', 'residential': 'road', 'service': 'road', 'unclassified': 'road',
     'path': 'trail', 'footway': 'trail', 'cycleway': 'trail', 'bridleway': 'trail',
     'track': 'trail', 'steps': 'technical'
 };
@@ -115,7 +115,7 @@ async function loadDemoGpx() {
         demoBtn.disabled = true;
         demoBtn.textContent = '⏳ Loading...';
         
-        const response = await fetch('demo.gpx');
+        const response = await fetch('races/demo.gpx');
         if (!response.ok) {
             throw new Error('Failed to load demo file');
         }
