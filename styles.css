@@ -4,12 +4,20 @@
     box-sizing: border-box;
 }
 
+:root {
+    color-scheme: dark;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     min-height: 100vh;
     color: #e0e0e0;
     padding: 20px;
+}
+
+input, select, textarea {
+    color-scheme: dark;
 }
 
 .container {
