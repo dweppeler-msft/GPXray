@@ -933,6 +933,30 @@ header h1 {
     transform: scale(1.05);
 }
 
+/* Unavailable race styling */
+.race-item-unavailable {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.race-item-unavailable:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+    transform: none;
+}
+
+.race-item-coming-soon {
+    padding: 6px 12px;
+    border-radius: 12px;
+    background: rgba(255, 165, 0, 0.2);
+    color: #ffa500;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
 .race-browser-footer {
     padding: 15px 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);

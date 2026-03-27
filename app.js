@@ -148,34 +148,48 @@ async function loadDemoGpx() {
 
 // Race Database
 const raceDatabase = [
+    // ===== AVAILABLE RACES =====
+    
+    // ZUT - Zugspitz Ultratrail (Germany)
+    { id: 'zut-grainau', name: 'ZUT Grainau Trail', country: '🇩🇪', distance: 16, elevation: 800, category: 'short', gpxUrl: 'Grainau_Trail_ZUT_2025_01bfa09fb6.gpx', available: true },
+    { id: 'zut-mittenwald', name: 'ZUT Mittenwald Trail', country: '🇩🇪', distance: 43, elevation: 2100, category: 'marathon', gpxUrl: 'Mittenwald_Trail_ZUT_2025_fa6c0d4010.gpx', available: true },
+    { id: 'zut-leutasch', name: 'ZUT Leutasch Trail', country: '🇩🇪', distance: 68, elevation: 3500, category: 'marathon', gpxUrl: 'Leutasch_Trail_ZUT_2025_620e36ae36.gpx', available: true },
+    { id: 'zut-ehrwald', name: 'ZUT Ehrwald Trail', country: '🇩🇪', distance: 85, elevation: 4500, category: 'marathon', gpxUrl: 'Ehrwald_Trail_ZUT_2025_85a841b963.gpx', available: true },
+    { id: 'zut-ultratrail', name: 'ZUT Ultratrail', country: '🇩🇪', distance: 106, elevation: 5400, category: 'ultra', gpxUrl: 'Ultratrail_ZUT_2025_3b6cbaa510.gpx', available: true },
+    { id: 'zut-100', name: 'ZUT 100', country: '🇩🇪', distance: 164, elevation: 8500, category: 'ultra', gpxUrl: 'ZUT_100_2025_71c0e173fd.gpx', available: true },
+    
+    // Rureifel Trail (Germany)
+    { id: 'ret-44', name: 'Rureifel Trail RET 44', country: '🇩🇪', distance: 46, elevation: 1200, category: 'marathon', gpxUrl: 'rureifel-trail-2026-ret44.gpx', available: true },
+    { id: 'ret-77', name: 'Rureifel Trail RET 77', country: '🇩🇪', distance: 76, elevation: 2000, category: 'marathon', gpxUrl: 'rureifel-trail-2026-ret77.gpx', available: true },
+    
+    // ===== COMING SOON =====
+    
     // Ultra Trail (100km+)
-    { id: 'utmb', name: 'UTMB - Ultra-Trail du Mont-Blanc', country: '🇫🇷', distance: 171, elevation: 10000, category: 'ultra', gpxUrl: 'races/utmb.gpx' },
-    { id: 'wser', name: 'Western States 100', country: '🇺🇸', distance: 161, elevation: 5500, category: 'ultra', gpxUrl: 'races/western-states.gpx' },
-    { id: 'hardrock', name: 'Hardrock 100', country: '🇺🇸', distance: 161, elevation: 10000, category: 'ultra', gpxUrl: 'races/hardrock.gpx' },
-    { id: 'lavaredo', name: 'Lavaredo Ultra Trail', country: '🇮🇹', distance: 120, elevation: 5800, category: 'ultra', gpxUrl: 'races/lavaredo.gpx' },
-    { id: 'transgrancanaria', name: 'Transgrancanaria', country: '🇪🇸', distance: 128, elevation: 7500, category: 'ultra', gpxUrl: 'races/transgrancanaria.gpx' },
-    { id: 'eiger', name: 'Eiger Ultra Trail E101', country: '🇨🇭', distance: 101, elevation: 6700, category: 'ultra', gpxUrl: 'races/eiger-e101.gpx' },
-    { id: 'madeira', name: 'Madeira Island Ultra Trail', country: '🇵🇹', distance: 115, elevation: 7200, category: 'ultra', gpxUrl: 'races/miut.gpx' },
-    { id: 'penyagolosa', name: 'Penyagolosa Trails MiM', country: '🇪🇸', distance: 109, elevation: 5700, category: 'ultra', gpxUrl: 'races/penyagolosa.gpx' },
+    { id: 'utmb', name: 'UTMB - Ultra-Trail du Mont-Blanc', country: '🇫🇷', distance: 171, elevation: 10000, category: 'ultra', available: false },
+    { id: 'wser', name: 'Western States 100', country: '🇺🇸', distance: 161, elevation: 5500, category: 'ultra', available: false },
+    { id: 'hardrock', name: 'Hardrock 100', country: '🇺🇸', distance: 161, elevation: 10000, category: 'ultra', available: false },
+    { id: 'lavaredo', name: 'Lavaredo Ultra Trail', country: '🇮🇹', distance: 120, elevation: 5800, category: 'ultra', available: false },
+    { id: 'transgrancanaria', name: 'Transgrancanaria', country: '🇪🇸', distance: 128, elevation: 7500, category: 'ultra', available: false },
+    { id: 'eiger', name: 'Eiger Ultra Trail E101', country: '🇨🇭', distance: 101, elevation: 6700, category: 'ultra', available: false },
+    { id: 'madeira', name: 'Madeira Island Ultra Trail', country: '🇵🇹', distance: 115, elevation: 7200, category: 'ultra', available: false },
+    { id: 'penyagolosa', name: 'Penyagolosa Trails MiM', country: '🇪🇸', distance: 109, elevation: 5700, category: 'ultra', available: false },
     
     // Marathon Trail (42-100km)
-    { id: 'ccc', name: 'CCC - Courmayeur-Champex-Chamonix', country: '🇫🇷', distance: 101, elevation: 6100, category: 'marathon', gpxUrl: 'races/ccc.gpx' },
-    { id: 'tds', name: 'TDS - Sur les Traces des Ducs de Savoie', country: '🇫🇷', distance: 145, elevation: 9100, category: 'ultra', gpxUrl: 'races/tds.gpx' },
-    { id: 'occ', name: 'OCC - Orsières-Champex-Chamonix', country: '🇫🇷', distance: 55, elevation: 3500, category: 'marathon', gpxUrl: 'races/occ.gpx' },
-    { id: 'zermatt', name: 'Matterhorn Ultraks 46K', country: '🇨🇭', distance: 46, elevation: 3600, category: 'marathon', gpxUrl: 'races/ultraks-46.gpx' },
-    { id: 'sierre-zinal', name: 'Sierre-Zinal', country: '🇨🇭', distance: 31, elevation: 2200, category: 'short', gpxUrl: 'races/sierre-zinal.gpx' },
-    { id: 'gorge', name: 'Columbia River Gorge 50', country: '🇺🇸', distance: 80, elevation: 2700, category: 'marathon', gpxUrl: 'races/gorge-50.gpx' },
-    { id: 'zugspitz', name: 'Zugspitz Ultratrail', country: '🇩🇪', distance: 100, elevation: 5400, category: 'marathon', gpxUrl: 'races/zugspitz.gpx' },
-    { id: 'dolomiti', name: 'Dolomiti Extreme Trail', country: '🇮🇹', distance: 52, elevation: 3900, category: 'marathon', gpxUrl: 'races/dolomiti.gpx' },
+    { id: 'ccc', name: 'CCC - Courmayeur-Champex-Chamonix', country: '🇫🇷', distance: 101, elevation: 6100, category: 'marathon', available: false },
+    { id: 'tds', name: 'TDS - Sur les Traces des Ducs de Savoie', country: '🇫🇷', distance: 145, elevation: 9100, category: 'ultra', available: false },
+    { id: 'occ', name: 'OCC - Orsières-Champex-Chamonix', country: '🇫🇷', distance: 55, elevation: 3500, category: 'marathon', available: false },
+    { id: 'zermatt', name: 'Matterhorn Ultraks 46K', country: '🇨🇭', distance: 46, elevation: 3600, category: 'marathon', available: false },
+    { id: 'sierre-zinal', name: 'Sierre-Zinal', country: '🇨🇭', distance: 31, elevation: 2200, category: 'short', available: false },
+    { id: 'gorge', name: 'Columbia River Gorge 50', country: '🇺🇸', distance: 80, elevation: 2700, category: 'marathon', available: false },
+    { id: 'dolomiti', name: 'Dolomiti Extreme Trail', country: '🇮🇹', distance: 52, elevation: 3900, category: 'marathon', available: false },
     
     // Short Trail (<42km)
-    { id: 'zut', name: 'ZUT Garmisch-Partenkirchen', country: '🇩🇪', distance: 29, elevation: 1500, category: 'short', gpxUrl: 'demo.gpx' },
-    { id: 'mont-blanc-marathon', name: 'Marathon du Mont-Blanc', country: '🇫🇷', distance: 42, elevation: 2700, category: 'marathon', gpxUrl: 'races/mbm.gpx' },
-    { id: 'jungfrau', name: 'Jungfrau Marathon', country: '🇨🇭', distance: 42, elevation: 1800, category: 'marathon', gpxUrl: 'races/jungfrau.gpx' },
-    { id: 'pikes', name: "Pikes Peak Marathon", country: '🇺🇸', distance: 42, elevation: 2400, category: 'marathon', gpxUrl: 'races/pikes-peak.gpx' },
-    { id: 'innsbruck', name: 'Innsbruck Alpine K42', country: '🇦🇹', distance: 42, elevation: 2500, category: 'marathon', gpxUrl: 'races/innsbruck.gpx' },
-    { id: 'ben-nevis', name: 'Ben Nevis Ultra 23K', country: '🇬🇧', distance: 23, elevation: 1400, category: 'short', gpxUrl: 'races/ben-nevis.gpx' },
-    { id: 'val-daran', name: 'Val d\'Aran by UTMB 21K', country: '🇪🇸', distance: 21, elevation: 1200, category: 'short', gpxUrl: 'races/val-daran.gpx' }
+    { id: 'mont-blanc-marathon', name: 'Marathon du Mont-Blanc', country: '🇫🇷', distance: 42, elevation: 2700, category: 'marathon', available: false },
+    { id: 'jungfrau', name: 'Jungfrau Marathon', country: '🇨🇭', distance: 42, elevation: 1800, category: 'marathon', available: false },
+    { id: 'pikes', name: "Pikes Peak Marathon", country: '🇺🇸', distance: 42, elevation: 2400, category: 'marathon', available: false },
+    { id: 'innsbruck', name: 'Innsbruck Alpine K42', country: '🇦🇹', distance: 42, elevation: 2500, category: 'marathon', available: false },
+    { id: 'ben-nevis', name: 'Ben Nevis Ultra 23K', country: '🇬🇧', distance: 23, elevation: 1400, category: 'short', available: false },
+    { id: 'val-daran', name: 'Val d\'Aran by UTMB 21K', country: '🇪🇸', distance: 21, elevation: 1200, category: 'short', available: false }
 ];
 
 function setupRaceBrowser() {
@@ -246,19 +260,37 @@ function renderRaceList(filter, searchText) {
         return;
     }
     
-    list.innerHTML = filtered.map(race => `
-        <div class="race-item" onclick="loadRace('${race.id}')">
-            <span class="race-item-flag">${race.country}</span>
-            <div class="race-item-info">
-                <div class="race-item-name">${race.name}</div>
-                <div class="race-item-details">
-                    <span>📏 ${race.distance} km</span>
-                    <span>⛰️ ${race.elevation.toLocaleString()}m D+</span>
+    list.innerHTML = filtered.map(race => {
+        if (race.available) {
+            return `
+                <div class="race-item" onclick="loadRace('${race.id}')">
+                    <span class="race-item-flag">${race.country}</span>
+                    <div class="race-item-info">
+                        <div class="race-item-name">${race.name}</div>
+                        <div class="race-item-details">
+                            <span>📏 ${race.distance} km</span>
+                            <span>⛰️ ${race.elevation.toLocaleString()}m D+</span>
+                        </div>
+                    </div>
+                    <button class="race-item-load" onclick="event.stopPropagation(); loadRace('${race.id}')">Load</button>
                 </div>
-            </div>
-            <button class="race-item-load" onclick="event.stopPropagation(); loadRace('${race.id}')">Load</button>
-        </div>
-    `).join('');
+            `;
+        } else {
+            return `
+                <div class="race-item race-item-unavailable">
+                    <span class="race-item-flag">${race.country}</span>
+                    <div class="race-item-info">
+                        <div class="race-item-name">${race.name}</div>
+                        <div class="race-item-details">
+                            <span>📏 ${race.distance} km</span>
+                            <span>⛰️ ${race.elevation.toLocaleString()}m D+</span>
+                        </div>
+                    </div>
+                    <span class="race-item-coming-soon">Coming Soon</span>
+                </div>
+            `;
+        }
+    }).join('');
 }
 
 async function loadRace(raceId) {
