@@ -443,7 +443,13 @@ function setupModeSelector() {
     const manualMode = document.getElementById('manualMode');
     const targetMode = document.getElementById('targetMode');
     
-    manualBtn.addEventListener('click', () => {
+    if (!manualBtn || !targetBtn || !manualMode || !targetMode) {
+        console.error('Mode selector elements not found');
+        return;
+    }
+    
+    manualBtn.addEventListener('click', (e) => {
+        e.preventDefault();
         currentMode = 'manual';
         manualBtn.classList.add('active');
         targetBtn.classList.remove('active');
@@ -451,7 +457,8 @@ function setupModeSelector() {
         targetMode.style.display = 'none';
     });
     
-    targetBtn.addEventListener('click', () => {
+    targetBtn.addEventListener('click', (e) => {
+        e.preventDefault();
         currentMode = 'target';
         targetBtn.classList.add('active');
         manualBtn.classList.remove('active');
