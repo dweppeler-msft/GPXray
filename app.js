@@ -3031,25 +3031,25 @@ async function exportToPdf() {
 
         // Header
         doc.setFillColor(...primaryColor);
-        doc.rect(0, 0, pageWidth, 25, 'F');
+        doc.rect(0, 0, pageWidth, 20, 'F');
         
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(20);
+        doc.setFontSize(14);
         doc.setTextColor(0, 0, 0);
         const routeName = currentRouteName || 'Race Plan';
-        doc.text(routeName, margin, 16);
+        doc.text(routeName, margin, 13);
         
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         const dateInput = document.getElementById('raceStartDate');
         const timeInput = document.getElementById('raceStartTime');
         const raceDate = dateInput?.value || '';
         const raceTime = timeInput?.value || '06:00';
         if (raceDate) {
-            doc.text(`${raceDate} at ${raceTime}`, pageWidth - margin, 16, { align: 'right' });
+            doc.text(`${raceDate} at ${raceTime}`, pageWidth - margin, 13, { align: 'right' });
         }
 
-        y = 35;
+        y = 30;
 
         // Stats row
         doc.setTextColor(...textColor);
@@ -3057,13 +3057,23 @@ async function exportToPdf() {
         
         const unitLabel = useMetric ? 'km' : 'mi';
         const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
-        const totalTime = document.getElementById('totalTime')?.textContent || '-';
+        let totalTimeText = document.getElementById('totalTime')?.textContent || '-';
+        // Clean up time - remove "(incl. X min stops)" for cleaner display
+        const timeMatch = totalTimeText.match(/^[\d:]+/);
+        const estTime = timeMatch ? timeMatch[0] : totalTimeText;
+        const stopsMatch = totalTimeText.match(/(\d+)\s*min\s*stop/);
+        const stopsTime = stopsMatch ? `${stopsMatch[1]} min` : null;
         
         const stats = [
             { label: 'Distance', value: `${distance.toFixed(1)} ${unitLabel}` },
             { label: 'Elevation', value: `+${gpxData.elevationGain.toFixed(0)}m / -${gpxData.elevationLoss.toFixed(0)}m` },
-            { label: 'Est. Time', value: totalTime }
+            { label: 'Est. Time', value: estTime }
         ];
+        
+        // Add stops as separate stat if present
+        if (stopsTime) {
+            stats.push({ label: 'Stops', value: stopsTime });
+        }
         
         // Add sun times if available
         if (sunTimes && !sunTimes.polarNight && !sunTimes.midnightSun) {
