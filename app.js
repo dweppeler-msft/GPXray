@@ -119,16 +119,15 @@ function parseGPX(gpxContent) {
 function extractPoints(nodes) {
     const points = [];
     let totalDistance = 0;
-    let elevationGain = 0;
-    let elevationLoss = 0;
     let minElevation = Infinity;
     let maxElevation = -Infinity;
 
+    // First pass: extract all points
     nodes.forEach((node, index) => {
         const lat = parseFloat(node.getAttribute('lat'));
         const lon = parseFloat(node.getAttribute('lon'));
         const eleNode = node.querySelector('ele');
-        const elevation = eleNode ? parseFloat(eleNode.textContent) : 0;
+        const elevation = eleNode ? parseFloat(eleNode.textContent) : null;
 
         const point = { lat, lon, elevation, distance: 0 };
 
@@ -140,29 +139,60 @@ function extractPoints(nodes) {
             );
             totalDistance += segmentDistance;
             point.distance = totalDistance;
-
-            const elevationChange = elevation - prevPoint.elevation;
-            if (elevationChange > 0) {
-                elevationGain += elevationChange;
-            } else {
-                elevationLoss += Math.abs(elevationChange);
-            }
         }
 
-        minElevation = Math.min(minElevation, elevation);
-        maxElevation = Math.max(maxElevation, elevation);
+        if (elevation !== null) {
+            minElevation = Math.min(minElevation, elevation);
+            maxElevation = Math.max(maxElevation, elevation);
+        }
 
         points.push(point);
     });
+
+    // Calculate elevation gain/loss with smoothing to filter GPS noise
+    const { elevationGain, elevationLoss } = calculateElevationWithSmoothing(points);
 
     return {
         points,
         totalDistance,
         elevationGain,
         elevationLoss,
-        minElevation,
-        maxElevation
+        minElevation: minElevation === Infinity ? 0 : minElevation,
+        maxElevation: maxElevation === -Infinity ? 0 : maxElevation
     };
+}
+
+// Calculate elevation gain/loss with smoothing to reduce GPS noise
+function calculateElevationWithSmoothing(points) {
+    // Minimum elevation change threshold (meters) to count as gain/loss
+    const ELEVATION_THRESHOLD = 2;
+    
+    let elevationGain = 0;
+    let elevationLoss = 0;
+    let lastSignificantElevation = null;
+    
+    for (const point of points) {
+        if (point.elevation === null) continue;
+        
+        if (lastSignificantElevation === null) {
+            lastSignificantElevation = point.elevation;
+            continue;
+        }
+        
+        const change = point.elevation - lastSignificantElevation;
+        
+        // Only count changes above the threshold
+        if (Math.abs(change) >= ELEVATION_THRESHOLD) {
+            if (change > 0) {
+                elevationGain += change;
+            } else {
+                elevationLoss += Math.abs(change);
+            }
+            lastSignificantElevation = point.elevation;
+        }
+    }
+    
+    return { elevationGain, elevationLoss };
 }
 
 // Haversine formula for distance calculation
@@ -189,14 +219,15 @@ function calculateSegments() {
     // Create segments every 100m or so for smooth gradient calculation
     const segmentLength = 0.1; // km
     let currentSegmentStart = 0;
-    let segmentStartElevation = points[0].elevation;
+    let segmentStartElevation = points[0].elevation || 0;
     
     for (let i = 1; i < points.length; i++) {
         const distanceFromSegmentStart = points[i].distance - (segments.length * segmentLength);
         
         if (distanceFromSegmentStart >= segmentLength || i === points.length - 1) {
             const segmentDistance = points[i].distance - currentSegmentStart;
-            const elevationChange = points[i].elevation - segmentStartElevation;
+            const currentElevation = points[i].elevation || 0;
+            const elevationChange = currentElevation - segmentStartElevation;
             
             // Calculate grade percentage
             const grade = segmentDistance > 0 ? (elevationChange / (segmentDistance * 1000)) * 100 : 0;
@@ -224,7 +255,7 @@ function calculateSegments() {
             });
             
             currentSegmentStart = points[i].distance;
-            segmentStartElevation = points[i].elevation;
+            segmentStartElevation = currentElevation;
         }
     }
 }
@@ -333,9 +364,9 @@ function displayElevationChart() {
     
     const points = gpxData.points;
     
-    // Prepare data with colors
+    // Prepare data with colors (handle null elevations)
     const labels = points.map(p => p.distance.toFixed(2));
-    const elevations = points.map(p => p.elevation);
+    const elevations = points.map(p => p.elevation !== null ? p.elevation : 0);
     
     // Create gradient colors based on terrain
     const colors = points.map((p, i) => {
