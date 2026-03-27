@@ -456,6 +456,12 @@ async function fetchSurfaceData() {
         displaySurfaceChart();
         updateSurfaceStatus(`Surface data loaded: ${countSurfaces()}`);
         
+        // If race plan was already calculated, recalculate to show surface data
+        const splitsSection = document.getElementById('splitsSection');
+        if (splitsSection && splitsSection.style.display !== 'none') {
+            calculateRacePlan();
+        }
+        
     } catch (error) {
         console.error('Error fetching surface data:', error);
         updateSurfaceStatus(`Could not load surface data: ${error.message}. Using default surfaces.`);
@@ -619,17 +625,24 @@ function pointToLineDistance(px, py, x1, y1, x2, y2) {
 function applySurfaceToSegments(surfaceResults) {
     surfaceData = surfaceResults;
     
+    // Sort results by distance for efficient lookup
+    const sortedSamples = [...surfaceResults].sort((a, b) => a.distance - b.distance);
+    
     for (const segment of segments) {
+        const segmentMidpoint = (segment.startDistance + segment.endDistance) / 2;
+        
         // Find surface samples within this segment
-        const samplesInSegment = surfaceResults.filter(s => 
+        const samplesInSegment = sortedSamples.filter(s => 
             s.distance >= segment.startDistance && s.distance <= segment.endDistance
         );
         
         if (samplesInSegment.length > 0) {
-            // Use most common surface type in segment
+            // Use most common non-unknown surface type in segment
             const counts = {};
             for (const sample of samplesInSegment) {
-                counts[sample.surfaceType] = (counts[sample.surfaceType] || 0) + 1;
+                if (sample.surfaceType !== 'unknown') {
+                    counts[sample.surfaceType] = (counts[sample.surfaceType] || 0) + 1;
+                }
             }
             
             let maxCount = 0;
@@ -641,7 +654,29 @@ function applySurfaceToSegments(surfaceResults) {
                 }
             }
             
-            segment.surfaceType = dominantSurface;
+            if (dominantSurface !== 'unknown') {
+                segment.surfaceType = dominantSurface;
+                continue;
+            }
+        }
+        
+        // No samples in segment - find nearest sample by distance
+        let nearestSample = null;
+        let minDist = Infinity;
+        
+        for (const sample of sortedSamples) {
+            if (sample.surfaceType === 'unknown') continue;
+            
+            const dist = Math.abs(sample.distance - segmentMidpoint);
+            if (dist < minDist) {
+                minDist = dist;
+                nearestSample = sample;
+            }
+        }
+        
+        // Only use interpolation within reasonable distance (500m)
+        if (nearestSample && minDist < 0.5) {
+            segment.surfaceType = nearestSample.surfaceType;
         }
     }
 }
@@ -2209,16 +2244,15 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
                 const overlapEnd = Math.min(segment.endDistance, unitEndKm);
                 const overlapDistance = overlapEnd - overlapStart;
                 
-                // Track dominant surface for this unit
-                if (applySurface && segment.surfaceType !== 'unknown') {
-                    // Simple tracking - could be improved with proper counting
+                // Track dominant surface for this unit (always track for display)
+                if (segment.surfaceType && segment.surfaceType !== 'unknown') {
                     if (overlapDistance > maxSurfaceDist) {
                         maxSurfaceDist = overlapDistance;
                         dominantSurface = segment.surfaceType;
                     }
                 }
                 
-                // Get surface multiplier
+                // Get surface multiplier (only applied if toggle is on)
                 const surfaceMultiplier = applySurface && SURFACE_TYPES[segment.surfaceType]
                     ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType]
                     : 1.0;
