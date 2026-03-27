@@ -50,6 +50,9 @@ jobs:
           echo "Contents of _site/v2:"
           ls -la _site/v2/ || echo "v2 folder not found"
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
