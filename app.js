@@ -1270,6 +1270,7 @@ function setupAidStations() {
     const addBtn = document.getElementById('addAidStation');
     const kmInput = document.getElementById('aidStationKm');
     const nameInput = document.getElementById('aidStationName');
+    const stopTimeInput = document.getElementById('aidStationStopTime');
     
     if (!addBtn) {
         console.error('AID station button not found');
@@ -1286,14 +1287,15 @@ function setupAidStations() {
         
         const km = parseFloat(kmInput.value);
         const name = nameInput.value.trim() || `AID ${aidStations.length + 1}`;
+        const stopMin = parseInt(stopTimeInput.value) || 2; // Default 2 min stop
         
         if (isNaN(km) || km < 0) {
             alert('Please enter a valid kilometer position.');
             return;
         }
         
-        // Add to array
-        aidStations.push({ km, name });
+        // Add to array with stop time
+        aidStations.push({ km, name, stopMin });
         
         // Sort by km
         aidStations.sort((a, b) => a.km - b.km);
@@ -1301,9 +1303,10 @@ function setupAidStations() {
         // Render list
         renderAidStations();
         
-        // Clear inputs
+        // Clear inputs (keep default stop time)
         kmInput.value = '';
         nameInput.value = '';
+        stopTimeInput.value = '2';
     });
 }
 
@@ -1316,6 +1319,7 @@ function renderAidStations() {
             <div class="aid-station-info">
                 <span class="aid-station-km">KM ${station.km}</span>
                 <span class="aid-station-name">${station.name}</span>
+                <span class="aid-station-stop">(${station.stopMin || 0} min stop)</span>
             </div>
             <button type="button" class="remove-aid-btn" onclick="removeAidStation(${index})">×</button>
         </div>
@@ -1481,7 +1485,10 @@ function calculateRacePlan() {
         }
     });
     
-    const totalTime = flatTime + uphillTime + downhillTime;
+    // Calculate total stop time from AID stations
+    const totalStopTime = aidStations.reduce((sum, station) => sum + (station.stopMin || 0), 0);
+    
+    const totalTime = flatTime + uphillTime + downhillTime + totalStopTime;
     
     // Display results
     document.getElementById('paceResults').style.display = 'block';
@@ -1493,7 +1500,12 @@ function calculateRacePlan() {
     document.getElementById('uphillTime').textContent = formatTime(uphillTime);
     document.getElementById('downhillTime').textContent = formatTime(downhillTime);
     
-    document.getElementById('totalTime').textContent = formatTime(totalTime);
+    // Display total time (including stop time if any)
+    if (totalStopTime > 0) {
+        document.getElementById('totalTime').textContent = `${formatTime(totalTime)} (incl. ${totalStopTime} min stops)`;
+    } else {
+        document.getElementById('totalTime').textContent = formatTime(totalTime);
+    }
     document.getElementById('estimatedTime').textContent = formatTime(totalTime);
     
     // Generate splits table
@@ -1625,6 +1637,7 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             // Calculate time to station based on km distance
             const fractionOfUnit = (stationKm - unitStartKm) / distanceKm;
             const timeToStation = cumulativeTime + (unitTime * fractionOfUnit);
+            const stopTime = station.stopMin || 0;
             const clockTimeMinutes = startTimeInMinutes + timeToStation;
             const clockTime = formatClockTime(clockTimeMinutes);
             const displayDistance = useMetric ? station.km : station.km * KM_TO_MILES;
@@ -1637,15 +1650,22 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
                 <td>-</td>
                 <td>-</td>
                 <td class="aid-station-cell">${station.name}</td>
+                <td class="stop-time">${stopTime > 0 ? '+' + stopTime + ' min' : '-'}</td>
                 <td>-</td>
                 <td>-</td>
                 <td>${formatTime(timeToStation)}</td>
                 <td>${clockTime}</td>
             `;
             splitsBody.appendChild(aidRow);
+            
+            // Add stop time to cumulative time (proportional to position in unit)
+            // The full stop time will be added after the fraction passes
         }
         
-        // Update cumulative time
+        // Update cumulative time (including any fractional AID stop times)
+        for (const station of aidStationsInUnit) {
+            cumulativeTime += station.stopMin || 0;
+        }
         cumulativeTime += unitTime;
         
         // Get target pace for dominant terrain (display pace for selected unit)
@@ -1656,20 +1676,24 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             default: targetPace = displayFlatPace;
         }
         
-        // Calculate clock time
-        const clockTimeMinutes = startTimeInMinutes + cumulativeTime;
-        const clockTime = formatClockTime(clockTimeMinutes);
-        
-        // Split time is the time for this unit
-        const splitTime = unitTime;
-        
-        // Check for AID station at this unit
+        // Check for AID station at this unit (exact or rounded)
         const aidStation = aidStations.find(s => {
             const stationInUnit = useMetric ? s.km : s.km * KM_TO_MILES;
             return Math.floor(stationInUnit) === unit || Math.round(stationInUnit) === unit;
         });
         const aidStationText = aidStation ? aidStation.name : '-';
         const hasAidStation = aidStation !== undefined;
+        const stopTime = hasAidStation ? (aidStation.stopMin || 0) : 0;
+        
+        // Add stop time for this km's AID station to cumulative time
+        cumulativeTime += stopTime;
+        
+        // Calculate clock time (after adding stop time)
+        const clockTimeMinutes = startTimeInMinutes + cumulativeTime;
+        const clockTime = formatClockTime(clockTimeMinutes);
+        
+        // Split time is the time for this unit (not including stop)
+        const splitTime = unitTime;
         
         const row = document.createElement('tr');
         if (hasAidStation) {
@@ -1685,6 +1709,7 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             <td class="terrain-${terrain}">${terrain.charAt(0).toUpperCase() + terrain.slice(1)}</td>
             <td class="surface-${dominantSurface}">${surfaceDisplay}</td>
             <td class="${hasAidStation ? 'aid-station-cell' : ''}">${aidStationText}</td>
+            <td class="stop-time">${stopTime > 0 ? '+' + stopTime + ' min' : '-'}</td>
             <td>${formatPace(targetPace)} /${unitLabel}</td>
             <td>${formatTime(splitTime)}</td>
             <td>${formatTime(cumulativeTime)}</td>
@@ -1781,11 +1806,15 @@ function exportToCsv() {
     // Add AID stations if any
     if (aidStations.length > 0) {
         csvContent += 'AID STATIONS\n';
-        csvContent += `${unitLabel.toUpperCase()},Name\n`;
+        csvContent += `${unitLabel.toUpperCase()},Name,Stop Time (min)\n`;
         aidStations.forEach(station => {
             const stationDist = useMetric ? station.km : station.km * KM_TO_MILES;
-            csvContent += `${stationDist.toFixed(1)},${station.name}\n`;
+            csvContent += `${stationDist.toFixed(1)},${station.name},${station.stopMin || 0}\n`;
         });
+        
+        // Add total stop time
+        const totalStopTime = aidStations.reduce((sum, s) => sum + (s.stopMin || 0), 0);
+        csvContent += `Total Stop Time,,${totalStopTime}\n`;
         csvContent += '\n';
     }
 

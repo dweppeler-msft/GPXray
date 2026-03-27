@@ -514,6 +514,12 @@ h2 {
     color: #ccc;
 }
 
+.aid-station-stop {
+    color: #ff6b6b;
+    font-size: 0.85em;
+    margin-left: 8px;
+}
+
 .remove-aid-btn {
     background: rgba(244, 67, 54, 0.3);
     border: none;
@@ -591,6 +597,12 @@ h2 {
 .aid-station-cell {
     color: #ffa500;
     font-weight: 500;
+}
+
+.stop-time {
+    color: #ff6b6b;
+    font-weight: 500;
+    font-size: 0.9em;
 }
 
 .calculate-btn {
