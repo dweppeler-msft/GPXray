@@ -3276,9 +3276,12 @@ async function exportShareCard() {
         let aidStationsList = '';
         const splitsTable = document.getElementById('splitsTable');
         if (splitsTable && aidStations.length > 0) {
-            // Get only the actual AID station km values
-            const aidKmSet = new Set(aidStations.map(s => useMetric ? s.km.toFixed(1) : (s.km * KM_TO_MILES).toFixed(1)));
+            // Sort AID stations by km and get their data
+            const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
+            const aidKmSet = new Set(sortedStations.map(s => useMetric ? s.km.toFixed(1) : (s.km * KM_TO_MILES).toFixed(1)));
             
+            // Collect matching rows with their data
+            const stationData = [];
             const rows = splitsTable.querySelectorAll('tbody tr.aid-station-row');
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
@@ -3287,17 +3290,89 @@ async function exportShareCard() {
                 const raceTime = cells[8]?.textContent || '';
                 const clockTime = cells[9]?.textContent || '';
                 
-                // Only include actual AID station positions (fractional km)
                 if (aidName && aidName !== '-' && aidKmSet.has(distCell)) {
+                    stationData.push({ dist: distCell, name: aidName, raceTime, clockTime });
+                }
+            });
+            
+            // Calculate leg info and build HTML
+            let prevKm = 0;
+            let prevElevation = gpxData.points[0]?.elevation || 0;
+            
+            stationData.forEach((station, index) => {
+                const stationKm = parseFloat(station.dist);
+                const legDist = (stationKm - prevKm).toFixed(1);
+                
+                // Find elevation at this station
+                let stationElevation = prevElevation;
+                let elevGain = 0;
+                let elevLoss = 0;
+                
+                // Calculate elevation change for this leg
+                for (const point of gpxData.points) {
+                    if (point.distance >= prevKm && point.distance <= stationKm) {
+                        if (point.elevation !== null) {
+                            stationElevation = point.elevation;
+                        }
+                    }
+                }
+                
+                // Sum up elevation changes in this leg
+                let lastElev = null;
+                for (const point of gpxData.points) {
+                    if (point.distance >= prevKm && point.distance <= stationKm) {
+                        if (point.elevation !== null) {
+                            if (lastElev !== null) {
+                                const diff = point.elevation - lastElev;
+                                if (diff > 0) elevGain += diff;
+                                else elevLoss += Math.abs(diff);
+                            }
+                            lastElev = point.elevation;
+                        }
+                    }
+                }
+                
+                // Add station row
+                aidStationsList += `
+                    <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <span style="color: #00d4ff; min-width: 55px;">📍 ${station.dist}</span>
+                        <span style="flex: 1; margin: 0 8px; font-size: 14px;">${station.name}</span>
+                        <span style="color: #888; font-size: 13px; margin-right: 10px;">${station.raceTime}</span>
+                        <span style="font-weight: bold; color: #4CAF50; min-width: 70px; text-align: right;">${station.clockTime}</span>
+                    </div>
+                `;
+                
+                // Add leg info row (if not last station)
+                if (index < stationData.length - 1) {
+                    const nextKm = parseFloat(stationData[index + 1].dist);
+                    const nextLegDist = (nextKm - stationKm).toFixed(1);
+                    
+                    // Calculate next leg elevation
+                    let nextElevGain = 0;
+                    let nextElevLoss = 0;
+                    let nextLastElev = null;
+                    for (const point of gpxData.points) {
+                        if (point.distance >= stationKm && point.distance <= nextKm) {
+                            if (point.elevation !== null) {
+                                if (nextLastElev !== null) {
+                                    const diff = point.elevation - nextLastElev;
+                                    if (diff > 0) nextElevGain += diff;
+                                    else nextElevLoss += Math.abs(diff);
+                                }
+                                nextLastElev = point.elevation;
+                            }
+                        }
+                    }
+                    
                     aidStationsList += `
-                        <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                            <span style="color: #00d4ff; min-width: 55px;">📍 ${distCell}</span>
-                            <span style="flex: 1; margin: 0 8px; font-size: 14px;">${aidName}</span>
-                            <span style="color: #888; font-size: 13px; margin-right: 10px;">${raceTime}</span>
-                            <span style="font-weight: bold; color: #4CAF50; min-width: 70px; text-align: right;">${clockTime}</span>
+                        <div style="text-align: center; padding: 6px 0; color: #666; font-size: 12px;">
+                            ↓ ${nextLegDist} ${unitLabel} · +${Math.round(nextElevGain)}m / -${Math.round(nextElevLoss)}m
                         </div>
                     `;
                 }
+                
+                prevKm = stationKm;
+                prevElevation = stationElevation;
             });
         }
 
