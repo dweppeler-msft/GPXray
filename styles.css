@@ -743,12 +743,111 @@ h2 {
     color: #2196F3;
 }
 
+/* Surface column colors */
+.surface-road {
+    color: #4CAF50;
+}
+
+.surface-trail {
+    color: #FF9800;
+}
+
+.surface-technical {
+    color: #9C27B0;
+}
+
+.surface-unknown {
+    color: #9E9E9E;
+}
+
 /* Gradient Section */
 .gradient-section {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 15px;
     padding: 25px;
     margin-bottom: 30px;
+}
+
+/* Surface Section */
+.surface-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.surface-status {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.surface-content {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.surface-chart-container {
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.surface-legend {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 20px;
+}
+
+.surface-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ccc;
+}
+
+.surface-color {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+}
+
+.surface-color.road {
+    background: #4CAF50;
+}
+
+.surface-color.trail {
+    background: #FF9800;
+}
+
+.surface-color.technical {
+    background: #9C27B0;
+}
+
+.surface-settings {
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.surface-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #ccc;
+}
+
+.surface-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
 }
 
 /* Settings Bar */

@@ -80,6 +80,36 @@
             </div>
         </section>
 
+        <section class="surface-section" id="surfaceSection" style="display: none;">
+            <h2>Surface Analysis</h2>
+            <p id="surfaceStatus" class="surface-status">Surface data will load automatically...</p>
+            <div class="surface-content">
+                <div class="surface-chart-container">
+                    <canvas id="surfaceChart"></canvas>
+                </div>
+                <div class="surface-legend">
+                    <div class="surface-legend-item">
+                        <span class="surface-color road"></span>
+                        <span>Road/Asphalt (1.0x pace)</span>
+                    </div>
+                    <div class="surface-legend-item">
+                        <span class="surface-color trail"></span>
+                        <span>Trail/Gravel (+5-10% pace)</span>
+                    </div>
+                    <div class="surface-legend-item">
+                        <span class="surface-color technical"></span>
+                        <span>Technical/Rocky (+15-25% pace)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="surface-settings">
+                <label class="surface-toggle">
+                    <input type="checkbox" id="surfaceEnabled" checked>
+                    <span>Apply surface multipliers to pace calculations</span>
+                </label>
+            </div>
+        </section>
+
         <section class="pace-section" id="paceSection" style="display: none;">
             <h2>Pace Planner</h2>
             
@@ -278,6 +308,7 @@
                             <th id="distanceHeader">KM</th>
                             <th>Elevation Change</th>
                             <th>Terrain</th>
+                            <th>Surface</th>
                             <th>AID Station</th>
                             <th>Target Pace</th>
                             <th>Split Time</th>
