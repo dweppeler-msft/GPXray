@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupExport();
     setupDemo();
     setupFeedback();
+    setupRaceBrowser();
 });
 
 // Demo GPX loading
@@ -154,6 +155,194 @@ function setupFeedback() {
         }
     });
 }
+
+// Race Database
+const raceDatabase = [
+    // ===== AVAILABLE RACES =====
+    
+    // ZUT - Zugspitz Ultratrail (Germany)
+    { id: 'zut-grainau', name: 'ZUT Grainau Trail', country: '🇩🇪', distance: 16, elevation: 800, category: 'short', gpxUrl: 'Grainau_Trail_ZUT_2025_01bfa09fb6.gpx', available: true },
+    { id: 'zut-mittenwald', name: 'ZUT Mittenwald Trail', country: '🇩🇪', distance: 43, elevation: 2100, category: 'marathon', gpxUrl: 'Mittenwald_Trail_ZUT_2025_fa6c0d4010.gpx', available: true },
+    { id: 'zut-leutasch', name: 'ZUT Leutasch Trail', country: '🇩🇪', distance: 68, elevation: 3500, category: 'marathon', gpxUrl: 'Leutasch_Trail_ZUT_2025_620e36ae36.gpx', available: true },
+    { id: 'zut-ehrwald', name: 'ZUT Ehrwald Trail', country: '🇩🇪', distance: 85, elevation: 4500, category: 'marathon', gpxUrl: 'Ehrwald_Trail_ZUT_2025_85a841b963.gpx', available: true },
+    { id: 'zut-ultratrail', name: 'ZUT Ultratrail', country: '🇩🇪', distance: 106, elevation: 5400, category: 'ultra', gpxUrl: 'Ultratrail_ZUT_2025_3b6cbaa510.gpx', available: true },
+    { id: 'zut-100', name: 'ZUT 100', country: '🇩🇪', distance: 164, elevation: 8500, category: 'ultra', gpxUrl: 'ZUT_100_2025_71c0e173fd.gpx', available: true },
+    
+    // Rureifel Trail (Germany)
+    { id: 'ret-44', name: 'Rureifel Trail RET 44', country: '🇩🇪', distance: 46, elevation: 1200, category: 'marathon', gpxUrl: 'rureifel-trail-2026-ret44.gpx', available: true },
+    { id: 'ret-77', name: 'Rureifel Trail RET 77', country: '🇩🇪', distance: 76, elevation: 2000, category: 'marathon', gpxUrl: 'rureifel-trail-2026-ret77.gpx', available: true },
+    
+    // ===== COMING SOON =====
+    
+    // Ultra Trail (100km+)
+    { id: 'utmb', name: 'UTMB - Ultra-Trail du Mont-Blanc', country: '🇫🇷', distance: 171, elevation: 10000, category: 'ultra', available: false },
+    { id: 'wser', name: 'Western States 100', country: '🇺🇸', distance: 161, elevation: 5500, category: 'ultra', available: false },
+    { id: 'hardrock', name: 'Hardrock 100', country: '🇺🇸', distance: 161, elevation: 10000, category: 'ultra', available: false },
+    { id: 'lavaredo', name: 'Lavaredo Ultra Trail', country: '🇮🇹', distance: 120, elevation: 5800, category: 'ultra', available: false },
+    { id: 'transgrancanaria', name: 'Transgrancanaria', country: '🇪🇸', distance: 128, elevation: 7500, category: 'ultra', available: false },
+    { id: 'eiger', name: 'Eiger Ultra Trail E101', country: '🇨🇭', distance: 101, elevation: 6700, category: 'ultra', available: false },
+    { id: 'madeira', name: 'Madeira Island Ultra Trail', country: '🇵🇹', distance: 115, elevation: 7200, category: 'ultra', available: false },
+    { id: 'penyagolosa', name: 'Penyagolosa Trails MiM', country: '🇪🇸', distance: 109, elevation: 5700, category: 'ultra', available: false },
+    
+    // Marathon Trail (42-100km)
+    { id: 'ccc', name: 'CCC - Courmayeur-Champex-Chamonix', country: '🇫🇷', distance: 101, elevation: 6100, category: 'marathon', available: false },
+    { id: 'tds', name: 'TDS - Sur les Traces des Ducs de Savoie', country: '🇫🇷', distance: 145, elevation: 9100, category: 'ultra', available: false },
+    { id: 'occ', name: 'OCC - Orsières-Champex-Chamonix', country: '🇫🇷', distance: 55, elevation: 3500, category: 'marathon', available: false },
+    { id: 'zermatt', name: 'Matterhorn Ultraks 46K', country: '🇨🇭', distance: 46, elevation: 3600, category: 'marathon', available: false },
+    { id: 'sierre-zinal', name: 'Sierre-Zinal', country: '🇨🇭', distance: 31, elevation: 2200, category: 'short', available: false },
+    { id: 'gorge', name: 'Columbia River Gorge 50', country: '🇺🇸', distance: 80, elevation: 2700, category: 'marathon', available: false },
+    { id: 'dolomiti', name: 'Dolomiti Extreme Trail', country: '🇮🇹', distance: 52, elevation: 3900, category: 'marathon', available: false },
+    
+    // Short Trail (<42km)
+    { id: 'mont-blanc-marathon', name: 'Marathon du Mont-Blanc', country: '🇫🇷', distance: 42, elevation: 2700, category: 'marathon', available: false },
+    { id: 'jungfrau', name: 'Jungfrau Marathon', country: '🇨🇭', distance: 42, elevation: 1800, category: 'marathon', available: false },
+    { id: 'pikes', name: "Pikes Peak Marathon", country: '🇺🇸', distance: 42, elevation: 2400, category: 'marathon', available: false },
+    { id: 'innsbruck', name: 'Innsbruck Alpine K42', country: '🇦🇹', distance: 42, elevation: 2500, category: 'marathon', available: false },
+    { id: 'ben-nevis', name: 'Ben Nevis Ultra 23K', country: '🇬🇧', distance: 23, elevation: 1400, category: 'short', available: false },
+    { id: 'val-daran', name: 'Val d\'Aran by UTMB 21K', country: '🇪🇸', distance: 21, elevation: 1200, category: 'short', available: false }
+];
+
+function setupRaceBrowser() {
+    const browseBtn = document.getElementById('browseRacesBtn');
+    const panel = document.getElementById('raceBrowserPanel');
+    const overlay = document.getElementById('raceBrowserOverlay');
+    const closeBtn = document.getElementById('raceBrowserClose');
+    const searchInput = document.getElementById('raceSearchInput');
+    const filterBtns = document.querySelectorAll('.race-filter-btn');
+    
+    if (!browseBtn || !panel) return;
+    
+    let currentFilter = 'all';
+    
+    // Open panel
+    browseBtn.addEventListener('click', () => {
+        panel.classList.add('active');
+        overlay.classList.add('active');
+        renderRaceList(currentFilter, '');
+        searchInput.focus();
+    });
+    
+    // Close panel
+    const closePanel = () => {
+        panel.classList.remove('active');
+        overlay.classList.remove('active');
+    };
+    
+    closeBtn?.addEventListener('click', closePanel);
+    overlay?.addEventListener('click', closePanel);
+    
+    // Search
+    searchInput?.addEventListener('input', (e) => {
+        renderRaceList(currentFilter, e.target.value);
+    });
+    
+    // Filters
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.filter;
+            renderRaceList(currentFilter, searchInput?.value || '');
+        });
+    });
+}
+
+function renderRaceList(filter, searchText) {
+    const list = document.getElementById('raceBrowserList');
+    if (!list) return;
+    
+    const query = searchText.toLowerCase();
+    
+    const filtered = raceDatabase.filter(race => {
+        // Filter by category
+        if (filter !== 'all' && race.category !== filter) return false;
+        
+        // Filter by search text
+        if (query && !race.name.toLowerCase().includes(query) && !race.country.includes(query)) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    if (filtered.length === 0) {
+        list.innerHTML = '<div class="no-races-found">No races found matching your criteria.</div>';
+        return;
+    }
+    
+    list.innerHTML = filtered.map(race => {
+        if (race.available) {
+            return `
+                <div class="race-item" onclick="loadRace('${race.id}')">
+                    <span class="race-item-flag">${race.country}</span>
+                    <div class="race-item-info">
+                        <div class="race-item-name">${race.name}</div>
+                        <div class="race-item-details">
+                            <span>📏 ${race.distance} km</span>
+                            <span>⛰️ ${race.elevation.toLocaleString()}m D+</span>
+                        </div>
+                    </div>
+                    <button class="race-item-load" onclick="event.stopPropagation(); loadRace('${race.id}')">Load</button>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="race-item race-item-unavailable">
+                    <span class="race-item-flag">${race.country}</span>
+                    <div class="race-item-info">
+                        <div class="race-item-name">${race.name}</div>
+                        <div class="race-item-details">
+                            <span>📏 ${race.distance} km</span>
+                            <span>⛰️ ${race.elevation.toLocaleString()}m D+</span>
+                        </div>
+                    </div>
+                    <span class="race-item-coming-soon">Coming Soon</span>
+                </div>
+            `;
+        }
+    }).join('');
+}
+
+async function loadRace(raceId) {
+    const race = raceDatabase.find(r => r.id === raceId);
+    if (!race) return;
+    
+    const panel = document.getElementById('raceBrowserPanel');
+    const overlay = document.getElementById('raceBrowserOverlay');
+    
+    try {
+        // Show loading state
+        const loadBtns = document.querySelectorAll('.race-item-load');
+        loadBtns.forEach(btn => btn.disabled = true);
+        
+        const response = await fetch(race.gpxUrl);
+        if (!response.ok) {
+            throw new Error('GPX file not available');
+        }
+        
+        const gpxContent = await response.text();
+        currentRouteName = race.name;
+        parseGPX(gpxContent);
+        
+        // Clear AID stations for new race (user can add their own)
+        aidStations = [];
+        renderAidStations();
+        
+        // Close panel
+        panel?.classList.remove('active');
+        overlay?.classList.remove('active');
+        
+    } catch (error) {
+        console.error('Error loading race:', error);
+        alert(`Sorry, the GPX file for "${race.name}" is not available yet. We're working on adding more races!`);
+        
+        const loadBtns = document.querySelectorAll('.race-item-load');
+        loadBtns.forEach(btn => btn.disabled = false);
+    }
+}
+
+// Make loadRace globally available
+window.loadRace = loadRace;
 
 // Drag and Drop functionality
 function setupDragAndDrop() {
