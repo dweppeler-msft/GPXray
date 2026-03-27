@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupFeedback();
     setupDemo();
     setupSunTimes();
+    setupRaceBrowser();
 });
 
 // Sun times setup
@@ -144,6 +145,162 @@ async function loadDemoGpx() {
         demoBtn.disabled = false;
     }
 }
+
+// Race Database
+const raceDatabase = [
+    // Ultra Trail (100km+)
+    { id: 'utmb', name: 'UTMB - Ultra-Trail du Mont-Blanc', country: '🇫🇷', distance: 171, elevation: 10000, category: 'ultra', gpxUrl: 'races/utmb.gpx' },
+    { id: 'wser', name: 'Western States 100', country: '🇺🇸', distance: 161, elevation: 5500, category: 'ultra', gpxUrl: 'races/western-states.gpx' },
+    { id: 'hardrock', name: 'Hardrock 100', country: '🇺🇸', distance: 161, elevation: 10000, category: 'ultra', gpxUrl: 'races/hardrock.gpx' },
+    { id: 'lavaredo', name: 'Lavaredo Ultra Trail', country: '🇮🇹', distance: 120, elevation: 5800, category: 'ultra', gpxUrl: 'races/lavaredo.gpx' },
+    { id: 'transgrancanaria', name: 'Transgrancanaria', country: '🇪🇸', distance: 128, elevation: 7500, category: 'ultra', gpxUrl: 'races/transgrancanaria.gpx' },
+    { id: 'eiger', name: 'Eiger Ultra Trail E101', country: '🇨🇭', distance: 101, elevation: 6700, category: 'ultra', gpxUrl: 'races/eiger-e101.gpx' },
+    { id: 'madeira', name: 'Madeira Island Ultra Trail', country: '🇵🇹', distance: 115, elevation: 7200, category: 'ultra', gpxUrl: 'races/miut.gpx' },
+    { id: 'penyagolosa', name: 'Penyagolosa Trails MiM', country: '🇪🇸', distance: 109, elevation: 5700, category: 'ultra', gpxUrl: 'races/penyagolosa.gpx' },
+    
+    // Marathon Trail (42-100km)
+    { id: 'ccc', name: 'CCC - Courmayeur-Champex-Chamonix', country: '🇫🇷', distance: 101, elevation: 6100, category: 'marathon', gpxUrl: 'races/ccc.gpx' },
+    { id: 'tds', name: 'TDS - Sur les Traces des Ducs de Savoie', country: '🇫🇷', distance: 145, elevation: 9100, category: 'ultra', gpxUrl: 'races/tds.gpx' },
+    { id: 'occ', name: 'OCC - Orsières-Champex-Chamonix', country: '🇫🇷', distance: 55, elevation: 3500, category: 'marathon', gpxUrl: 'races/occ.gpx' },
+    { id: 'zermatt', name: 'Matterhorn Ultraks 46K', country: '🇨🇭', distance: 46, elevation: 3600, category: 'marathon', gpxUrl: 'races/ultraks-46.gpx' },
+    { id: 'sierre-zinal', name: 'Sierre-Zinal', country: '🇨🇭', distance: 31, elevation: 2200, category: 'short', gpxUrl: 'races/sierre-zinal.gpx' },
+    { id: 'gorge', name: 'Columbia River Gorge 50', country: '🇺🇸', distance: 80, elevation: 2700, category: 'marathon', gpxUrl: 'races/gorge-50.gpx' },
+    { id: 'zugspitz', name: 'Zugspitz Ultratrail', country: '🇩🇪', distance: 100, elevation: 5400, category: 'marathon', gpxUrl: 'races/zugspitz.gpx' },
+    { id: 'dolomiti', name: 'Dolomiti Extreme Trail', country: '🇮🇹', distance: 52, elevation: 3900, category: 'marathon', gpxUrl: 'races/dolomiti.gpx' },
+    
+    // Short Trail (<42km)
+    { id: 'zut', name: 'ZUT Garmisch-Partenkirchen', country: '🇩🇪', distance: 29, elevation: 1500, category: 'short', gpxUrl: 'demo.gpx' },
+    { id: 'mont-blanc-marathon', name: 'Marathon du Mont-Blanc', country: '🇫🇷', distance: 42, elevation: 2700, category: 'marathon', gpxUrl: 'races/mbm.gpx' },
+    { id: 'jungfrau', name: 'Jungfrau Marathon', country: '🇨🇭', distance: 42, elevation: 1800, category: 'marathon', gpxUrl: 'races/jungfrau.gpx' },
+    { id: 'pikes', name: "Pikes Peak Marathon", country: '🇺🇸', distance: 42, elevation: 2400, category: 'marathon', gpxUrl: 'races/pikes-peak.gpx' },
+    { id: 'innsbruck', name: 'Innsbruck Alpine K42', country: '🇦🇹', distance: 42, elevation: 2500, category: 'marathon', gpxUrl: 'races/innsbruck.gpx' },
+    { id: 'ben-nevis', name: 'Ben Nevis Ultra 23K', country: '🇬🇧', distance: 23, elevation: 1400, category: 'short', gpxUrl: 'races/ben-nevis.gpx' },
+    { id: 'val-daran', name: 'Val d\'Aran by UTMB 21K', country: '🇪🇸', distance: 21, elevation: 1200, category: 'short', gpxUrl: 'races/val-daran.gpx' }
+];
+
+function setupRaceBrowser() {
+    const browseBtn = document.getElementById('browseRacesBtn');
+    const panel = document.getElementById('raceBrowserPanel');
+    const overlay = document.getElementById('raceBrowserOverlay');
+    const closeBtn = document.getElementById('raceBrowserClose');
+    const searchInput = document.getElementById('raceSearchInput');
+    const filterBtns = document.querySelectorAll('.race-filter-btn');
+    
+    if (!browseBtn || !panel) return;
+    
+    let currentFilter = 'all';
+    
+    // Open panel
+    browseBtn.addEventListener('click', () => {
+        panel.classList.add('active');
+        overlay.classList.add('active');
+        renderRaceList(currentFilter, '');
+        searchInput.focus();
+    });
+    
+    // Close panel
+    const closePanel = () => {
+        panel.classList.remove('active');
+        overlay.classList.remove('active');
+    };
+    
+    closeBtn?.addEventListener('click', closePanel);
+    overlay?.addEventListener('click', closePanel);
+    
+    // Search
+    searchInput?.addEventListener('input', (e) => {
+        renderRaceList(currentFilter, e.target.value);
+    });
+    
+    // Filters
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.filter;
+            renderRaceList(currentFilter, searchInput?.value || '');
+        });
+    });
+}
+
+function renderRaceList(filter, searchText) {
+    const list = document.getElementById('raceBrowserList');
+    if (!list) return;
+    
+    const query = searchText.toLowerCase();
+    
+    const filtered = raceDatabase.filter(race => {
+        // Filter by category
+        if (filter !== 'all' && race.category !== filter) return false;
+        
+        // Filter by search text
+        if (query && !race.name.toLowerCase().includes(query) && !race.country.includes(query)) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    if (filtered.length === 0) {
+        list.innerHTML = '<div class="no-races-found">No races found matching your criteria.</div>';
+        return;
+    }
+    
+    list.innerHTML = filtered.map(race => `
+        <div class="race-item" onclick="loadRace('${race.id}')">
+            <span class="race-item-flag">${race.country}</span>
+            <div class="race-item-info">
+                <div class="race-item-name">${race.name}</div>
+                <div class="race-item-details">
+                    <span>📏 ${race.distance} km</span>
+                    <span>⛰️ ${race.elevation.toLocaleString()}m D+</span>
+                </div>
+            </div>
+            <button class="race-item-load" onclick="event.stopPropagation(); loadRace('${race.id}')">Load</button>
+        </div>
+    `).join('');
+}
+
+async function loadRace(raceId) {
+    const race = raceDatabase.find(r => r.id === raceId);
+    if (!race) return;
+    
+    const panel = document.getElementById('raceBrowserPanel');
+    const overlay = document.getElementById('raceBrowserOverlay');
+    
+    try {
+        // Show loading state
+        const loadBtns = document.querySelectorAll('.race-item-load');
+        loadBtns.forEach(btn => btn.disabled = true);
+        
+        const response = await fetch(race.gpxUrl);
+        if (!response.ok) {
+            throw new Error('GPX file not available');
+        }
+        
+        const gpxContent = await response.text();
+        currentRouteName = race.name;
+        parseGPX(gpxContent);
+        
+        // Clear AID stations for new race (user can add their own)
+        aidStations = [];
+        renderAidStations();
+        
+        // Close panel
+        panel?.classList.remove('active');
+        overlay?.classList.remove('active');
+        
+    } catch (error) {
+        console.error('Error loading race:', error);
+        alert(`Sorry, the GPX file for "${race.name}" is not available yet. We're working on adding more races!`);
+        
+        const loadBtns = document.querySelectorAll('.race-item-load');
+        loadBtns.forEach(btn => btn.disabled = false);
+    }
+}
+
+// Make loadRace globally available
+window.loadRace = loadRace;
 
 // Drag and Drop functionality
 function setupDragAndDrop() {

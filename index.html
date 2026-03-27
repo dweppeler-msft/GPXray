@@ -121,12 +121,41 @@
             </div>
             <div class="demo-section">
                 <span class="demo-divider">or</span>
-                <button type="button" class="demo-btn" id="loadDemoBtn">
-                    🏔️ Try Demo: ZUT Garmisch-Partenkirchen Trail
-                </button>
-                <p class="demo-hint">Load a sample trail to explore all features</p>
+                <div class="demo-buttons">
+                    <button type="button" class="demo-btn" id="loadDemoBtn">
+                        🏔️ Try Demo: ZUT Garmisch-Partenkirchen Trail
+                    </button>
+                    <button type="button" class="browse-races-btn" id="browseRacesBtn">
+                        🔍 Browse Popular Races
+                    </button>
+                </div>
+                <p class="demo-hint">Load a sample trail or browse our curated race database</p>
             </div>
         </section>
+
+        <!-- Race Browser Panel -->
+        <div class="race-browser-overlay" id="raceBrowserOverlay"></div>
+        <aside class="race-browser-panel" id="raceBrowserPanel">
+            <div class="race-browser-header">
+                <h3>🔍 Popular Trail Races</h3>
+                <button type="button" class="race-browser-close" id="raceBrowserClose">✕</button>
+            </div>
+            <div class="race-browser-search">
+                <input type="text" id="raceSearchInput" placeholder="Search races..." autocomplete="off">
+            </div>
+            <div class="race-browser-filters">
+                <button type="button" class="race-filter-btn active" data-filter="all">All</button>
+                <button type="button" class="race-filter-btn" data-filter="ultra">Ultra (100km+)</button>
+                <button type="button" class="race-filter-btn" data-filter="marathon">Marathon Trail</button>
+                <button type="button" class="race-filter-btn" data-filter="short">Short (<42km)</button>
+            </div>
+            <div class="race-browser-list" id="raceBrowserList">
+                <!-- Races will be populated here -->
+            </div>
+            <div class="race-browser-footer">
+                <p>Missing a race? <a href="mailto:gpxrayrun@gmail.com?subject=Race%20Request">Request it!</a></p>
+            </div>
+        </aside>
 
         <section class="stats-section" id="statsSection" style="display: none;">
             <div class="route-name-display">
