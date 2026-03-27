@@ -527,9 +527,19 @@ function setupAidStations() {
     const kmInput = document.getElementById('aidStationKm');
     const nameInput = document.getElementById('aidStationName');
     
-    if (!addBtn) return;
+    if (!addBtn) {
+        console.error('AID station button not found');
+        return;
+    }
     
-    addBtn.addEventListener('click', () => {
+    // Remove any existing listeners by cloning
+    const newBtn = addBtn.cloneNode(true);
+    addBtn.parentNode.replaceChild(newBtn, addBtn);
+    
+    newBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
         const km = parseFloat(kmInput.value);
         const name = nameInput.value.trim() || `AID ${aidStations.length + 1}`;
         
