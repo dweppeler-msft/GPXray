@@ -2643,6 +2643,9 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
     
     let cumulativeTime = 0;
     
+    // Track which AID stations have had their stop time added (to prevent double-counting)
+    const processedStopTimes = new Set();
+    
     // Get average pace for AID station time calculations
     const avgPace = (flatPace + uphillPace + downhillPace) / 3;
     
@@ -2767,7 +2770,10 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         
         // Update cumulative time (including any fractional AID stop times)
         for (const station of aidStationsInUnit) {
-            cumulativeTime += station.stopMin || 0;
+            if (!processedStopTimes.has(station.km)) {
+                cumulativeTime += station.stopMin || 0;
+                processedStopTimes.add(station.km);
+            }
         }
         cumulativeTime += unitTime;
         
@@ -2779,17 +2785,20 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             default: targetPace = displayFlatPace;
         }
         
-        // Check for AID station at this unit (exact or rounded)
+        // Check for AID station at this unit (exact or rounded) - for display purposes
         const aidStation = aidStations.find(s => {
             const stationInUnit = useMetric ? s.km : s.km * KM_TO_MILES;
             return Math.floor(stationInUnit) === unit || Math.round(stationInUnit) === unit;
         });
         const aidStationText = aidStation ? aidStation.name : '-';
         const hasAidStation = aidStation !== undefined;
-        const stopTime = hasAidStation ? (aidStation.stopMin || 0) : 0;
         
-        // Add stop time for this km's AID station to cumulative time
-        cumulativeTime += stopTime;
+        // Add stop time only if not already processed (prevents double-counting)
+        if (hasAidStation && !processedStopTimes.has(aidStation.km)) {
+            cumulativeTime += aidStation.stopMin || 0;
+            processedStopTimes.add(aidStation.km);
+        }
+        const stopTime = hasAidStation ? (aidStation.stopMin || 0) : 0;
         
         // Calculate clock time (after adding stop time)
         const clockTimeMinutes = startTimeInMinutes + cumulativeTime;
