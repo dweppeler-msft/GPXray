@@ -23,7 +23,54 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModeSelector();
     setupAidStations();
     setupExport();
+    setupDemo();
 });
+
+// Demo GPX loading
+function setupDemo() {
+    const demoBtn = document.getElementById('loadDemoBtn');
+    if (!demoBtn) return;
+    
+    demoBtn.addEventListener('click', loadDemoGpx);
+}
+
+async function loadDemoGpx() {
+    const demoBtn = document.getElementById('loadDemoBtn');
+    const originalText = demoBtn.textContent;
+    
+    try {
+        demoBtn.disabled = true;
+        demoBtn.textContent = '⏳ Loading...';
+        
+        const response = await fetch('demo.gpx');
+        if (!response.ok) {
+            throw new Error('Failed to load demo file');
+        }
+        
+        const gpxContent = await response.text();
+        parseGPX(gpxContent);
+        
+        // Add sample AID stations for demo
+        aidStations = [
+            { km: 5.2, name: 'VP1 Hammersbach', stopMin: 3 },
+            { km: 12.8, name: 'VP2 Kreuzeck', stopMin: 5 },
+            { km: 18.5, name: 'VP3 Hausberg', stopMin: 3 }
+        ];
+        renderAidStations();
+        
+        demoBtn.textContent = '✅ Demo Loaded!';
+        setTimeout(() => {
+            demoBtn.textContent = originalText;
+            demoBtn.disabled = false;
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error loading demo:', error);
+        alert('Failed to load demo GPX file.');
+        demoBtn.textContent = originalText;
+        demoBtn.disabled = false;
+    }
+}
 
 // Drag and Drop functionality
 function setupDragAndDrop() {
