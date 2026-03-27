@@ -191,6 +191,18 @@
                 </div>
             </div>
             
+            <div class="aid-stations-section">
+                <label>🚰 AID Stations (optional)</label>
+                <div class="aid-stations-list" id="aidStationsList">
+                    <!-- AID stations will be added here -->
+                </div>
+                <div class="add-aid-station">
+                    <input type="number" id="aidStationKm" placeholder="KM" min="0" step="0.1">
+                    <input type="text" id="aidStationName" placeholder="Name (e.g., Water Stop 1)">
+                    <button type="button" id="addAidStation" class="add-aid-btn">+ Add</button>
+                </div>
+            </div>
+            
             <button id="calculatePace" class="calculate-btn">Calculate Race Plan</button>
             
             <div id="paceResults" class="pace-results" style="display: none;">
@@ -244,6 +256,7 @@
                             <th>KM</th>
                             <th>Elevation Change</th>
                             <th>Terrain</th>
+                            <th>AID Station</th>
                             <th>Target Pace</th>
                             <th>Split Time</th>
                             <th>Race Time</th>

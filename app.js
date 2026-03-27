@@ -5,6 +5,7 @@ let routeLayers = [];
 let elevationChart = null;
 let segments = []; // Stores segment data with terrain type
 let currentMode = 'manual'; // 'manual' or 'target'
+let aidStations = []; // Stores AID station data
 
 // Constants
 const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupFileInput();
     setupPaceCalculation();
     setupModeSelector();
+    setupAidStations();
     setupExport();
 });
 
@@ -519,6 +521,69 @@ function setupModeSelector() {
     });
 }
 
+// AID Stations setup
+function setupAidStations() {
+    const addBtn = document.getElementById('addAidStation');
+    const kmInput = document.getElementById('aidStationKm');
+    const nameInput = document.getElementById('aidStationName');
+    
+    if (!addBtn) return;
+    
+    addBtn.addEventListener('click', () => {
+        const km = parseFloat(kmInput.value);
+        const name = nameInput.value.trim() || `AID ${aidStations.length + 1}`;
+        
+        if (isNaN(km) || km < 0) {
+            alert('Please enter a valid kilometer position.');
+            return;
+        }
+        
+        // Add to array
+        aidStations.push({ km, name });
+        
+        // Sort by km
+        aidStations.sort((a, b) => a.km - b.km);
+        
+        // Render list
+        renderAidStations();
+        
+        // Clear inputs
+        kmInput.value = '';
+        nameInput.value = '';
+    });
+}
+
+function renderAidStations() {
+    const list = document.getElementById('aidStationsList');
+    if (!list) return;
+    
+    list.innerHTML = aidStations.map((station, index) => `
+        <div class="aid-station-item">
+            <div class="aid-station-info">
+                <span class="aid-station-km">KM ${station.km}</span>
+                <span class="aid-station-name">${station.name}</span>
+            </div>
+            <button type="button" class="remove-aid-btn" onclick="removeAidStation(${index})">×</button>
+        </div>
+    `).join('');
+}
+
+function removeAidStation(index) {
+    aidStations.splice(index, 1);
+    renderAidStations();
+}
+
+// Make removeAidStation available globally
+window.removeAidStation = removeAidStation;
+
+function getAidStationForKm(km) {
+    // Find AID station that falls within or at this km
+    return aidStations.find(station => 
+        Math.floor(station.km) === km || 
+        (station.km > km - 1 && station.km <= km)
+    );
+}
+
 function getPaceInMinutes(minInput, secInput) {
     const min = parseInt(minInput.value) || 0;
     const sec = parseInt(secInput.value) || 0;
@@ -759,11 +824,20 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         // Split time is the time for this km
         const splitTime = kmTime;
         
+        // Check for AID station at this km
+        const aidStation = getAidStationForKm(km);
+        const aidStationText = aidStation ? `🚰 ${aidStation.name}` : '-';
+        const hasAidStation = aidStation !== undefined;
+        
         const row = document.createElement('tr');
+        if (hasAidStation) {
+            row.classList.add('aid-station-row');
+        }
         row.innerHTML = `
             <td>${km}</td>
             <td>${elevationChange >= 0 ? '+' : ''}${elevationChange.toFixed(0)} m</td>
             <td class="terrain-${terrain}">${terrain.charAt(0).toUpperCase() + terrain.slice(1)}</td>
+            <td class="${hasAidStation ? 'aid-station-cell' : ''}">${aidStationText}</td>
             <td>${formatPace(targetPace)} /km</td>
             <td>${formatTime(splitTime)}</td>
             <td>${formatTime(cumulativeTime)}</td>
@@ -848,6 +922,16 @@ function exportToCsv() {
     csvContent += `Downhill Time,${document.getElementById('downhillTime').textContent}\n`;
     csvContent += `Total Estimated Time,${document.getElementById('totalTime').textContent}\n`;
     csvContent += '\n';
+
+    // Add AID stations if any
+    if (aidStations.length > 0) {
+        csvContent += 'AID STATIONS\n';
+        csvContent += 'KM,Name\n';
+        aidStations.forEach(station => {
+            csvContent += `${station.km},${station.name}\n`;
+        });
+        csvContent += '\n';
+    }
 
     // Add splits table
     csvContent += 'KILOMETER SPLITS\n';

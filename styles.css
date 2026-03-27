@@ -460,6 +460,128 @@ h2 {
     cursor: pointer;
 }
 
+/* AID Stations Section */
+.aid-stations-section {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+}
+
+.aid-stations-section > label {
+    display: block;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 15px;
+    color: #00d4ff;
+}
+
+.aid-stations-list {
+    margin-bottom: 15px;
+}
+
+.aid-station-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 165, 0, 0.15);
+    border: 1px solid rgba(255, 165, 0, 0.3);
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+}
+
+.aid-station-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.aid-station-km {
+    font-weight: bold;
+    color: #ffa500;
+}
+
+.aid-station-name {
+    color: #ccc;
+}
+
+.remove-aid-btn {
+    background: rgba(244, 67, 54, 0.3);
+    border: none;
+    color: #f44336;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.remove-aid-btn:hover {
+    background: rgba(244, 67, 54, 0.5);
+}
+
+.add-aid-station {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.add-aid-station input {
+    padding: 10px 12px;
+    border: 2px solid #4a4a6a;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.add-aid-station input[type="number"] {
+    width: 80px;
+    text-align: center;
+}
+
+.add-aid-station input[type="text"] {
+    flex: 1;
+    min-width: 150px;
+}
+
+.add-aid-station input:focus {
+    outline: none;
+    border-color: #00d4ff;
+}
+
+.add-aid-station input::placeholder {
+    color: #666;
+}
+
+.add-aid-btn {
+    padding: 10px 18px;
+    background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
+    border: none;
+    border-radius: 8px;
+    color: #1a1a2e;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-aid-btn:hover {
+    transform: scale(1.05);
+}
+
+/* AID Station highlight in splits table */
+.aid-station-row {
+    background: rgba(255, 165, 0, 0.1) !important;
+}
+
+.aid-station-cell {
+    color: #ffa500;
+    font-weight: 500;
+}
+
 .calculate-btn {
     display: block;
     width: 100%;
