@@ -3295,6 +3295,39 @@ async function exportShareCard() {
                 }
             });
             
+            // Dynamic sizing based on station count
+            const stationCount = stationData.length;
+            let rowPadding, kmSize, nameSize, timeSize, clockSize, legInfoSize, showLegInfo;
+            
+            if (stationCount <= 4) {
+                // Large mode
+                rowPadding = '14px 0';
+                kmSize = '20px';
+                nameSize = '18px';
+                timeSize = '16px';
+                clockSize = '20px';
+                legInfoSize = '14px';
+                showLegInfo = true;
+            } else if (stationCount <= 7) {
+                // Medium mode
+                rowPadding = '10px 0';
+                kmSize = '17px';
+                nameSize = '15px';
+                timeSize = '14px';
+                clockSize = '17px';
+                legInfoSize = '12px';
+                showLegInfo = true;
+            } else {
+                // Compact mode (8+ stations)
+                rowPadding = '8px 0';
+                kmSize = '15px';
+                nameSize = '13px';
+                timeSize = '12px';
+                clockSize = '15px';
+                legInfoSize = '11px';
+                showLegInfo = false; // Hide leg info to save space
+            }
+            
             // Calculate leg info and build HTML
             let prevKm = 0;
             let prevElevation = gpxData.points[0]?.elevation || 0;
@@ -3334,15 +3367,15 @@ async function exportShareCard() {
                 
                 // Add station row
                 aidStationsList += `
-                    <div style="display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.15);">
-                        <span style="color: #00d4ff; min-width: 60px; font-size: 18px; font-weight: bold;">📍 ${station.dist}</span>
-                        <span style="flex: 1; margin: 0 8px; font-size: 16px; font-weight: 600;">${station.name}</span>
-                        <span style="color: #ccc; font-size: 15px; font-weight: 500; margin-right: 12px;">${station.raceTime}</span>
-                        <span style="font-weight: bold; color: #4CAF50; min-width: 80px; text-align: right; font-size: 18px;">${station.clockTime}</span>
+                    <div style="display: flex; align-items: center; padding: ${rowPadding}; border-bottom: 1px solid rgba(255,255,255,0.15);">
+                        <span style="color: #00d4ff; min-width: 55px; font-size: ${kmSize}; font-weight: bold;">📍 ${station.dist}</span>
+                        <span style="flex: 1; margin: 0 6px; font-size: ${nameSize}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${station.name}</span>
+                        <span style="color: #ddd; font-size: ${timeSize}; font-weight: 600; margin-right: 10px;">${station.raceTime}</span>
+                        <span style="font-weight: bold; color: #4CAF50; min-width: 75px; text-align: right; font-size: ${clockSize};">${station.clockTime}</span>
                     </div>
                 `;
                 
-                // Add leg info row (if not last station)
+                // Add leg info row (if not last station and showLegInfo is true)
                 if (index < stationData.length - 1) {
                     const nextKm = parseFloat(stationData[index + 1].dist);
                     const nextLegDist = (nextKm - stationKm).toFixed(1);
@@ -3364,11 +3397,13 @@ async function exportShareCard() {
                         }
                     }
                     
-                    aidStationsList += `
-                        <div style="text-align: center; padding: 8px 0; color: #999; font-size: 14px; font-weight: 500;">
-                            ↓ ${nextLegDist} ${unitLabel} · +${Math.round(nextElevGain)}m / -${Math.round(nextElevLoss)}m
-                        </div>
-                    `;
+                    if (showLegInfo) {
+                        aidStationsList += `
+                            <div style="text-align: center; padding: 6px 0; color: #999; font-size: ${legInfoSize}; font-weight: 500;">
+                                ↓ ${nextLegDist} ${unitLabel} · +${Math.round(nextElevGain)}m / -${Math.round(nextElevLoss)}m
+                            </div>
+                        `;
+                    }
                 }
                 
                 prevKm = stationKm;
