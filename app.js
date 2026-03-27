@@ -2830,6 +2830,7 @@ function renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, star
 // CSV Export functionality
 function setupExport() {
     document.getElementById('exportCsv').addEventListener('click', exportToCsv);
+    document.getElementById('exportPdf').addEventListener('click', exportToPdf);
 }
 
 function exportToCsv() {
@@ -2973,4 +2974,233 @@ function exportToCsv() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+// PDF Race Card Export
+async function exportToPdf() {
+    if (!gpxData || segments.length === 0) {
+        alert('Please load a GPX file and calculate a race plan first.');
+        return;
+    }
+
+    const splitsTable = document.getElementById('splitsTable');
+    if (!splitsTable || splitsTable.rows.length <= 1) {
+        alert('Please calculate a race plan first to generate splits.');
+        return;
+    }
+
+    const btn = document.getElementById('exportPdf');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ Generating...';
+    btn.disabled = true;
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 15;
+        let y = margin;
+
+        // Colors
+        const primaryColor = [0, 212, 255];
+        const darkBg = [30, 30, 50];
+        const textColor = [255, 255, 255];
+        const mutedColor = [150, 150, 150];
+
+        // Background
+        doc.setFillColor(...darkBg);
+        doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+        // Header
+        doc.setFillColor(...primaryColor);
+        doc.rect(0, 0, pageWidth, 25, 'F');
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.setTextColor(0, 0, 0);
+        const routeName = currentRouteName || 'Race Plan';
+        doc.text(routeName, margin, 16);
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        const dateInput = document.getElementById('raceStartDate');
+        const timeInput = document.getElementById('raceStartTime');
+        const raceDate = dateInput?.value || '';
+        const raceTime = timeInput?.value || '06:00';
+        if (raceDate) {
+            doc.text(`${raceDate} at ${raceTime}`, pageWidth - margin, 16, { align: 'right' });
+        }
+
+        y = 35;
+
+        // Stats row
+        doc.setTextColor(...textColor);
+        doc.setFontSize(9);
+        
+        const unitLabel = useMetric ? 'km' : 'mi';
+        const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
+        const totalTime = document.getElementById('totalTime')?.textContent || '-';
+        
+        const stats = [
+            { label: 'Distance', value: `${distance.toFixed(1)} ${unitLabel}` },
+            { label: 'Elevation', value: `↑${gpxData.elevationGain.toFixed(0)}m ↓${gpxData.elevationLoss.toFixed(0)}m` },
+            { label: 'Est. Time', value: totalTime }
+        ];
+        
+        // Add sun times if available
+        if (sunTimes && !sunTimes.polarNight && !sunTimes.midnightSun) {
+            stats.push({ label: 'Sunrise', value: formatSunTime(sunTimes.sunrise) });
+            stats.push({ label: 'Sunset', value: formatSunTime(sunTimes.sunset) });
+        }
+
+        const statWidth = (pageWidth - 2 * margin) / stats.length;
+        stats.forEach((stat, i) => {
+            const x = margin + i * statWidth;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...mutedColor);
+            doc.text(stat.label, x, y);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(...textColor);
+            doc.text(stat.value, x, y + 5);
+        });
+
+        y += 15;
+
+        // Elevation chart capture
+        const chartCanvas = document.getElementById('elevationChart');
+        if (chartCanvas && chartCanvas.style.display !== 'none') {
+            try {
+                const chartImage = chartCanvas.toDataURL('image/png', 1.0);
+                const chartWidth = pageWidth - 2 * margin;
+                const chartHeight = 35;
+                doc.addImage(chartImage, 'PNG', margin, y, chartWidth, chartHeight);
+                y += chartHeight + 8;
+            } catch (e) {
+                console.warn('Could not capture chart:', e);
+            }
+        }
+
+        // AID Stations / Leg Summary
+        if (aidStations.length > 0) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(...primaryColor);
+            doc.text('AID Stations', margin, y);
+            y += 6;
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...textColor);
+
+            aidStations.forEach(station => {
+                const stationDist = useMetric ? station.km : station.km * KM_TO_MILES;
+                const stopText = station.stopMin > 0 ? ` (+${station.stopMin}min)` : '';
+                doc.text(`• ${stationDist.toFixed(1)} ${unitLabel}: ${station.name}${stopText}`, margin + 2, y);
+                y += 4;
+            });
+            y += 4;
+        }
+
+        // Splits table
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(...primaryColor);
+        doc.text('Splits', margin, y);
+        y += 6;
+
+        // Table header
+        const cols = [
+            { header: unitLabel.toUpperCase(), width: 12 },
+            { header: 'Elev', width: 18 },
+            { header: 'Terrain', width: 18 },
+            { header: 'AID', width: 35 },
+            { header: 'Pace', width: 22 },
+            { header: 'Split', width: 18 },
+            { header: 'Total', width: 18 },
+            { header: 'Clock', width: 18 }
+        ];
+
+        doc.setFillColor(40, 40, 60);
+        doc.rect(margin, y - 3, pageWidth - 2 * margin, 6, 'F');
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(...mutedColor);
+        
+        let colX = margin + 1;
+        cols.forEach(col => {
+            doc.text(col.header, colX, y);
+            colX += col.width;
+        });
+        y += 5;
+
+        // Table rows
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        
+        const rows = splitsTable.querySelectorAll('tbody tr');
+        rows.forEach((row, rowIndex) => {
+            // Check if we need a new page
+            if (y > pageHeight - 20) {
+                doc.addPage();
+                doc.setFillColor(...darkBg);
+                doc.rect(0, 0, pageWidth, pageHeight, 'F');
+                y = margin;
+            }
+
+            const cells = row.querySelectorAll('td');
+            const isAid = row.classList.contains('aid-station-row');
+            const isNight = row.classList.contains('night-section');
+            
+            // Row background
+            if (isAid) {
+                doc.setFillColor(0, 100, 80);
+                doc.rect(margin, y - 3, pageWidth - 2 * margin, 5, 'F');
+            } else if (isNight) {
+                doc.setFillColor(50, 30, 70);
+                doc.rect(margin, y - 3, pageWidth - 2 * margin, 5, 'F');
+            } else if (rowIndex % 2 === 0) {
+                doc.setFillColor(35, 35, 55);
+                doc.rect(margin, y - 3, pageWidth - 2 * margin, 5, 'F');
+            }
+
+            doc.setTextColor(...textColor);
+            colX = margin + 1;
+            
+            // Columns: 0=km, 1=elev, 2=terrain, 4=aid, 6=pace, 7=split, 8=total, 9=clock
+            const indices = [0, 1, 2, 4, 6, 7, 8, 9];
+            indices.forEach((cellIndex, i) => {
+                let text = cells[cellIndex]?.textContent?.trim() || '-';
+                // Truncate long text
+                if (text.length > 15) text = text.substring(0, 14) + '…';
+                doc.text(text, colX, y);
+                colX += cols[i].width;
+            });
+            y += 5;
+        });
+
+        // Footer
+        y = pageHeight - 10;
+        doc.setFontSize(7);
+        doc.setTextColor(...mutedColor);
+        doc.text('Generated by GPXray - gpxray.run', margin, y);
+        doc.text(new Date().toLocaleDateString(), pageWidth - margin, y, { align: 'right' });
+
+        // Save
+        const fileName = (currentRouteName || 'race_plan').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        doc.save(`${fileName}_race_card.pdf`);
+
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        alert('Failed to generate PDF. Please try again.');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
 }

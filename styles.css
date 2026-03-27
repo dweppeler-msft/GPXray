@@ -1488,6 +1488,14 @@ h2 {
     box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
 }
 
+.pdf-btn {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+.pdf-btn:hover {
+    box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+}
+
 /* Leg Summary */
 .leg-summary {
     margin-bottom: 25px;

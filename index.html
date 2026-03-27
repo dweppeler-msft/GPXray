@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -451,8 +453,9 @@
             <div class="section-header">
                 <h2>Kilometer Splits</h2>
                 <div class="splits-actions">
-                    <button id="printRaceCard" class="action-btn print-btn">🖨️ Print Race Card</button>
-                    <button id="exportCsv" class="export-btn">📥 Export CSV</button>
+                    <button id="exportPdf" class="export-btn pdf-btn">📄 PDF Race Card</button>
+                    <button id="printRaceCard" class="action-btn print-btn">🖨️ Print</button>
+                    <button id="exportCsv" class="export-btn">📥 CSV</button>
                 </div>
             </div>
             
