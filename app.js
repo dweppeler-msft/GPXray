@@ -3485,7 +3485,7 @@ async function exportShareCard() {
             ` : ''}
             
             <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center;">
-                <div style="font-size: 12px; color: #555;">gpxray.run</div>
+                <div style="font-size: 12px; color: #555;">© gpxray.run</div>
             </div>
         `;
 
