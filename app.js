@@ -175,6 +175,9 @@ function parseGPX(gpxContent) {
     // Update ITRA effort display
     updateItraEffortDisplay();
     
+    // Re-render AID stations to show leg info with GPX data
+    renderAidStations();
+    
     // Fetch surface data from OSM (async, will update display when done)
     fetchSurfaceData();
 }
@@ -1949,16 +1952,158 @@ function renderAidStations() {
     const list = document.getElementById('aidStationsList');
     if (!list) return;
     
-    list.innerHTML = aidStations.map((station, index) => `
-        <div class="aid-station-item">
-            <div class="aid-station-info">
-                <span class="aid-station-km">KM ${station.km}</span>
-                <span class="aid-station-name">${station.name}</span>
-                <span class="aid-station-stop">(${station.stopMin || 0} min stop)</span>
+    // Sort AID stations by km for proper leg calculation
+    const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
+    
+    // Build legs between stations (including start and finish)
+    const legs = [];
+    if (gpxData && sortedStations.length > 0) {
+        // Start → First AID
+        const firstStation = sortedStations[0];
+        legs.push({
+            from: 'Start',
+            to: firstStation.name,
+            fromKm: 0,
+            toKm: firstStation.km
+        });
+        
+        // Between AID stations
+        for (let i = 0; i < sortedStations.length - 1; i++) {
+            legs.push({
+                from: sortedStations[i].name,
+                to: sortedStations[i + 1].name,
+                fromKm: sortedStations[i].km,
+                toKm: sortedStations[i + 1].km
+            });
+        }
+        
+        // Last AID → Finish
+        const lastStation = sortedStations[sortedStations.length - 1];
+        legs.push({
+            from: lastStation.name,
+            to: 'Finish',
+            fromKm: lastStation.km,
+            toKm: gpxData.totalDistance
+        });
+    }
+    
+    // Render stations with leg info
+    list.innerHTML = aidStations.map((station, index) => {
+        // Find the leg ending at this station
+        const legIndex = sortedStations.findIndex(s => s.km === station.km);
+        let legInfo = '';
+        
+        if (gpxData && legIndex >= 0 && legIndex < legs.length) {
+            const leg = legs[legIndex];
+            const distance = leg.toKm - leg.fromKm;
+            const elevFrom = getElevationAtDistance(leg.fromKm);
+            const elevTo = getElevationAtDistance(leg.toKm);
+            const elevGain = calculateElevationGainBetween(leg.fromKm, leg.toKm);
+            const elevLoss = calculateElevationLossBetween(leg.fromKm, leg.toKm);
+            
+            legInfo = `
+                <div class="aid-station-leg">
+                    <span class="leg-distance">↔ ${distance.toFixed(1)} km from ${leg.from}</span>
+                    <span class="leg-elevation">⬆️ ${elevGain.toFixed(0)}m ⬇️ ${elevLoss.toFixed(0)}m</span>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="aid-station-item">
+                <div class="aid-station-info">
+                    <span class="aid-station-km">KM ${station.km}</span>
+                    <span class="aid-station-name">${station.name}</span>
+                    <span class="aid-station-stop">(${station.stopMin || 0} min stop)</span>
+                </div>
+                ${legInfo}
+                <button type="button" class="remove-aid-btn" onclick="removeAidStation(${index})">×</button>
             </div>
-            <button type="button" class="remove-aid-btn" onclick="removeAidStation(${index})">×</button>
-        </div>
-    `).join('');
+        `;
+    }).join('');
+    
+    // Render final leg summary (last AID → Finish)
+    if (gpxData && legs.length > 0) {
+        const finalLeg = legs[legs.length - 1];
+        const distance = finalLeg.toKm - finalLeg.fromKm;
+        const elevGain = calculateElevationGainBetween(finalLeg.fromKm, finalLeg.toKm);
+        const elevLoss = calculateElevationLossBetween(finalLeg.fromKm, finalLeg.toKm);
+        
+        list.innerHTML += `
+            <div class="aid-station-item final-leg">
+                <div class="aid-station-info">
+                    <span class="aid-station-km">🏁 Finish</span>
+                    <span class="aid-station-name">${gpxData.totalDistance.toFixed(1)} km</span>
+                </div>
+                <div class="aid-station-leg">
+                    <span class="leg-distance">↔ ${distance.toFixed(1)} km from ${finalLeg.from}</span>
+                    <span class="leg-elevation">⬆️ ${elevGain.toFixed(0)}m ⬇️ ${elevLoss.toFixed(0)}m</span>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Get elevation at a specific distance along the route
+function getElevationAtDistance(distanceKm) {
+    if (!gpxData || gpxData.points.length === 0) return 0;
+    
+    // Find the two points surrounding this distance
+    for (let i = 0; i < gpxData.points.length - 1; i++) {
+        const p1 = gpxData.points[i];
+        const p2 = gpxData.points[i + 1];
+        
+        if (p1.distance <= distanceKm && p2.distance >= distanceKm) {
+            // Interpolate elevation
+            const ratio = (distanceKm - p1.distance) / (p2.distance - p1.distance);
+            return (p1.elevation || 0) + ratio * ((p2.elevation || 0) - (p1.elevation || 0));
+        }
+    }
+    
+    // Return last point elevation if beyond route
+    return gpxData.points[gpxData.points.length - 1].elevation || 0;
+}
+
+// Calculate elevation gain between two distances
+function calculateElevationGainBetween(fromKm, toKm) {
+    if (!gpxData) return 0;
+    
+    let gain = 0;
+    let prevElev = null;
+    
+    for (const point of gpxData.points) {
+        if (point.distance >= fromKm && point.distance <= toKm) {
+            if (prevElev !== null && point.elevation > prevElev) {
+                gain += point.elevation - prevElev;
+            }
+            prevElev = point.elevation;
+        } else if (point.distance > toKm) {
+            break;
+        }
+    }
+    
+    return gain;
+}
+
+// Calculate elevation loss between two distances
+function calculateElevationLossBetween(fromKm, toKm) {
+    if (!gpxData) return 0;
+    
+    let loss = 0;
+    let prevElev = null;
+    
+    for (const point of gpxData.points) {
+        if (point.distance >= fromKm && point.distance <= toKm) {
+            if (prevElev !== null && point.elevation < prevElev) {
+                loss += prevElev - point.elevation;
+            }
+            prevElev = point.elevation;
+        } else if (point.distance > toKm) {
+            break;
+        }
+    }
+    
+    return loss;
 }
 
 function removeAidStation(index) {

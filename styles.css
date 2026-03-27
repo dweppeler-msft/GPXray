@@ -1027,12 +1027,44 @@ h2 {
     border-radius: 8px;
     padding: 10px 15px;
     margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.aid-station-item.final-leg {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.aid-station-item.final-leg .aid-station-km {
+    color: #4CAF50;
 }
 
 .aid-station-info {
     display: flex;
     align-items: center;
     gap: 15px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.aid-station-leg {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85em;
+    color: #888;
+    flex: 1;
+    justify-content: flex-end;
+    margin-right: 10px;
+}
+
+.leg-distance {
+    color: #00d4ff;
+}
+
+.leg-elevation {
+    color: #aaa;
+    white-space: nowrap;
 }
 
 .aid-station-km {
@@ -1060,6 +1092,7 @@ h2 {
     cursor: pointer;
     font-size: 1rem;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .remove-aid-btn:hover {
