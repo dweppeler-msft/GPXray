@@ -46,6 +46,19 @@ header h1 {
     margin-bottom: 5px;
 }
 
+.beta-badge {
+    font-size: 0.5em;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    vertical-align: middle;
+    margin-left: 10px;
+    text-shadow: none;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
 .tagline {
     font-size: 1.2rem;
     color: #888;
