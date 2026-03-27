@@ -3036,7 +3036,13 @@ async function exportToPdf() {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
         doc.setTextColor(0, 0, 0);
-        const routeName = currentRouteName || 'Race Plan';
+        let routeName = currentRouteName || 'Race Plan';
+        
+        // Truncate long titles to fit header (max ~50 chars)
+        const maxTitleLength = 50;
+        if (routeName.length > maxTitleLength) {
+            routeName = routeName.substring(0, maxTitleLength - 3) + '...';
+        }
         doc.text(routeName, margin, 13);
         
         doc.setFontSize(9);
