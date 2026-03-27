@@ -3272,22 +3272,29 @@ async function exportShareCard() {
         const raceDate = dateInput?.value || '';
         const raceTime = timeInput?.value || '06:00';
 
-        // Get AID station times from the splits table
+        // Get AID station times from the splits table (only exact AID station rows)
         let aidStationsList = '';
         const splitsTable = document.getElementById('splitsTable');
         if (splitsTable && aidStations.length > 0) {
+            // Get only the actual AID station km values
+            const aidKmSet = new Set(aidStations.map(s => useMetric ? s.km.toFixed(1) : (s.km * KM_TO_MILES).toFixed(1)));
+            
             const rows = splitsTable.querySelectorAll('tbody tr.aid-station-row');
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
-                const distCell = cells[0]?.textContent || '';
+                const distCell = cells[0]?.textContent?.trim() || '';
                 const aidName = cells[4]?.textContent || '';
+                const raceTime = cells[8]?.textContent || '';
                 const clockTime = cells[9]?.textContent || '';
-                if (aidName && aidName !== '-') {
+                
+                // Only include actual AID station positions (fractional km)
+                if (aidName && aidName !== '-' && aidKmSet.has(distCell)) {
                     aidStationsList += `
-                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                            <span style="color: #00d4ff;">📍 ${distCell} ${unitLabel}</span>
-                            <span style="flex: 1; margin: 0 10px;">${aidName}</span>
-                            <span style="font-weight: bold; color: #4CAF50;">${clockTime}</span>
+                        <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span style="color: #00d4ff; min-width: 55px;">📍 ${distCell}</span>
+                            <span style="flex: 1; margin: 0 8px; font-size: 14px;">${aidName}</span>
+                            <span style="color: #888; font-size: 13px; margin-right: 10px;">${raceTime}</span>
+                            <span style="font-weight: bold; color: #4CAF50; min-width: 70px; text-align: right;">${clockTime}</span>
                         </div>
                     `;
                 }
@@ -3360,6 +3367,12 @@ async function exportShareCard() {
             ${aidStationsList ? `
                 <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
                     <div style="font-size: 14px; color: #888; margin-bottom: 10px; text-align: center;">🚰 AID STATION SCHEDULE</div>
+                    <div style="display: flex; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 5px;">
+                        <span style="color: #555; min-width: 55px; font-size: 11px;">${unitLabel.toUpperCase()}</span>
+                        <span style="flex: 1; margin: 0 8px; font-size: 11px; color: #555;">STATION</span>
+                        <span style="color: #555; font-size: 11px; margin-right: 10px;">RACE</span>
+                        <span style="color: #555; min-width: 70px; text-align: right; font-size: 11px;">CLOCK</span>
+                    </div>
                     ${aidStationsList}
                 </div>
             ` : ''}
