@@ -174,6 +174,15 @@ function setupFileInput() {
         gpxInput.click();
     });
 
+    // Mobile browse button
+    const browseBtnMobile = document.getElementById('browseBtnMobile');
+    if (browseBtnMobile) {
+        browseBtnMobile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            gpxInput.click();
+        });
+    }
+
     dropZone.addEventListener('click', () => {
         gpxInput.click();
     });

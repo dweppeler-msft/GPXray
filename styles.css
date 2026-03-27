@@ -640,6 +640,11 @@ header h1 {
     color: #b0b0b0;
 }
 
+/* Mobile upload text - hidden by default on desktop */
+.upload-text-mobile {
+    display: none;
+}
+
 .upload-box button {
     background: #00d4ff;
     border: none;
@@ -2228,6 +2233,24 @@ h2 {
     .feature-pill {
         padding: 6px 10px;
         font-size: 0.75rem;
+    }
+    
+    /* Mobile upload - show tap-friendly button, hide drag & drop text */
+    .upload-text-desktop {
+        display: none;
+    }
+    
+    .upload-text-mobile {
+        display: block;
+    }
+    
+    .upload-text-mobile button {
+        padding: 14px 28px;
+        font-size: 1.1rem;
+    }
+    
+    .upload-box {
+        padding: 40px 20px;
     }
     
     .terrain-breakdown, .time-breakdown {
