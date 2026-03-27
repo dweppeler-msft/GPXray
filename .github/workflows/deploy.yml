@@ -1,3 +1,4 @@
+# Deploys main to root and v2-features to /beta/
 name: Deploy to GitHub Pages
 
 on:
