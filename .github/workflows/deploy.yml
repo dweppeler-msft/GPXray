@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - v2-features
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: read
@@ -59,6 +63,8 @@ jobs:
           path: _site
 
   deploy:
+    # Only deploy from main branch (not v2-features)
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
