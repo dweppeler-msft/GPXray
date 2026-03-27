@@ -531,11 +531,14 @@ h2 {
 
 .add-aid-station input {
     padding: 10px 12px;
-    border: 2px solid #4a4a6a;
+    border: 2px solid #4a4a6a !important;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: rgba(255, 255, 255, 0.1) !important;
+    background-color: rgba(30, 30, 50, 0.9) !important;
+    color: #fff !important;
     font-size: 0.95rem;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
 }
 
 .add-aid-station input[type="number"] {
@@ -550,11 +553,11 @@ h2 {
 
 .add-aid-station input:focus {
     outline: none;
-    border-color: #00d4ff;
+    border-color: #00d4ff !important;
 }
 
 .add-aid-station input::placeholder {
-    color: #666;
+    color: #888 !important;
 }
 
 .add-aid-btn {
