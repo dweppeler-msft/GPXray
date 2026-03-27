@@ -3,12 +3,16 @@ let gpxData = null;
 let map = null;
 let routeLayers = [];
 let elevationChart = null;
+let gradientChart = null;
 let segments = []; // Stores segment data with terrain type
 let currentMode = 'manual'; // 'manual' or 'target'
 let aidStations = []; // Stores AID station data
+let useMetric = true; // true = km, false = miles
 
 // Constants
 const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
+const KM_TO_MILES = 0.621371;
+const MILES_TO_KM = 1.60934;
 
 // DOM Elements
 const dropZone = document.getElementById('dropZone');
@@ -23,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModeSelector();
     setupAidStations();
     setupExport();
+    setupUnitToggle();
+    setupSaveLoad();
+    setupPrintRaceCard();
 });
 
 // Drag and Drop functionality
@@ -115,6 +122,7 @@ function parseGPX(gpxContent) {
     displayStats();
     displayMap();
     displayElevationChart();
+    displayGradientChart();
 }
 
 // Extract points from XML nodes
@@ -288,12 +296,20 @@ function showSections() {
     document.getElementById('statsSection').style.display = 'block';
     document.getElementById('mapSection').style.display = 'block';
     document.getElementById('elevationSection').style.display = 'block';
+    document.getElementById('gradientSection').style.display = 'block';
     document.getElementById('paceSection').style.display = 'block';
 }
 
 // Display statistics
 function displayStats() {
-    document.getElementById('totalDistance').textContent = `${gpxData.totalDistance.toFixed(2)} km`;
+    const distanceKm = gpxData.totalDistance;
+    const distanceMiles = distanceKm * KM_TO_MILES;
+    
+    if (useMetric) {
+        document.getElementById('totalDistance').textContent = `${distanceKm.toFixed(2)} km`;
+    } else {
+        document.getElementById('totalDistance').textContent = `${distanceMiles.toFixed(2)} mi`;
+    }
     document.getElementById('elevationGain').textContent = `${gpxData.elevationGain.toFixed(0)} m`;
     document.getElementById('elevationLoss').textContent = `${gpxData.elevationLoss.toFixed(0)} m`;
     document.getElementById('minElevation').textContent = `${gpxData.minElevation.toFixed(0)} m`;
@@ -483,6 +499,311 @@ function displayElevationChart() {
     
     // Make chart container responsive
     document.querySelector('.chart-container').style.height = '300px';
+}
+
+// Display gradient chart
+function displayGradientChart() {
+    const ctx = document.getElementById('gradientChart').getContext('2d');
+    
+    // Destroy existing chart
+    if (gradientChart) {
+        gradientChart.destroy();
+    }
+    
+    // Calculate gradients from segments
+    const labels = [];
+    const gradients = [];
+    const colors = [];
+    
+    segments.forEach((segment, index) => {
+        const midDistance = (segment.startDistance + segment.endDistance) / 2;
+        labels.push(midDistance.toFixed(2));
+        gradients.push(segment.grade);
+        
+        // Color based on gradient
+        if (segment.grade > GRADE_THRESHOLD) {
+            colors.push('rgba(244, 67, 54, 0.8)'); // red for uphill
+        } else if (segment.grade < -GRADE_THRESHOLD) {
+            colors.push('rgba(33, 150, 243, 0.8)'); // blue for downhill
+        } else {
+            colors.push('rgba(76, 175, 80, 0.8)'); // green for flat
+        }
+    });
+    
+    gradientChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Gradient (%)',
+                data: gradients,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return `Distance: ${context[0].label} km`;
+                        },
+                        label: function(context) {
+                            return `Gradient: ${context.raw.toFixed(1)}%`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: useMetric ? 'Distance (km)' : 'Distance (mi)',
+                        color: '#888'
+                    },
+                    ticks: {
+                        color: '#888',
+                        maxTicksLimit: 15
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Gradient (%)',
+                        color: '#888'
+                    },
+                    ticks: {
+                        color: '#888'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Make chart container responsive
+    const containers = document.querySelectorAll('.chart-container');
+    containers.forEach(c => c.style.height = '300px');
+}
+
+// Unit Toggle (KM / Miles)
+function setupUnitToggle() {
+    const kmBtn = document.getElementById('kmBtn');
+    const milesBtn = document.getElementById('milesBtn');
+    
+    if (!kmBtn || !milesBtn) return;
+    
+    kmBtn.addEventListener('click', () => {
+        useMetric = true;
+        kmBtn.classList.add('active');
+        milesBtn.classList.remove('active');
+        updateDistanceHeader();
+        if (gpxData) {
+            displayStats();
+            // Recalculate if plan was already calculated
+            const paceResults = document.getElementById('paceResults');
+            if (paceResults && paceResults.style.display !== 'none') {
+                calculateRacePlan();
+            }
+        }
+    });
+    
+    milesBtn.addEventListener('click', () => {
+        useMetric = false;
+        milesBtn.classList.add('active');
+        kmBtn.classList.remove('active');
+        updateDistanceHeader();
+        if (gpxData) {
+            displayStats();
+            const paceResults = document.getElementById('paceResults');
+            if (paceResults && paceResults.style.display !== 'none') {
+                calculateRacePlan();
+            }
+        }
+    });
+}
+
+function updateDistanceHeader() {
+    const header = document.getElementById('distanceHeader');
+    if (header) {
+        header.textContent = useMetric ? 'KM' : 'Mile';
+    }
+}
+
+// Save/Load Plan functionality
+function setupSaveLoad() {
+    const saveBtn = document.getElementById('savePlanBtn');
+    const loadBtn = document.getElementById('loadPlanBtn');
+    
+    if (!saveBtn || !loadBtn) return;
+    
+    saveBtn.addEventListener('click', savePlan);
+    loadBtn.addEventListener('click', loadPlan);
+}
+
+function savePlan() {
+    const plan = {
+        aidStations: aidStations,
+        mode: currentMode,
+        useMetric: useMetric,
+        startTime: document.getElementById('raceStartTime')?.value || '09:00',
+        flatPaceMin: document.getElementById('flatPaceMin')?.value || '5',
+        flatPaceSec: document.getElementById('flatPaceSec')?.value || '30',
+        uphillPaceMin: document.getElementById('uphillPaceMin')?.value || '6',
+        uphillPaceSec: document.getElementById('uphillPaceSec')?.value || '30',
+        downhillPaceMin: document.getElementById('downhillPaceMin')?.value || '5',
+        downhillPaceSec: document.getElementById('downhillPaceSec')?.value || '0',
+        targetHours: document.getElementById('targetHours')?.value || '0',
+        targetMinutes: document.getElementById('targetMinutes')?.value || '45',
+        targetSeconds: document.getElementById('targetSeconds')?.value || '0',
+        uphillRatio: document.getElementById('uphillRatio')?.value || '1.2',
+        downhillRatio: document.getElementById('downhillRatio')?.value || '0.9'
+    };
+    
+    localStorage.setItem('gpxray_plan', JSON.stringify(plan));
+    alert('Plan saved successfully!');
+}
+
+function loadPlan() {
+    const saved = localStorage.getItem('gpxray_plan');
+    if (!saved) {
+        alert('No saved plan found.');
+        return;
+    }
+    
+    try {
+        const plan = JSON.parse(saved);
+        
+        // Restore AID stations
+        aidStations = plan.aidStations || [];
+        renderAidStations();
+        
+        // Restore mode
+        currentMode = plan.mode || 'manual';
+        const manualBtn = document.getElementById('manualModeBtn');
+        const targetBtn = document.getElementById('targetModeBtn');
+        const manualMode = document.getElementById('manualMode');
+        const targetMode = document.getElementById('targetMode');
+        
+        if (currentMode === 'manual') {
+            manualBtn?.classList.add('active');
+            targetBtn?.classList.remove('active');
+            if (manualMode) manualMode.style.display = 'block';
+            if (targetMode) targetMode.style.display = 'none';
+        } else {
+            targetBtn?.classList.add('active');
+            manualBtn?.classList.remove('active');
+            if (targetMode) targetMode.style.display = 'block';
+            if (manualMode) manualMode.style.display = 'none';
+        }
+        
+        // Restore unit
+        useMetric = plan.useMetric !== false;
+        const kmBtn = document.getElementById('kmBtn');
+        const milesBtn = document.getElementById('milesBtn');
+        if (useMetric) {
+            kmBtn?.classList.add('active');
+            milesBtn?.classList.remove('active');
+        } else {
+            milesBtn?.classList.add('active');
+            kmBtn?.classList.remove('active');
+        }
+        
+        // Restore values
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        setVal('raceStartTime', plan.startTime);
+        setVal('flatPaceMin', plan.flatPaceMin);
+        setVal('flatPaceSec', plan.flatPaceSec);
+        setVal('uphillPaceMin', plan.uphillPaceMin);
+        setVal('uphillPaceSec', plan.uphillPaceSec);
+        setVal('downhillPaceMin', plan.downhillPaceMin);
+        setVal('downhillPaceSec', plan.downhillPaceSec);
+        setVal('targetHours', plan.targetHours);
+        setVal('targetMinutes', plan.targetMinutes);
+        setVal('targetSeconds', plan.targetSeconds);
+        setVal('uphillRatio', plan.uphillRatio);
+        setVal('downhillRatio', plan.downhillRatio);
+        
+        alert('Plan loaded successfully!');
+    } catch (e) {
+        alert('Error loading plan.');
+        console.error(e);
+    }
+}
+
+// Print Race Card functionality
+function setupPrintRaceCard() {
+    const printBtn = document.getElementById('printRaceCard');
+    if (!printBtn) return;
+    
+    printBtn.addEventListener('click', printRaceCard);
+}
+
+function printRaceCard() {
+    if (!gpxData) {
+        alert('Please load a GPX file first.');
+        return;
+    }
+    
+    const splitsBody = document.getElementById('splitsBody');
+    if (!splitsBody || splitsBody.children.length === 0) {
+        alert('Please calculate a race plan first.');
+        return;
+    }
+    
+    // Prepare print content
+    const distanceUnit = useMetric ? 'km' : 'mi';
+    const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
+    
+    document.getElementById('printTitle').textContent = 'Race Plan';
+    document.getElementById('printDistance').textContent = `${distance.toFixed(2)} ${distanceUnit}`;
+    document.getElementById('printElevation').textContent = `↑${gpxData.elevationGain.toFixed(0)}m ↓${gpxData.elevationLoss.toFixed(0)}m`;
+    document.getElementById('printTime').textContent = document.getElementById('totalTime')?.textContent || '-';
+    
+    // Update print table header for units
+    const printDistHeader = document.getElementById('printDistanceHeader');
+    if (printDistHeader) {
+        printDistHeader.textContent = useMetric ? 'KM' : 'Mile';
+    }
+    
+    // Copy splits to print table
+    const printBody = document.getElementById('printSplitsBody');
+    printBody.innerHTML = '';
+    
+    const rows = splitsBody.querySelectorAll('tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const printRow = document.createElement('tr');
+        
+        // Check if it's an AID station row
+        if (row.classList.contains('aid-station-row')) {
+            printRow.classList.add('aid-row');
+        }
+        
+        // KM, AID, Pace, Race Time, Clock (columns 0, 3, 4, 6, 7)
+        const indices = [0, 3, 4, 6, 7];
+        indices.forEach(i => {
+            const td = document.createElement('td');
+            td.textContent = cells[i]?.textContent || '-';
+            printRow.appendChild(td);
+        });
+        
+        printBody.appendChild(printRow);
+    });
+    
+    // Trigger print
+    window.print();
 }
 
 // Pace calculation
@@ -753,7 +1074,17 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
     splitsBody.innerHTML = '';
     
     const points = gpxData.points;
-    const totalKm = Math.ceil(gpxData.totalDistance);
+    
+    // Determine unit system and total distance
+    const totalDistanceKm = gpxData.totalDistance;
+    const unitLabel = useMetric ? 'km' : 'mi';
+    const totalUnits = useMetric ? Math.ceil(totalDistanceKm) : Math.ceil(totalDistanceKm * KM_TO_MILES);
+    
+    // Pace conversion: input paces are in min/km, convert to min/mi if needed
+    const paceMultiplier = useMetric ? 1 : MILES_TO_KM;
+    const displayFlatPace = flatPace * paceMultiplier;
+    const displayUphillPace = uphillPace * paceMultiplier;
+    const displayDownhillPace = downhillPace * paceMultiplier;
     
     // Get start time
     const startTimeInput = document.getElementById('raceStartTime');
@@ -766,20 +1097,21 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
     // Get average pace for AID station time calculations
     const avgPace = (flatPace + uphillPace + downhillPace) / 3;
     
-    // Calculate splits per kilometer
-    for (let km = 1; km <= totalKm; km++) {
-        const kmStart = km - 1;
-        const kmEnd = Math.min(km, gpxData.totalDistance);
+    // Calculate splits per unit (km or mile)
+    for (let unit = 1; unit <= totalUnits; unit++) {
+        // Convert unit boundaries to km for internal calculations
+        const unitStartKm = useMetric ? (unit - 1) : ((unit - 1) * MILES_TO_KM);
+        const unitEndKm = useMetric ? Math.min(unit, totalDistanceKm) : Math.min(unit * MILES_TO_KM, totalDistanceKm);
         
-        // Find elevation change for this km
+        // Find elevation change for this unit
         let startElevation = 0, endElevation = 0;
         let dominantTerrain = { flat: 0, uphill: 0, downhill: 0 };
         
-        // Find points within this km range
+        // Find points within this unit range (using km internally)
         for (const segment of segments) {
-            if (segment.endDistance >= kmStart && segment.startDistance < kmEnd) {
-                const overlapStart = Math.max(segment.startDistance, kmStart);
-                const overlapEnd = Math.min(segment.endDistance, kmEnd);
+            if (segment.endDistance >= unitStartKm && segment.startDistance < unitEndKm) {
+                const overlapStart = Math.max(segment.startDistance, unitStartKm);
+                const overlapEnd = Math.min(segment.endDistance, unitEndKm);
                 const overlapDistance = overlapEnd - overlapStart;
                 
                 dominantTerrain[segment.terrainType] += overlapDistance;
@@ -791,7 +1123,7 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             }
         }
         
-        // Determine dominant terrain for this km
+        // Determine dominant terrain for this unit
         let terrain = 'flat';
         let maxDist = dominantTerrain.flat;
         if (dominantTerrain.uphill > maxDist) {
@@ -804,30 +1136,35 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         
         // Calculate elevation change
         const elevationChange = endElevation - startElevation;
-        const distance = kmEnd - kmStart;
+        const distanceKm = unitEndKm - unitStartKm;
         
-        // Calculate pace for this km based on terrain distribution
-        let kmTime = 0;
-        kmTime += dominantTerrain.flat * flatPace;
-        kmTime += dominantTerrain.uphill * uphillPace;
-        kmTime += dominantTerrain.downhill * downhillPace;
+        // Calculate pace for this unit based on terrain distribution (using km internally)
+        let unitTime = 0;
+        unitTime += dominantTerrain.flat * flatPace;
+        unitTime += dominantTerrain.uphill * uphillPace;
+        unitTime += dominantTerrain.downhill * downhillPace;
         
-        // Check for AID stations within this km (before adding main row)
-        const aidStationsInKm = aidStations.filter(station => 
-            station.km > kmStart && station.km < km && station.km % 1 !== 0
-        );
+        // Check for AID stations within this unit (before adding main row)
+        const aidStationsInUnit = aidStations.filter(station => {
+            // AID stations are stored in km, convert if needed
+            const stationInUnit = useMetric ? station.km : station.km * KM_TO_MILES;
+            return stationInUnit > (unit - 1) && stationInUnit < unit && stationInUnit % 1 !== 0;
+        });
         
         // Add AID station rows for fractional positions
-        for (const station of aidStationsInKm) {
-            const fractionOfKm = station.km - kmStart;
-            const timeToStation = cumulativeTime + (kmTime * fractionOfKm);
+        for (const station of aidStationsInUnit) {
+            const stationKm = station.km;
+            // Calculate time to station based on km distance
+            const fractionOfUnit = (stationKm - unitStartKm) / distanceKm;
+            const timeToStation = cumulativeTime + (unitTime * fractionOfUnit);
             const clockTimeMinutes = startTimeInMinutes + timeToStation;
             const clockTime = formatClockTime(clockTimeMinutes);
-            
+            const displayDistance = useMetric ? station.km : station.km * KM_TO_MILES;
+
             const aidRow = document.createElement('tr');
             aidRow.classList.add('aid-station-row');
             aidRow.innerHTML = `
-                <td>${station.km.toFixed(1)}</td>
+                <td>${displayDistance.toFixed(1)}</td>
                 <td>-</td>
                 <td>-</td>
                 <td class="aid-station-cell">${station.name}</td>
@@ -840,25 +1177,28 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         }
         
         // Update cumulative time
-        cumulativeTime += kmTime;
+        cumulativeTime += unitTime;
         
-        // Get target pace for dominant terrain
+        // Get target pace for dominant terrain (display pace for selected unit)
         let targetPace;
         switch (terrain) {
-            case 'uphill': targetPace = uphillPace; break;
-            case 'downhill': targetPace = downhillPace; break;
-            default: targetPace = flatPace;
+            case 'uphill': targetPace = displayUphillPace; break;
+            case 'downhill': targetPace = displayDownhillPace; break;
+            default: targetPace = displayFlatPace;
         }
         
         // Calculate clock time
         const clockTimeMinutes = startTimeInMinutes + cumulativeTime;
         const clockTime = formatClockTime(clockTimeMinutes);
         
-        // Split time is the time for this km
-        const splitTime = kmTime;
+        // Split time is the time for this unit
+        const splitTime = unitTime;
         
-        // Check for AID station exactly at this km
-        const aidStation = aidStations.find(s => Math.floor(s.km) === km || s.km === km);
+        // Check for AID station at this unit
+        const aidStation = aidStations.find(s => {
+            const stationInUnit = useMetric ? s.km : s.km * KM_TO_MILES;
+            return Math.floor(stationInUnit) === unit || Math.round(stationInUnit) === unit;
+        });
         const aidStationText = aidStation ? aidStation.name : '-';
         const hasAidStation = aidStation !== undefined;
         
@@ -867,11 +1207,11 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             row.classList.add('aid-station-row');
         }
         row.innerHTML = `
-            <td>${km}</td>
+            <td>${unit}</td>
             <td>${elevationChange >= 0 ? '+' : ''}${elevationChange.toFixed(0)} m</td>
             <td class="terrain-${terrain}">${terrain.charAt(0).toUpperCase() + terrain.slice(1)}</td>
             <td class="${hasAidStation ? 'aid-station-cell' : ''}">${aidStationText}</td>
-            <td>${formatPace(targetPace)} /km</td>
+            <td>${formatPace(targetPace)} /${unitLabel}</td>
             <td>${formatTime(splitTime)}</td>
             <td>${formatTime(cumulativeTime)}</td>
             <td>${clockTime}</td>
@@ -928,23 +1268,31 @@ function exportToCsv() {
     // Get start time
     const startTimeInput = document.getElementById('raceStartTime');
     const startTimeValue = startTimeInput ? startTimeInput.value : '09:00';
+    
+    // Unit settings
+    const unitLabel = useMetric ? 'km' : 'mi';
+    const distanceDisplay = useMetric ? gpxData.totalDistance.toFixed(2) : (gpxData.totalDistance * KM_TO_MILES).toFixed(2);
 
     // Add summary section
     csvContent += 'GPX RACE PLAN EXPORT\n';
     csvContent += `Mode,${currentMode === 'manual' ? 'Manual Pace' : 'Target Time'}\n`;
     csvContent += `Race Start Time,${startTimeValue}\n`;
+    csvContent += `Units,${useMetric ? 'Metric (km)' : 'Imperial (miles)'}\n`;
     csvContent += '\n';
     csvContent += 'ROUTE STATISTICS\n';
-    csvContent += `Total Distance,${gpxData.totalDistance.toFixed(2)} km\n`;
+    csvContent += `Total Distance,${distanceDisplay} ${unitLabel}\n`;
     csvContent += `Elevation Gain,${gpxData.elevationGain.toFixed(0)} m\n`;
     csvContent += `Elevation Loss,${gpxData.elevationLoss.toFixed(0)} m\n`;
     csvContent += `Min Elevation,${gpxData.minElevation.toFixed(0)} m\n`;
     csvContent += `Max Elevation,${gpxData.maxElevation.toFixed(0)} m\n`;
     csvContent += '\n';
     csvContent += 'PACE SETTINGS\n';
-    csvContent += `Flat Pace,${formatPace(flatPace)} /km\n`;
-    csvContent += `Uphill Pace,${formatPace(uphillPace)} /km\n`;
-    csvContent += `Downhill Pace,${formatPace(downhillPace)} /km\n`;
+    const displayFlatPace = useMetric ? flatPace : flatPace * MILES_TO_KM;
+    const displayUphillPace = useMetric ? uphillPace : uphillPace * MILES_TO_KM;
+    const displayDownhillPace = useMetric ? downhillPace : downhillPace * MILES_TO_KM;
+    csvContent += `Flat Pace,${formatPace(displayFlatPace)} /${unitLabel}\n`;
+    csvContent += `Uphill Pace,${formatPace(displayUphillPace)} /${unitLabel}\n`;
+    csvContent += `Downhill Pace,${formatPace(displayDownhillPace)} /${unitLabel}\n`;
     csvContent += '\n';
     csvContent += 'TERRAIN BREAKDOWN\n';
     csvContent += `Flat Distance,${document.getElementById('flatDistance').textContent}\n`;
@@ -959,15 +1307,16 @@ function exportToCsv() {
     // Add AID stations if any
     if (aidStations.length > 0) {
         csvContent += 'AID STATIONS\n';
-        csvContent += 'KM,Name\n';
+        csvContent += `${unitLabel.toUpperCase()},Name\n`;
         aidStations.forEach(station => {
-            csvContent += `${station.km},${station.name}\n`;
+            const stationDist = useMetric ? station.km : station.km * KM_TO_MILES;
+            csvContent += `${stationDist.toFixed(1)},${station.name}\n`;
         });
         csvContent += '\n';
     }
 
     // Add splits table
-    csvContent += 'KILOMETER SPLITS\n';
+    csvContent += `${useMetric ? 'KILOMETER' : 'MILE'} SPLITS\n`;
     
     // Get table headers
     const headers = [];

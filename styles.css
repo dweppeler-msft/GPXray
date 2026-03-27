@@ -743,6 +743,168 @@ h2 {
     color: #2196F3;
 }
 
+/* Gradient Section */
+.gradient-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+/* Settings Bar */
+.settings-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+
+.unit-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.unit-toggle span {
+    color: #888;
+}
+
+.unit-btn {
+    padding: 8px 16px;
+    border: 2px solid #4a4a6a;
+    border-radius: 6px;
+    background: transparent;
+    color: #888;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.unit-btn:hover {
+    border-color: #00d4ff;
+    color: #fff;
+}
+
+.unit-btn.active {
+    background: #00d4ff;
+    border-color: #00d4ff;
+    color: #1a1a2e;
+}
+
+.plan-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.action-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ccc;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.print-btn {
+    background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+    color: white;
+}
+
+.print-btn:hover {
+    box-shadow: 0 5px 15px rgba(156, 39, 176, 0.4);
+}
+
+.splits-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Race Card Print Styles */
+.race-card-print {
+    display: none;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    .race-card-print, .race-card-print * {
+        visibility: visible;
+    }
+    
+    .race-card-print {
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white;
+        color: black;
+        padding: 15px;
+        font-family: Arial, sans-serif;
+    }
+    
+    .race-card-header {
+        text-align: center;
+        border-bottom: 2px solid black;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .race-card-header h1 {
+        font-size: 18pt;
+        margin-bottom: 5px;
+        color: black;
+    }
+    
+    .race-card-info {
+        font-size: 10pt;
+        color: #333;
+    }
+    
+    .race-card-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9pt;
+    }
+    
+    .race-card-table th,
+    .race-card-table td {
+        border: 1px solid #333;
+        padding: 4px 6px;
+        text-align: center;
+    }
+    
+    .race-card-table th {
+        background: #eee;
+        font-weight: bold;
+    }
+    
+    .race-card-table tr.aid-row {
+        background: #ffffcc;
+    }
+    
+    .race-card-footer {
+        margin-top: 10px;
+        text-align: center;
+        font-size: 8pt;
+        color: #666;
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     header h1 {
@@ -761,5 +923,18 @@ h2 {
         flex-direction: column;
         align-items: center;
         gap: 10px;
+    }
+    
+    .settings-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .unit-toggle, .plan-actions {
+        justify-content: center;
+    }
+    
+    .splits-actions {
+        flex-direction: column;
     }
 }
