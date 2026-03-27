@@ -4,6 +4,7 @@ let map = null;
 let routeLayers = [];
 let elevationChart = null;
 let gradientChart = null;
+let surfaceChart = null;
 let segments = []; // Stores segment data with terrain type
 let currentMode = 'target'; // 'manual', 'target', or 'itra'
 let aidStations = []; // Stores AID station data
@@ -796,6 +797,12 @@ function displaySurfaceChart() {
     const ctx = document.getElementById('surfaceChart');
     if (!ctx) return;
     
+    // Destroy existing chart if it exists
+    if (surfaceChart) {
+        surfaceChart.destroy();
+        surfaceChart = null;
+    }
+    
     const surfaceDistances = { road: 0, trail: 0, technical: 0, unknown: 0 };
     for (const segment of segments) {
         surfaceDistances[segment.surfaceType] += segment.distance;
@@ -813,7 +820,7 @@ function displaySurfaceChart() {
         }
     }
     
-    new Chart(ctx.getContext('2d'), {
+    surfaceChart = new Chart(ctx.getContext('2d'), {
         type: 'doughnut',
         data: {
             labels,
