@@ -566,6 +566,63 @@ h2 {
     background: #2196F3;
 }
 
+/* Surface Stats under map */
+.surface-stats {
+    margin-top: 12px;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+.surface-stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.surface-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.surface-stat-item .surface-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.surface-stat-item .surface-color.road { background: #4CAF50; }
+.surface-stat-item .surface-color.trail { background: #FF9800; }
+.surface-stat-item .surface-color.technical { background: #9C27B0; }
+.surface-stat-item .surface-color.unknown { background: #9E9E9E; }
+
+.surface-stat-item .surface-pct {
+    color: #fff;
+    font-weight: 600;
+}
+
+.surface-stat-item .surface-name {
+    color: #aaa;
+}
+
+.surface-stats .surface-toggle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #888;
+    cursor: pointer;
+}
+
+.surface-stats .surface-toggle input {
+    cursor: pointer;
+}
+
 /* Elevation Chart */
 .chart-header {
     display: flex;

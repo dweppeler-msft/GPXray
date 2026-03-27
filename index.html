@@ -117,6 +117,15 @@
                 <span class="legend-item"><span class="legend-color uphill"></span> Uphill</span>
                 <span class="legend-item"><span class="legend-color downhill"></span> Downhill</span>
             </div>
+            <div class="surface-stats" id="surfaceStats" style="display: none;">
+                <div class="surface-stats-row" id="surfaceStatsRow">
+                    <!-- Surface percentages will be inserted here -->
+                </div>
+                <label class="surface-toggle">
+                    <input type="checkbox" id="surfaceEnabled" checked>
+                    <span>Apply surface multipliers to pace</span>
+                </label>
+            </div>
         </section>
 
         <section class="elevation-section" id="elevationSection" style="display: none;">
@@ -135,7 +144,8 @@
             </div>
         </section>
 
-        <section class="surface-section" id="surfaceSection" style="display: none;">
+        <!-- Surface section hidden - stats now shown under map -->
+        <section class="surface-section" id="surfaceSection" style="display: none !important;">
             <h2>Surface Analysis</h2>
             <p id="surfaceStatus" class="surface-status">Surface data will load automatically...</p>
             <div class="surface-content">

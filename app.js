@@ -4,7 +4,6 @@ let map = null;
 let routeLayers = [];
 let elevationChart = null;
 let gradientChart = null;
-let surfaceChart = null;
 let segments = []; // Stores segment data with terrain type
 let currentMode = 'target'; // 'manual', 'target', or 'itra'
 let aidStations = []; // Stores AID station data
@@ -535,8 +534,7 @@ async function fetchSurfaceData() {
         
         // Update display with surface info
         displayMap(); // Redraw map with surface colors
-        displaySurfaceChart();
-        updateSurfaceStatus(`Surface data loaded: ${countSurfaces()}`);
+        displaySurfaceStats();
         
         // If race plan was already calculated, recalculate to show surface data
         const splitsSection = document.getElementById('splitsSection');
@@ -792,58 +790,42 @@ function updateSurfaceStatus(message) {
     }
 }
 
-// Display surface type chart
-function displaySurfaceChart() {
-    const ctx = document.getElementById('surfaceChart');
-    if (!ctx) return;
-    
-    // Destroy existing chart if it exists
-    if (surfaceChart) {
-        surfaceChart.destroy();
-        surfaceChart = null;
-    }
+// Display surface stats under map (replacing pie chart)
+function displaySurfaceStats() {
+    const statsContainer = document.getElementById('surfaceStats');
+    const statsRow = document.getElementById('surfaceStatsRow');
+    if (!statsContainer || !statsRow) return;
     
     const surfaceDistances = { road: 0, trail: 0, technical: 0, unknown: 0 };
+    let totalDistance = 0;
+    
     for (const segment of segments) {
         surfaceDistances[segment.surfaceType] += segment.distance;
+        totalDistance += segment.distance;
     }
     
-    const labels = [];
-    const data = [];
-    const colors = [];
+    if (totalDistance === 0) {
+        statsContainer.style.display = 'none';
+        return;
+    }
     
+    // Build stats HTML
+    let html = '';
     for (const [type, dist] of Object.entries(surfaceDistances)) {
         if (dist > 0) {
-            labels.push(SURFACE_TYPES[type].name);
-            data.push(dist.toFixed(2));
-            colors.push(SURFACE_TYPES[type].color);
+            const pct = ((dist / totalDistance) * 100).toFixed(0);
+            html += `
+                <span class="surface-stat-item">
+                    <span class="surface-color ${type}"></span>
+                    <span class="surface-pct">${pct}%</span>
+                    <span class="surface-name">${SURFACE_TYPES[type].name}</span>
+                </span>
+            `;
         }
     }
     
-    surfaceChart = new Chart(ctx.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels,
-            datasets: [{
-                data,
-                backgroundColor: colors
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#fff' }
-                },
-                title: {
-                    display: true,
-                    text: 'Surface Distribution (km)',
-                    color: '#fff'
-                }
-            }
-        }
-    });
+    statsRow.innerHTML = html;
+    statsContainer.style.display = 'block';
 }
 
 // Show hidden sections
@@ -851,7 +833,6 @@ function showSections() {
     document.getElementById('statsSection').style.display = 'block';
     document.getElementById('mapSection').style.display = 'block';
     document.getElementById('elevationSection').style.display = 'block';
-    document.getElementById('surfaceSection').style.display = 'block';
     document.getElementById('paceSection').style.display = 'block';
 }
 
