@@ -2843,6 +2843,7 @@ function renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, star
 function setupExport() {
     document.getElementById('exportCsv').addEventListener('click', exportToCsv);
     document.getElementById('exportPdf').addEventListener('click', exportToPdf);
+    document.getElementById('exportShareCard').addEventListener('click', exportShareCard);
 }
 
 function exportToCsv() {
@@ -3227,6 +3228,159 @@ async function exportToPdf() {
     } catch (error) {
         console.error('PDF generation error:', error);
         alert('Failed to generate PDF. Please try again.');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Share Card Export (Phone format image)
+async function exportShareCard() {
+    if (!gpxData || segments.length === 0) {
+        alert('Please load a GPX file and calculate a race plan first.');
+        return;
+    }
+
+    const btn = document.getElementById('exportShareCard');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ Creating...';
+    btn.disabled = true;
+
+    try {
+        // Create a hidden container for the share card
+        const card = document.createElement('div');
+        card.id = 'shareCardContainer';
+        card.style.cssText = `
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 540px;
+            height: 960px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            padding: 30px;
+            box-sizing: border-box;
+        `;
+
+        // Build card content
+        const unitLabel = useMetric ? 'km' : 'mi';
+        const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
+        const totalTime = document.getElementById('totalTime')?.textContent || '-';
+        const dateInput = document.getElementById('raceStartDate');
+        const timeInput = document.getElementById('raceStartTime');
+        const raceDate = dateInput?.value || '';
+        const raceTime = timeInput?.value || '06:00';
+
+        // Get AID station times from the splits table
+        let aidStationsList = '';
+        const splitsTable = document.getElementById('splitsTable');
+        if (splitsTable && aidStations.length > 0) {
+            const rows = splitsTable.querySelectorAll('tbody tr.aid-station-row');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const distCell = cells[0]?.textContent || '';
+                const aidName = cells[4]?.textContent || '';
+                const clockTime = cells[9]?.textContent || '';
+                if (aidName && aidName !== '-') {
+                    aidStationsList += `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span style="color: #00d4ff;">📍 ${distCell} ${unitLabel}</span>
+                            <span style="flex: 1; margin: 0 10px;">${aidName}</span>
+                            <span style="font-weight: bold; color: #4CAF50;">${clockTime}</span>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // Sun times
+        let sunTimesHtml = '';
+        if (sunTimes && !sunTimes.polarNight && !sunTimes.midnightSun) {
+            sunTimesHtml = `
+                <div style="display: flex; gap: 30px; justify-content: center; margin: 15px 0;">
+                    <span>🌅 ${formatSunTime(sunTimes.sunrise)}</span>
+                    <span>🌇 ${formatSunTime(sunTimes.sunset)}</span>
+                </div>
+            `;
+        }
+
+        let routeName = currentRouteName || 'Race Plan';
+        if (routeName.length > 35) {
+            routeName = routeName.substring(0, 32) + '...';
+        }
+
+        card.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 24px; font-weight: bold; color: #00d4ff; margin-bottom: 5px;">GPXray</div>
+                <div style="font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px;">Race Plan</div>
+            </div>
+            
+            <div style="background: rgba(0,212,255,0.15); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div style="font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 15px;">${routeName}</div>
+                
+                <div style="display: flex; justify-content: space-around; text-align: center;">
+                    <div>
+                        <div style="font-size: 28px; font-weight: bold;">${distance.toFixed(1)}</div>
+                        <div style="font-size: 12px; color: #888;">${unitLabel}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 28px; font-weight: bold;">+${gpxData.elevationGain.toFixed(0)}</div>
+                        <div style="font-size: 12px; color: #888;">m gain</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 28px; font-weight: bold;">-${gpxData.elevationLoss.toFixed(0)}</div>
+                        <div style="font-size: 12px; color: #888;">m loss</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-bottom: 20px;">
+                ${raceDate ? `<div style="font-size: 14px; color: #aaa;">📅 ${raceDate} at ${raceTime}</div>` : ''}
+                ${sunTimesHtml}
+            </div>
+            
+            <div style="background: rgba(76,175,80,0.15); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 14px; color: #888; margin-bottom: 5px;">Estimated Finish</div>
+                <div style="font-size: 36px; font-weight: bold; color: #4CAF50;">${totalTime.split('(')[0].trim()}</div>
+            </div>
+            
+            ${aidStationsList ? `
+                <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                    <div style="font-size: 14px; color: #888; margin-bottom: 10px; text-align: center;">🚰 AID STATION SCHEDULE</div>
+                    ${aidStationsList}
+                </div>
+            ` : ''}
+            
+            <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center;">
+                <div style="font-size: 12px; color: #555;">gpxray.run</div>
+            </div>
+        `;
+
+        document.body.appendChild(card);
+
+        // Use html2canvas to capture the card
+        const canvas = await html2canvas(card, {
+            width: 540,
+            height: 960,
+            scale: 2,
+            backgroundColor: null,
+            logging: false
+        });
+
+        // Remove temporary element
+        document.body.removeChild(card);
+
+        // Download as PNG
+        const link = document.createElement('a');
+        const fileName = (currentRouteName || 'race_plan').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        link.download = `${fileName}_share_card.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+    } catch (error) {
+        console.error('Share card generation error:', error);
+        alert('Failed to generate share card. Please try again.');
     } finally {
         btn.textContent = originalText;
         btn.disabled = false;

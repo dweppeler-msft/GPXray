@@ -1591,6 +1591,14 @@ h2 {
     box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
 }
 
+.share-btn {
+    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+}
+
+.share-btn:hover {
+    box-shadow: 0 5px 20px rgba(155, 89, 182, 0.4);
+}
+
 /* Leg Summary */
 .leg-summary {
     margin-bottom: 25px;
