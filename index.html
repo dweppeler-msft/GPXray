@@ -75,45 +75,111 @@
 
         <section class="pace-section" id="paceSection" style="display: none;">
             <h2>Pace Planner</h2>
-            <p class="pace-description">Set your target pace for different terrain types. Pace is in minutes per kilometer (min/km).</p>
             
-            <div class="pace-inputs">
-                <div class="pace-input-group">
-                    <label for="flatPace">
-                        <span class="terrain-icon flat-icon">➡️</span>
-                        Flat Pace (grade -2% to 2%)
-                    </label>
-                    <div class="pace-input-wrapper">
-                        <input type="number" id="flatPaceMin" value="5" min="1" max="20" step="1">
-                        <span>:</span>
-                        <input type="number" id="flatPaceSec" value="30" min="0" max="59" step="1">
-                        <span>min/km</span>
+            <div class="mode-selector">
+                <button class="mode-btn active" id="manualModeBtn" data-mode="manual">Manual Pace</button>
+                <button class="mode-btn" id="targetModeBtn" data-mode="target">Target Time</button>
+            </div>
+            
+            <!-- Manual Mode -->
+            <div id="manualMode" class="pace-mode">
+                <p class="pace-description">Set your target pace for different terrain types. Pace is in minutes per kilometer (min/km).</p>
+                
+                <div class="pace-inputs">
+                    <div class="pace-input-group">
+                        <label for="flatPace">
+                            <span class="terrain-icon flat-icon">➡️</span>
+                            Flat Pace (grade -2% to 2%)
+                        </label>
+                        <div class="pace-input-wrapper">
+                            <input type="number" id="flatPaceMin" value="5" min="1" max="20" step="1">
+                            <span>:</span>
+                            <input type="number" id="flatPaceSec" value="30" min="0" max="59" step="1">
+                            <span>min/km</span>
+                        </div>
+                    </div>
+                    
+                    <div class="pace-input-group">
+                        <label for="uphillPace">
+                            <span class="terrain-icon uphill-icon">⬆️</span>
+                            Uphill Pace (grade > 2%)
+                        </label>
+                        <div class="pace-input-wrapper">
+                            <input type="number" id="uphillPaceMin" value="6" min="1" max="20" step="1">
+                            <span>:</span>
+                            <input type="number" id="uphillPaceSec" value="30" min="0" max="59" step="1">
+                            <span>min/km</span>
+                        </div>
+                    </div>
+                    
+                    <div class="pace-input-group">
+                        <label for="downhillPace">
+                            <span class="terrain-icon downhill-icon">⬇️</span>
+                            Downhill Pace (grade < -2%)
+                        </label>
+                        <div class="pace-input-wrapper">
+                            <input type="number" id="downhillPaceMin" value="5" min="1" max="20" step="1">
+                            <span>:</span>
+                            <input type="number" id="downhillPaceSec" value="0" min="0" max="59" step="1">
+                            <span>min/km</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Target Time Mode -->
+            <div id="targetMode" class="pace-mode" style="display: none;">
+                <p class="pace-description">Enter your target finish time and adjust the pace ratios for different terrain.</p>
+                
+                <div class="target-time-input">
+                    <label>Target Finish Time</label>
+                    <div class="time-input-wrapper">
+                        <input type="number" id="targetHours" value="0" min="0" max="24" step="1">
+                        <span>h</span>
+                        <input type="number" id="targetMinutes" value="45" min="0" max="59" step="1">
+                        <span>m</span>
+                        <input type="number" id="targetSeconds" value="0" min="0" max="59" step="1">
+                        <span>s</span>
                     </div>
                 </div>
                 
-                <div class="pace-input-group">
-                    <label for="uphillPace">
-                        <span class="terrain-icon uphill-icon">⬆️</span>
-                        Uphill Pace (grade > 2%)
-                    </label>
-                    <div class="pace-input-wrapper">
-                        <input type="number" id="uphillPaceMin" value="6" min="1" max="20" step="1">
-                        <span>:</span>
-                        <input type="number" id="uphillPaceSec" value="30" min="0" max="59" step="1">
-                        <span>min/km</span>
+                <div class="pace-ratios">
+                    <p class="ratio-description">Adjust pace multipliers relative to flat pace (1.0 = same as flat):</p>
+                    <div class="ratio-inputs">
+                        <div class="ratio-group">
+                            <label>
+                                <span class="terrain-icon uphill-icon">⬆️</span>
+                                Uphill Multiplier
+                            </label>
+                            <input type="number" id="uphillRatio" value="1.2" min="1.0" max="2.0" step="0.05">
+                            <span class="ratio-hint">Slower (1.2 = 20% slower)</span>
+                        </div>
+                        <div class="ratio-group">
+                            <label>
+                                <span class="terrain-icon downhill-icon">⬇️</span>
+                                Downhill Multiplier
+                            </label>
+                            <input type="number" id="downhillRatio" value="0.9" min="0.5" max="1.0" step="0.05">
+                            <span class="ratio-hint">Faster (0.9 = 10% faster)</span>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="pace-input-group">
-                    <label for="downhillPace">
-                        <span class="terrain-icon downhill-icon">⬇️</span>
-                        Downhill Pace (grade < -2%)
-                    </label>
-                    <div class="pace-input-wrapper">
-                        <input type="number" id="downhillPaceMin" value="5" min="1" max="20" step="1">
-                        <span>:</span>
-                        <input type="number" id="downhillPaceSec" value="0" min="0" max="59" step="1">
-                        <span>min/km</span>
+                <div id="calculatedPaces" class="calculated-paces" style="display: none;">
+                    <h4>Calculated Paces</h4>
+                    <div class="calc-pace-grid">
+                        <div class="calc-pace-item">
+                            <span class="calc-pace-label">➡️ Flat:</span>
+                            <span class="calc-pace-value" id="calcFlatPace">-</span>
+                        </div>
+                        <div class="calc-pace-item">
+                            <span class="calc-pace-label">⬆️ Uphill:</span>
+                            <span class="calc-pace-value" id="calcUphillPace">-</span>
+                        </div>
+                        <div class="calc-pace-item">
+                            <span class="calc-pace-label">⬇️ Downhill:</span>
+                            <span class="calc-pace-value" id="calcDownhillPace">-</span>
+                        </div>
                     </div>
                 </div>
             </div>

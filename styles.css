@@ -179,6 +179,46 @@ h2 {
 }
 
 /* Pace Section */
+.mode-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px;
+    border-radius: 10px;
+    width: fit-content;
+}
+
+.mode-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #888;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mode-btn:hover {
+    color: #fff;
+}
+
+.mode-btn.active {
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    color: #1a1a2e;
+}
+
+.pace-mode {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .pace-description {
     color: #888;
     margin-bottom: 20px;
@@ -233,6 +273,144 @@ h2 {
 
 .pace-input-wrapper span {
     color: #888;
+}
+
+/* Target Time Mode */
+.target-time-input {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.target-time-input label {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 15px;
+    color: #00d4ff;
+}
+
+.time-input-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.time-input-wrapper input {
+    width: 70px;
+    padding: 12px;
+    border: 2px solid #4a4a6a;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.time-input-wrapper input:focus {
+    outline: none;
+    border-color: #00d4ff;
+}
+
+.time-input-wrapper span {
+    color: #888;
+    font-size: 1.1rem;
+}
+
+.pace-ratios {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+}
+
+.ratio-description {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.ratio-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.ratio-group {
+    text-align: center;
+}
+
+.ratio-group label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.ratio-group input {
+    width: 100px;
+    padding: 12px;
+    border: 2px solid #4a4a6a;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.ratio-group input:focus {
+    outline: none;
+    border-color: #00d4ff;
+}
+
+.ratio-hint {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.calculated-paces {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.calculated-paces h4 {
+    color: #00d4ff;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.calc-pace-grid {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.calc-pace-item {
+    text-align: center;
+}
+
+.calc-pace-label {
+    display: block;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.calc-pace-value {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #fff;
 }
 
 .calculate-btn {
