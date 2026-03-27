@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupPrintRaceCard();
     setupChartSelector();
     setupHistory();
+    setupFeedback();
     setupDemo();
     setupSunTimes();
 });
@@ -1400,6 +1401,103 @@ function setupHistory() {
     // Import history
     historyImportBtn?.addEventListener('click', () => historyImportInput?.click());
     historyImportInput?.addEventListener('change', importHistory);
+}
+
+// Feedback Panel functionality
+function setupFeedback() {
+    const feedbackBtn = document.getElementById('feedbackBtn');
+    const feedbackPanel = document.getElementById('feedbackPanel');
+    const feedbackOverlay = document.getElementById('feedbackOverlay');
+    const feedbackClose = document.getElementById('feedbackClose');
+    const feedbackForm = document.getElementById('feedbackForm');
+    const feedbackSuccess = document.getElementById('feedbackSuccess');
+    
+    if (!feedbackBtn || !feedbackPanel) return;
+    
+    // Open panel
+    feedbackBtn.addEventListener('click', () => {
+        feedbackPanel.classList.add('active');
+        feedbackOverlay.classList.add('active');
+        // Reset form when opening
+        feedbackForm.style.display = 'flex';
+        feedbackSuccess.style.display = 'none';
+        feedbackForm.reset();
+    });
+    
+    // Close panel
+    const closePanel = () => {
+        feedbackPanel.classList.remove('active');
+        feedbackOverlay.classList.remove('active');
+    };
+    
+    feedbackClose?.addEventListener('click', closePanel);
+    feedbackOverlay?.addEventListener('click', closePanel);
+    
+    // Handle form submission
+    feedbackForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(feedbackForm);
+        const data = {
+            like: formData.get('like'),
+            missing: formData.get('missing'),
+            bugs: formData.get('bugs'),
+            email: formData.get('email'),
+            url: window.location.href,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Try Formspree submission (replace YOUR_FORM_ID with actual ID from formspree.io)
+        const FORMSPREE_ENDPOINT = 'https://formspree.io/f/YOUR_FORM_ID';
+        
+        try {
+            // Check if Formspree is configured
+            if (FORMSPREE_ENDPOINT.includes('YOUR_FORM_ID')) {
+                // Fallback to mailto
+                const subject = encodeURIComponent('GPXray Beta Feedback');
+                const body = encodeURIComponent(
+                    `What I like:\n${data.like || 'N/A'}\n\n` +
+                    `Missing features:\n${data.missing || 'N/A'}\n\n` +
+                    `Bugs/Issues:\n${data.bugs || 'N/A'}\n\n` +
+                    `Email: ${data.email || 'N/A'}\n` +
+                    `Submitted: ${data.timestamp}`
+                );
+                window.open(`mailto:gpxrayrun@gmail.com?subject=${subject}&body=${body}`, '_blank');
+                feedbackForm.style.display = 'none';
+                feedbackSuccess.style.display = 'flex';
+            } else {
+                // Submit to Formspree
+                const response = await fetch(FORMSPREE_ENDPOINT, {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    feedbackForm.style.display = 'none';
+                    feedbackSuccess.style.display = 'flex';
+                } else {
+                    throw new Error('Form submission failed');
+                }
+            }
+        } catch (error) {
+            console.error('Feedback submission error:', error);
+            // Fallback to mailto on error
+            const subject = encodeURIComponent('GPXray Beta Feedback');
+            const body = encodeURIComponent(
+                `What I like:\n${data.like || 'N/A'}\n\n` +
+                `Missing features:\n${data.missing || 'N/A'}\n\n` +
+                `Bugs/Issues:\n${data.bugs || 'N/A'}\n\n` +
+                `Email: ${data.email || 'N/A'}`
+            );
+            window.open(`mailto:gpxrayrun@gmail.com?subject=${subject}&body=${body}`, '_blank');
+            feedbackForm.style.display = 'none';
+            feedbackSuccess.style.display = 'flex';
+        }
+    });
 }
 
 function getHistory() {

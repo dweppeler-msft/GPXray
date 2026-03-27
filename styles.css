@@ -171,6 +171,37 @@ header h1 {
     background: rgba(0, 212, 255, 0.1);
 }
 
+/* Header Buttons */
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.header-btn {
+    padding: 10px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.header-btn:hover {
+    border-color: #00d4ff;
+    background: rgba(0, 212, 255, 0.1);
+}
+
+.feedback-btn {
+    border-color: rgba(76, 175, 80, 0.4);
+}
+
+.feedback-btn:hover {
+    border-color: #4CAF50;
+    background: rgba(76, 175, 80, 0.15);
+}
+
 /* History Panel */
 .history-overlay {
     position: fixed;
@@ -355,6 +386,174 @@ header h1 {
 .history-import-btn:hover {
     border-color: #00d4ff;
     background: rgba(0, 212, 255, 0.1);
+}
+
+/* Feedback Panel */
+.feedback-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+
+.feedback-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.feedback-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    max-width: 90vw;
+    height: 100vh;
+    background: #1a1a2e;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    transition: right 0.3s ease;
+    z-index: 1000;
+}
+
+.feedback-panel.active {
+    right: 0;
+}
+
+.feedback-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.feedback-header h3 {
+    margin: 0;
+    color: #4CAF50;
+}
+
+.feedback-close {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+}
+
+.feedback-close:hover {
+    color: #fff;
+}
+
+.feedback-form {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.feedback-field label {
+    display: block;
+    color: #aaa;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+}
+
+.feedback-field textarea,
+.feedback-field input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.feedback-field textarea:focus,
+.feedback-field input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.feedback-field textarea::placeholder,
+.feedback-field input::placeholder {
+    color: #555;
+}
+
+.feedback-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    padding-top: 10px;
+}
+
+.feedback-submit {
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.feedback-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+.feedback-email-link {
+    color: #888;
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.feedback-email-link:hover {
+    color: #00d4ff;
+    text-decoration: underline;
+}
+
+.feedback-success {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    text-align: center;
+}
+
+.feedback-success-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.feedback-success h4 {
+    color: #4CAF50;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.feedback-success p {
+    color: #888;
 }
 
 /* Upload Section */
