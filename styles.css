@@ -389,6 +389,288 @@ h2 {
     color: #666;
 }
 
+/* ITRA Index Mode Styles */
+.itra-effort-display {
+    background: rgba(255, 165, 0, 0.1);
+    border: 1px solid rgba(255, 165, 0, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.itra-effort-display h4 {
+    color: #ffa500;
+    margin-bottom: 15px;
+}
+
+.effort-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.effort-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.effort-item.effort-total {
+    width: 100%;
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 165, 0, 0.3);
+}
+
+.effort-label {
+    color: #888;
+}
+
+.effort-value {
+    color: #fff;
+    font-weight: bold;
+}
+
+.effort-total .effort-value {
+    color: #ffa500;
+    font-size: 1.3em;
+}
+
+.itra-input-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.itra-input-section h4 {
+    color: #00d4ff;
+    margin-bottom: 15px;
+}
+
+.itra-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.itra-tab {
+    flex: 1;
+    padding: 10px 15px;
+    border: 2px solid #4a4a6a;
+    border-radius: 8px;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.itra-tab:hover {
+    border-color: #00d4ff;
+    color: #fff;
+}
+
+.itra-tab.active {
+    background: #00d4ff;
+    border-color: #00d4ff;
+    color: #1a1a2e;
+}
+
+.itra-input-panel {
+    padding: 15px 0;
+}
+
+.itra-score-input {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
+}
+
+.itra-score-input label {
+    color: #ccc;
+}
+
+.itra-score-input input {
+    padding: 12px;
+    border: 2px solid #4a4a6a;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.itra-score-input input:focus {
+    outline: none;
+    border-color: #00d4ff;
+}
+
+.itra-link {
+    color: #00d4ff;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.itra-link:hover {
+    text-decoration: underline;
+}
+
+.itra-level-indicator {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background: rgba(0, 212, 255, 0.1);
+    border-radius: 8px;
+    display: inline-block;
+}
+
+#itraLevelText {
+    color: #00d4ff;
+    font-weight: bold;
+}
+
+.calc-description {
+    color: #888;
+    margin-bottom: 15px;
+}
+
+.past-race-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px;
+}
+
+.past-race-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.past-race-row label {
+    flex: 0 0 120px;
+    color: #ccc;
+}
+
+.past-race-row input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #4a4a6a;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+}
+
+.past-race-row input:focus {
+    outline: none;
+    border-color: #00d4ff;
+}
+
+.past-race-row span {
+    color: #888;
+    min-width: 30px;
+}
+
+.past-race-time {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+}
+
+.past-race-time input {
+    width: 60px;
+    text-align: center;
+}
+
+.past-race-time span {
+    color: #888;
+    min-width: auto;
+}
+
+.calc-itra-btn {
+    margin-top: 20px;
+    padding: 12px 25px;
+    background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
+    border: none;
+    border-radius: 8px;
+    color: #1a1a2e;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.calc-itra-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 165, 0, 0.3);
+}
+
+.calculated-itra {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.calc-itra-label {
+    color: #888;
+}
+
+.calc-itra-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #00d4ff;
+}
+
+.use-itra-btn {
+    padding: 8px 15px;
+    background: #00d4ff;
+    border: none;
+    border-radius: 6px;
+    color: #1a1a2e;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.use-itra-btn:hover {
+    background: #00b8e6;
+}
+
+.itra-result {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(255, 165, 0, 0.15) 100%);
+    border: 2px solid rgba(0, 212, 255, 0.3);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.itra-result h4 {
+    color: #00d4ff;
+    margin-bottom: 15px;
+}
+
+.itra-estimated-time {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.itra-pace-info {
+    color: #888;
+}
+
+.itra-pace-info span {
+    color: #ffa500;
+}
+
 .calculated-paces {
     background: rgba(0, 212, 255, 0.1);
     border: 1px solid rgba(0, 212, 255, 0.3);

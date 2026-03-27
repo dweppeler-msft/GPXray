@@ -157,6 +157,9 @@ function parseGPX(gpxContent) {
     displayElevationChart();
     displayGradientChart();
     
+    // Update ITRA effort display
+    updateItraEffortDisplay();
+    
     // Fetch surface data from OSM (async, will update display when done)
     fetchSurfaceData();
 }
@@ -1238,8 +1241,10 @@ function setupPaceCalculation() {
 function setupModeSelector() {
     const manualBtn = document.getElementById('manualModeBtn');
     const targetBtn = document.getElementById('targetModeBtn');
+    const itraBtn = document.getElementById('itraModeBtn');
     const manualMode = document.getElementById('manualMode');
     const targetMode = document.getElementById('targetMode');
+    const itraMode = document.getElementById('itraMode');
     
     if (!manualBtn || !targetBtn || !manualMode || !targetMode) {
         console.error('Mode selector elements not found');
@@ -1251,8 +1256,10 @@ function setupModeSelector() {
         currentMode = 'manual';
         manualBtn.classList.add('active');
         targetBtn.classList.remove('active');
+        if (itraBtn) itraBtn.classList.remove('active');
         manualMode.style.display = 'block';
         targetMode.style.display = 'none';
+        if (itraMode) itraMode.style.display = 'none';
     });
     
     targetBtn.addEventListener('click', (e) => {
@@ -1260,9 +1267,250 @@ function setupModeSelector() {
         currentMode = 'target';
         targetBtn.classList.add('active');
         manualBtn.classList.remove('active');
+        if (itraBtn) itraBtn.classList.remove('active');
         targetMode.style.display = 'block';
         manualMode.style.display = 'none';
+        if (itraMode) itraMode.style.display = 'none';
     });
+    
+    if (itraBtn && itraMode) {
+        itraBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentMode = 'itra';
+            itraBtn.classList.add('active');
+            manualBtn.classList.remove('active');
+            targetBtn.classList.remove('active');
+            itraMode.style.display = 'block';
+            manualMode.style.display = 'none';
+            targetMode.style.display = 'none';
+            updateItraEffortDisplay();
+        });
+    }
+    
+    // Setup ITRA mode specific handlers
+    setupItraMode();
+}
+
+// ITRA Mode setup and functions
+function setupItraMode() {
+    // Tab switching
+    const directTab = document.getElementById('itraDirectTab');
+    const calcTab = document.getElementById('itraCalcTab');
+    const directInput = document.getElementById('itraDirectInput');
+    const calcInput = document.getElementById('itraCalcInput');
+    
+    if (directTab && calcTab) {
+        directTab.addEventListener('click', () => {
+            directTab.classList.add('active');
+            calcTab.classList.remove('active');
+            directInput.style.display = 'block';
+            calcInput.style.display = 'none';
+        });
+        
+        calcTab.addEventListener('click', () => {
+            calcTab.classList.add('active');
+            directTab.classList.remove('active');
+            calcInput.style.display = 'block';
+            directInput.style.display = 'none';
+        });
+    }
+    
+    // ITRA score input - update level indicator
+    const itraScoreInput = document.getElementById('itraScore');
+    if (itraScoreInput) {
+        itraScoreInput.addEventListener('input', () => {
+            updateItraLevel(parseInt(itraScoreInput.value));
+            updateItraEstimate();
+        });
+    }
+    
+    // Calculate ITRA from past race
+    const calcItraBtn = document.getElementById('calcItraBtn');
+    if (calcItraBtn) {
+        calcItraBtn.addEventListener('click', calculateItraFromRace);
+    }
+    
+    // Use calculated ITRA button
+    const useCalcItra = document.getElementById('useCalcItra');
+    if (useCalcItra) {
+        useCalcItra.addEventListener('click', () => {
+            const calcValue = document.getElementById('calcItraValue').textContent;
+            if (calcValue && calcValue !== '-') {
+                document.getElementById('itraScore').value = parseInt(calcValue);
+                updateItraLevel(parseInt(calcValue));
+                updateItraEstimate();
+                // Switch to direct input tab
+                document.getElementById('itraDirectTab').click();
+            }
+        });
+    }
+    
+    // Update estimate when ratios change
+    const uphillRatio = document.getElementById('itraUphillRatio');
+    const downhillRatio = document.getElementById('itraDownhillRatio');
+    if (uphillRatio) uphillRatio.addEventListener('input', updateItraEstimate);
+    if (downhillRatio) downhillRatio.addEventListener('input', updateItraEstimate);
+}
+
+// Update ITRA effort display when GPX is loaded
+function updateItraEffortDisplay() {
+    if (!gpxData) return;
+    
+    const distanceEl = document.getElementById('itraDistance');
+    const elevationEl = document.getElementById('itraElevation');
+    const effortEl = document.getElementById('itraEffortPoints');
+    
+    if (!distanceEl || !elevationEl || !effortEl) return;
+    
+    const distance = gpxData.totalDistance;
+    const elevation = gpxData.elevationGain;
+    const effortPoints = calculateEffortPoints(distance, elevation);
+    
+    distanceEl.textContent = `${distance.toFixed(2)} km`;
+    elevationEl.textContent = `${elevation.toFixed(0)} m`;
+    effortEl.textContent = effortPoints.toFixed(0);
+    
+    // Update estimate
+    updateItraEstimate();
+}
+
+// Calculate ITRA effort points: distance + (elevation / 100)
+function calculateEffortPoints(distanceKm, elevationM) {
+    return distanceKm + (elevationM / 100);
+}
+
+// Update ITRA level indicator text
+function updateItraLevel(score) {
+    const levelText = document.getElementById('itraLevelText');
+    if (!levelText) return;
+    
+    let level, color;
+    if (score >= 800) {
+        level = 'Elite';
+        color = '#ffd700';
+    } else if (score >= 700) {
+        level = 'Competitive';
+        color = '#00d4ff';
+    } else if (score >= 600) {
+        level = 'Advanced';
+        color = '#4CAF50';
+    } else if (score >= 500) {
+        level = 'Intermediate';
+        color = '#ffa500';
+    } else {
+        level = 'Beginner';
+        color = '#9E9E9E';
+    }
+    
+    levelText.textContent = level;
+    levelText.style.color = color;
+}
+
+// Calculate ITRA score from past race
+function calculateItraFromRace() {
+    const distance = parseFloat(document.getElementById('pastRaceDistance').value);
+    const elevation = parseFloat(document.getElementById('pastRaceElevation').value);
+    const hours = parseInt(document.getElementById('pastRaceHours').value) || 0;
+    const minutes = parseInt(document.getElementById('pastRaceMinutes').value) || 0;
+    
+    if (isNaN(distance) || distance <= 0 || isNaN(elevation) || elevation < 0) {
+        alert('Please enter valid distance and elevation values.');
+        return;
+    }
+    
+    if (hours === 0 && minutes === 0) {
+        alert('Please enter your finish time.');
+        return;
+    }
+    
+    const timeInHours = hours + (minutes / 60);
+    const effortPoints = calculateEffortPoints(distance, elevation);
+    
+    // ITRA formula approximation:
+    // Reference: ~550 index corresponds to ~5.5 min/effort point
+    // Higher score = faster (less time per effort point)
+    const minutesPerPoint = (timeInHours * 60) / effortPoints;
+    
+    // Inverse relationship: faster runners have higher scores
+    // Calibration: 550 score ≈ 5.5 min/point, 700 score ≈ 4.3 min/point, 800 score ≈ 3.7 min/point
+    // Score ≈ 3000 / minutesPerPoint (rough approximation)
+    let estimatedScore = Math.round(3000 / minutesPerPoint);
+    
+    // Clamp to realistic range
+    estimatedScore = Math.max(350, Math.min(950, estimatedScore));
+    
+    // Display result
+    document.getElementById('calcItraValue').textContent = estimatedScore;
+    document.getElementById('calculatedItra').style.display = 'flex';
+}
+
+// Update ITRA estimated time
+function updateItraEstimate() {
+    if (!gpxData) return;
+    
+    const itraScore = parseInt(document.getElementById('itraScore')?.value) || 550;
+    const distance = gpxData.totalDistance;
+    const elevation = gpxData.elevationGain;
+    const effortPoints = calculateEffortPoints(distance, elevation);
+    
+    // Calculate time based on ITRA score
+    // Higher score = less minutes per effort point
+    const minutesPerPoint = 3000 / itraScore;
+    const totalMinutes = effortPoints * minutesPerPoint;
+    
+    // Add stop times from AID stations
+    const totalStopTime = aidStations.reduce((sum, s) => sum + (s.stopMin || 0), 0);
+    const finalTime = totalMinutes + totalStopTime;
+    
+    // Display
+    const resultDiv = document.getElementById('itraResult');
+    const timeEl = document.getElementById('itraEstimatedTime');
+    const paceEl = document.getElementById('itraAvgPace');
+    
+    if (resultDiv && timeEl && paceEl) {
+        resultDiv.style.display = 'block';
+        timeEl.textContent = formatTime(finalTime);
+        
+        const avgPace = totalMinutes / distance;
+        paceEl.textContent = `${formatPace(avgPace)} /km`;
+    }
+}
+
+// Calculate paces from ITRA score
+function calculatePacesFromItra() {
+    if (!gpxData) return null;
+    
+    const itraScore = parseInt(document.getElementById('itraScore')?.value) || 550;
+    const uphillRatio = parseFloat(document.getElementById('itraUphillRatio')?.value) || 1.3;
+    const downhillRatio = parseFloat(document.getElementById('itraDownhillRatio')?.value) || 0.85;
+    
+    const distance = gpxData.totalDistance;
+    const elevation = gpxData.elevationGain;
+    const effortPoints = calculateEffortPoints(distance, elevation);
+    
+    const minutesPerPoint = 3000 / itraScore;
+    const totalRunningMinutes = effortPoints * minutesPerPoint;
+    
+    // Calculate terrain breakdown
+    let flatDist = 0, uphillDist = 0, downhillDist = 0;
+    for (const segment of segments) {
+        switch (segment.terrainType) {
+            case 'flat': flatDist += segment.distance; break;
+            case 'uphill': uphillDist += segment.distance; break;
+            case 'downhill': downhillDist += segment.distance; break;
+        }
+    }
+    
+    // Calculate base flat pace that achieves target time with ratios
+    // totalTime = flatDist * flatPace + uphillDist * flatPace * uphillRatio + downhillDist * flatPace * downhillRatio
+    const weightedDistance = flatDist + (uphillDist * uphillRatio) + (downhillDist * downhillRatio);
+    const flatPace = totalRunningMinutes / weightedDistance;
+    
+    return {
+        flatPace: flatPace,
+        uphillPace: flatPace * uphillRatio,
+        downhillPace: flatPace * downhillRatio
+    };
 }
 
 // AID Stations setup
@@ -1441,7 +1689,7 @@ function calculateRacePlan() {
             document.getElementById('downhillPaceMin'),
             document.getElementById('downhillPaceSec')
         );
-    } else {
+    } else if (currentMode === 'target') {
         // Calculate paces from target time
         const paces = calculatePacesFromTargetTime();
         flatPace = paces.flatPace;
@@ -1453,6 +1701,17 @@ function calculateRacePlan() {
         document.getElementById('calcFlatPace').textContent = formatPace(flatPace) + ' /km';
         document.getElementById('calcUphillPace').textContent = formatPace(uphillPace) + ' /km';
         document.getElementById('calcDownhillPace').textContent = formatPace(downhillPace) + ' /km';
+    } else if (currentMode === 'itra') {
+        // Calculate paces from ITRA score
+        const paces = calculatePacesFromItra();
+        if (!paces) return;
+        flatPace = paces.flatPace;
+        uphillPace = paces.uphillPace;
+        downhillPace = paces.downhillPace;
+        
+        // Hide target mode calculated paces if visible
+        const calcPacesDiv = document.getElementById('calculatedPaces');
+        if (calcPacesDiv) calcPacesDiv.style.display = 'none';
     }
     
     // Calculate distances and times for each terrain type

@@ -128,6 +128,7 @@
             <div class="mode-selector">
                 <button type="button" class="mode-btn active" id="manualModeBtn">Manual Pace</button>
                 <button type="button" class="mode-btn" id="targetModeBtn">Target Time</button>
+                <button type="button" class="mode-btn" id="itraModeBtn">ITRA Index</button>
             </div>
             
             <!-- Manual Mode -->
@@ -228,6 +229,100 @@
                         <div class="calc-pace-item">
                             <span class="calc-pace-label">⬇️ Downhill:</span>
                             <span class="calc-pace-value" id="calcDownhillPace">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ITRA Index Mode -->
+            <div id="itraMode" class="pace-mode" style="display: none;">
+                <p class="pace-description">Use your ITRA Performance Index to estimate race time. You can enter your score directly or calculate it from a past race.</p>
+                
+                <div class="itra-effort-display">
+                    <h4>📊 Route Effort Points</h4>
+                    <div class="effort-stats">
+                        <div class="effort-item">
+                            <span class="effort-label">Distance:</span>
+                            <span class="effort-value" id="itraDistance">-</span>
+                        </div>
+                        <div class="effort-item">
+                            <span class="effort-label">Elevation Gain:</span>
+                            <span class="effort-value" id="itraElevation">-</span>
+                        </div>
+                        <div class="effort-item effort-total">
+                            <span class="effort-label">ITRA Effort Points:</span>
+                            <span class="effort-value" id="itraEffortPoints">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="itra-input-section">
+                    <h4>🏃 Your ITRA Index</h4>
+                    <div class="itra-tabs">
+                        <button type="button" class="itra-tab active" id="itraDirectTab">Enter Score</button>
+                        <button type="button" class="itra-tab" id="itraCalcTab">Calculate from Race</button>
+                    </div>
+                    
+                    <div id="itraDirectInput" class="itra-input-panel">
+                        <div class="itra-score-input">
+                            <label>ITRA Performance Index (400-900)</label>
+                            <input type="number" id="itraScore" value="550" min="400" max="900" step="1">
+                            <a href="https://itra.run/" target="_blank" class="itra-link">Find your score on ITRA.run →</a>
+                        </div>
+                        <div class="itra-level-indicator">
+                            <span id="itraLevelText">Intermediate</span>
+                        </div>
+                    </div>
+                    
+                    <div id="itraCalcInput" class="itra-input-panel" style="display: none;">
+                        <p class="calc-description">Enter a past trail race result to estimate your ITRA index:</p>
+                        <div class="past-race-inputs">
+                            <div class="past-race-row">
+                                <label>Race Distance</label>
+                                <input type="number" id="pastRaceDistance" placeholder="km" min="1" step="0.1">
+                                <span>km</span>
+                            </div>
+                            <div class="past-race-row">
+                                <label>Elevation Gain</label>
+                                <input type="number" id="pastRaceElevation" placeholder="m" min="0" step="10">
+                                <span>m</span>
+                            </div>
+                            <div class="past-race-row">
+                                <label>Finish Time</label>
+                                <div class="past-race-time">
+                                    <input type="number" id="pastRaceHours" placeholder="h" min="0" max="48">
+                                    <span>:</span>
+                                    <input type="number" id="pastRaceMinutes" placeholder="m" min="0" max="59">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="calcItraBtn" class="calc-itra-btn">Calculate My Index</button>
+                        <div id="calculatedItra" class="calculated-itra" style="display: none;">
+                            <span class="calc-itra-label">Estimated ITRA Index:</span>
+                            <span class="calc-itra-value" id="calcItraValue">-</span>
+                            <button type="button" id="useCalcItra" class="use-itra-btn">Use This Score</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="itra-result" id="itraResult" style="display: none;">
+                    <h4>⏱️ Estimated Race Time</h4>
+                    <div class="itra-estimated-time" id="itraEstimatedTime">-</div>
+                    <div class="itra-pace-info">
+                        <span>Avg pace: <span id="itraAvgPace">-</span></span>
+                    </div>
+                </div>
+                
+                <div class="pace-ratios">
+                    <p class="ratio-description">Adjust pace multipliers relative to flat pace:</p>
+                    <div class="ratio-inputs">
+                        <div class="ratio-group">
+                            <label><span class="terrain-icon uphill-icon">⬆️</span> Uphill Multiplier</label>
+                            <input type="number" id="itraUphillRatio" value="1.3" min="1.0" max="2.0" step="0.05">
+                        </div>
+                        <div class="ratio-group">
+                            <label><span class="terrain-icon downhill-icon">⬇️</span> Downhill Multiplier</label>
+                            <input type="number" id="itraDownhillRatio" value="0.85" min="0.5" max="1.0" step="0.05">
                         </div>
                     </div>
                 </div>
