@@ -3056,7 +3056,7 @@ async function exportToPdf() {
         
         const stats = [
             { label: 'Distance', value: `${distance.toFixed(1)} ${unitLabel}` },
-            { label: 'Elevation', value: `↑${gpxData.elevationGain.toFixed(0)}m ↓${gpxData.elevationLoss.toFixed(0)}m` },
+            { label: 'Elevation', value: `+${gpxData.elevationGain.toFixed(0)}m / -${gpxData.elevationLoss.toFixed(0)}m` },
             { label: 'Est. Time', value: totalTime }
         ];
         
