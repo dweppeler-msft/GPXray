@@ -1447,41 +1447,24 @@ function setupFeedback() {
             timestamp: new Date().toISOString()
         };
         
-        // Try Formspree submission (replace YOUR_FORM_ID with actual ID from formspree.io)
-        const FORMSPREE_ENDPOINT = 'https://formspree.io/f/YOUR_FORM_ID';
+        // Submit to Formspree
+        const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mqegeeap';
         
         try {
-            // Check if Formspree is configured
-            if (FORMSPREE_ENDPOINT.includes('YOUR_FORM_ID')) {
-                // Fallback to mailto
-                const subject = encodeURIComponent('GPXray Beta Feedback');
-                const body = encodeURIComponent(
-                    `What I like:\n${data.like || 'N/A'}\n\n` +
-                    `Missing features:\n${data.missing || 'N/A'}\n\n` +
-                    `Bugs/Issues:\n${data.bugs || 'N/A'}\n\n` +
-                    `Email: ${data.email || 'N/A'}\n` +
-                    `Submitted: ${data.timestamp}`
-                );
-                window.open(`mailto:gpxrayrun@gmail.com?subject=${subject}&body=${body}`, '_blank');
+            const response = await fetch(FORMSPREE_ENDPOINT, {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
                 feedbackForm.style.display = 'none';
                 feedbackSuccess.style.display = 'flex';
             } else {
-                // Submit to Formspree
-                const response = await fetch(FORMSPREE_ENDPOINT, {
-                    method: 'POST',
-                    body: JSON.stringify(data),
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    feedbackForm.style.display = 'none';
-                    feedbackSuccess.style.display = 'flex';
-                } else {
-                    throw new Error('Form submission failed');
-                }
+                throw new Error('Form submission failed');
             }
         } catch (error) {
             console.error('Feedback submission error:', error);
