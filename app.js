@@ -3305,6 +3305,17 @@ async function exportShareCard() {
             `;
         }
 
+        // Get finish clock time from the last row of splits table
+        let finishClockTime = '';
+        if (splitsTable) {
+            const allRows = splitsTable.querySelectorAll('tbody tr');
+            if (allRows.length > 0) {
+                const lastRow = allRows[allRows.length - 1];
+                const cells = lastRow.querySelectorAll('td');
+                finishClockTime = cells[9]?.textContent || '';
+            }
+        }
+
         let routeName = currentRouteName || 'Race Plan';
         if (routeName.length > 35) {
             routeName = routeName.substring(0, 32) + '...';
@@ -3343,6 +3354,7 @@ async function exportShareCard() {
             <div style="background: rgba(76,175,80,0.15); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 14px; color: #888; margin-bottom: 5px;">Estimated Finish</div>
                 <div style="font-size: 36px; font-weight: bold; color: #4CAF50;">${totalTime.split('(')[0].trim()}</div>
+                ${finishClockTime ? `<div style="font-size: 18px; color: #aaa; margin-top: 8px;">🏁 ${finishClockTime}</div>` : ''}
             </div>
             
             ${aidStationsList ? `
