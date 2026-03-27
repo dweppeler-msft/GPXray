@@ -4,6 +4,7 @@ let map = null;
 let routeLayers = [];
 let elevationChart = null;
 let segments = []; // Stores segment data with terrain type
+let currentMode = 'manual'; // 'manual' or 'target'
 
 // Constants
 const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDragAndDrop();
     setupFileInput();
     setupPaceCalculation();
+    setupModeSelector();
     setupExport();
 });
 
@@ -434,6 +436,30 @@ function setupPaceCalculation() {
     document.getElementById('calculatePace').addEventListener('click', calculateRacePlan);
 }
 
+// Mode selector setup
+function setupModeSelector() {
+    const manualBtn = document.getElementById('manualModeBtn');
+    const targetBtn = document.getElementById('targetModeBtn');
+    const manualMode = document.getElementById('manualMode');
+    const targetMode = document.getElementById('targetMode');
+    
+    manualBtn.addEventListener('click', () => {
+        currentMode = 'manual';
+        manualBtn.classList.add('active');
+        targetBtn.classList.remove('active');
+        manualMode.style.display = 'block';
+        targetMode.style.display = 'none';
+    });
+    
+    targetBtn.addEventListener('click', () => {
+        currentMode = 'target';
+        targetBtn.classList.add('active');
+        manualBtn.classList.remove('active');
+        targetMode.style.display = 'block';
+        manualMode.style.display = 'none';
+    });
+}
+
 function getPaceInMinutes(minInput, secInput) {
     const min = parseInt(minInput.value) || 0;
     const sec = parseInt(secInput.value) || 0;
@@ -457,25 +483,86 @@ function formatPace(paceMinutes) {
     return `${min}:${sec.toString().padStart(2, '0')}`;
 }
 
+function calculateTerrainDistances() {
+    let flatDistance = 0, uphillDistance = 0, downhillDistance = 0;
+    
+    segments.forEach(segment => {
+        switch (segment.terrainType) {
+            case 'flat':
+                flatDistance += segment.distance;
+                break;
+            case 'uphill':
+                uphillDistance += segment.distance;
+                break;
+            case 'downhill':
+                downhillDistance += segment.distance;
+                break;
+        }
+    });
+    
+    return { flatDistance, uphillDistance, downhillDistance };
+}
+
+function calculatePacesFromTargetTime() {
+    // Get target time in minutes
+    const hours = parseInt(document.getElementById('targetHours').value) || 0;
+    const minutes = parseInt(document.getElementById('targetMinutes').value) || 0;
+    const seconds = parseInt(document.getElementById('targetSeconds').value) || 0;
+    const targetTimeMinutes = hours * 60 + minutes + seconds / 60;
+    
+    // Get ratios
+    const uphillRatio = parseFloat(document.getElementById('uphillRatio').value) || 1.2;
+    const downhillRatio = parseFloat(document.getElementById('downhillRatio').value) || 0.9;
+    
+    // Get terrain distances
+    const { flatDistance, uphillDistance, downhillDistance } = calculateTerrainDistances();
+    
+    // Calculate base (flat) pace
+    // Total time = flatDist * flatPace + uphillDist * (flatPace * uphillRatio) + downhillDist * (flatPace * downhillRatio)
+    // Total time = flatPace * (flatDist + uphillDist * uphillRatio + downhillDist * downhillRatio)
+    const weightedDistance = flatDistance + (uphillDistance * uphillRatio) + (downhillDistance * downhillRatio);
+    const flatPace = targetTimeMinutes / weightedDistance;
+    const uphillPace = flatPace * uphillRatio;
+    const downhillPace = flatPace * downhillRatio;
+    
+    return { flatPace, uphillPace, downhillPace };
+}
+
 function calculateRacePlan() {
     if (!gpxData || segments.length === 0) {
         alert('Please load a GPX file first.');
         return;
     }
     
-    // Get pace values
-    const flatPace = getPaceInMinutes(
-        document.getElementById('flatPaceMin'),
-        document.getElementById('flatPaceSec')
-    );
-    const uphillPace = getPaceInMinutes(
-        document.getElementById('uphillPaceMin'),
-        document.getElementById('uphillPaceSec')
-    );
-    const downhillPace = getPaceInMinutes(
-        document.getElementById('downhillPaceMin'),
-        document.getElementById('downhillPaceSec')
-    );
+    let flatPace, uphillPace, downhillPace;
+    
+    if (currentMode === 'manual') {
+        // Get pace values from manual inputs
+        flatPace = getPaceInMinutes(
+            document.getElementById('flatPaceMin'),
+            document.getElementById('flatPaceSec')
+        );
+        uphillPace = getPaceInMinutes(
+            document.getElementById('uphillPaceMin'),
+            document.getElementById('uphillPaceSec')
+        );
+        downhillPace = getPaceInMinutes(
+            document.getElementById('downhillPaceMin'),
+            document.getElementById('downhillPaceSec')
+        );
+    } else {
+        // Calculate paces from target time
+        const paces = calculatePacesFromTargetTime();
+        flatPace = paces.flatPace;
+        uphillPace = paces.uphillPace;
+        downhillPace = paces.downhillPace;
+        
+        // Display calculated paces
+        document.getElementById('calculatedPaces').style.display = 'block';
+        document.getElementById('calcFlatPace').textContent = formatPace(flatPace) + ' /km';
+        document.getElementById('calcUphillPace').textContent = formatPace(uphillPace) + ' /km';
+        document.getElementById('calcDownhillPace').textContent = formatPace(downhillPace) + ' /km';
+    }
     
     // Calculate distances and times for each terrain type
     let flatDistance = 0, uphillDistance = 0, downhillDistance = 0;
@@ -623,24 +710,34 @@ function exportToCsv() {
         return;
     }
 
-    // Get pace values for summary
-    const flatPace = getPaceInMinutes(
-        document.getElementById('flatPaceMin'),
-        document.getElementById('flatPaceSec')
-    );
-    const uphillPace = getPaceInMinutes(
-        document.getElementById('uphillPaceMin'),
-        document.getElementById('uphillPaceSec')
-    );
-    const downhillPace = getPaceInMinutes(
-        document.getElementById('downhillPaceMin'),
-        document.getElementById('downhillPaceSec')
-    );
+    // Get pace values based on current mode
+    let flatPace, uphillPace, downhillPace;
+    
+    if (currentMode === 'manual') {
+        flatPace = getPaceInMinutes(
+            document.getElementById('flatPaceMin'),
+            document.getElementById('flatPaceSec')
+        );
+        uphillPace = getPaceInMinutes(
+            document.getElementById('uphillPaceMin'),
+            document.getElementById('uphillPaceSec')
+        );
+        downhillPace = getPaceInMinutes(
+            document.getElementById('downhillPaceMin'),
+            document.getElementById('downhillPaceSec')
+        );
+    } else {
+        const paces = calculatePacesFromTargetTime();
+        flatPace = paces.flatPace;
+        uphillPace = paces.uphillPace;
+        downhillPace = paces.downhillPace;
+    }
 
     let csvContent = '';
 
     // Add summary section
     csvContent += 'GPX RACE PLAN EXPORT\n';
+    csvContent += `Mode,${currentMode === 'manual' ? 'Manual Pace' : 'Target Time'}\n`;
     csvContent += '\n';
     csvContent += 'ROUTE STATISTICS\n';
     csvContent += `Total Distance,${gpxData.totalDistance.toFixed(2)} km\n`;
