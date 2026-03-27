@@ -3272,9 +3272,20 @@ async function exportShareCard() {
         const raceDate = dateInput?.value || '';
         const raceTime = timeInput?.value || '06:00';
 
+        // Get finish clock time from the last row of splits table
+        let finishClockTime = '';
+        const splitsTable = document.getElementById('splitsTable');
+        if (splitsTable) {
+            const allRows = splitsTable.querySelectorAll('tbody tr');
+            if (allRows.length > 0) {
+                const lastRow = allRows[allRows.length - 1];
+                const cells = lastRow.querySelectorAll('td');
+                finishClockTime = cells[9]?.textContent || '';
+            }
+        }
+
         // Get AID station times from the splits table (only exact AID station rows)
         let aidStationsList = '';
-        const splitsTable = document.getElementById('splitsTable');
         if (splitsTable && aidStations.length > 0) {
             // Sort AID stations by km and get their data
             const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
@@ -3409,6 +3420,56 @@ async function exportShareCard() {
                 prevKm = stationKm;
                 prevElevation = stationElevation;
             });
+            
+            // Add leg info to finish (if there are stations and showLegInfo)
+            if (stationData.length > 0 && showLegInfo) {
+                const lastStationKm = parseFloat(stationData[stationData.length - 1].dist);
+                const finishKm = distance;
+                const legToFinish = (finishKm - lastStationKm).toFixed(1);
+                
+                // Calculate elevation to finish
+                let finishElevGain = 0;
+                let finishElevLoss = 0;
+                let lastElev = null;
+                for (const point of gpxData.points) {
+                    if (point.distance >= lastStationKm) {
+                        if (point.elevation !== null) {
+                            if (lastElev !== null) {
+                                const diff = point.elevation - lastElev;
+                                if (diff > 0) finishElevGain += diff;
+                                else finishElevLoss += Math.abs(diff);
+                            }
+                            lastElev = point.elevation;
+                        }
+                    }
+                }
+                
+                aidStationsList += `
+                    <div style="text-align: center; padding: 6px 0; color: #999; font-size: ${legInfoSize}; font-weight: 500;">
+                        ↓ ${legToFinish} ${unitLabel} · +${Math.round(finishElevGain)}m / -${Math.round(finishElevLoss)}m
+                    </div>
+                `;
+            }
+            
+            // Add FINISH row
+            aidStationsList += `
+                <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(76,175,80,0.2); border-radius: 8px; margin-top: 4px;">
+                    <span style="color: #4CAF50; min-width: 55px; font-size: ${kmSize}; font-weight: bold;">🏁 ${distance.toFixed(1)}</span>
+                    <span style="flex: 1; margin: 0 6px; font-size: ${nameSize}; font-weight: 700; color: #4CAF50;">FINISH</span>
+                    <span style="color: #4CAF50; font-size: ${timeSize}; font-weight: 700; margin-right: 10px;">${totalTime.split('(')[0].trim()}</span>
+                    <span style="font-weight: bold; color: #4CAF50; min-width: 75px; text-align: right; font-size: ${clockSize};">${finishClockTime}</span>
+                </div>
+            `;
+        } else {
+            // No AID stations - show just FINISH row
+            aidStationsList = `
+                <div style="display: flex; align-items: center; padding: 14px 0; background: rgba(76,175,80,0.2); border-radius: 8px;">
+                    <span style="color: #4CAF50; min-width: 55px; font-size: 20px; font-weight: bold;">🏁 ${distance.toFixed(1)}</span>
+                    <span style="flex: 1; margin: 0 6px; font-size: 18px; font-weight: 700; color: #4CAF50;">FINISH</span>
+                    <span style="color: #4CAF50; font-size: 16px; font-weight: 700; margin-right: 10px;">${totalTime.split('(')[0].trim()}</span>
+                    <span style="font-weight: bold; color: #4CAF50; min-width: 75px; text-align: right; font-size: 20px;">${finishClockTime}</span>
+                </div>
+            `;
         }
 
         // Sun times
@@ -3420,17 +3481,6 @@ async function exportShareCard() {
                     <span>🌇 ${formatSunTime(sunTimes.sunset)}</span>
                 </div>
             `;
-        }
-
-        // Get finish clock time from the last row of splits table
-        let finishClockTime = '';
-        if (splitsTable) {
-            const allRows = splitsTable.querySelectorAll('tbody tr');
-            if (allRows.length > 0) {
-                const lastRow = allRows[allRows.length - 1];
-                const cells = lastRow.querySelectorAll('td');
-                finishClockTime = cells[9]?.textContent || '';
-            }
         }
 
         let routeName = currentRouteName || 'Race Plan';
@@ -3465,20 +3515,14 @@ async function exportShareCard() {
             
             ${sunTimesHtml ? `<div style="text-align: center; margin-bottom: 20px;">${sunTimesHtml}</div>` : ''}
             
-            <div style="background: rgba(76,175,80,0.15); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 16px; color: #aaa; margin-bottom: 5px; font-weight: 500;">Estimated Finish</div>
-                <div style="font-size: 42px; font-weight: bold; color: #4CAF50;">${totalTime.split('(')[0].trim()}</div>
-                ${finishClockTime ? `<div style="font-size: 22px; color: #ccc; margin-top: 8px; font-weight: 600;">🏁 ${finishClockTime}</div>` : ''}
-            </div>
-            
             ${aidStationsList ? `
                 <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
-                    <div style="font-size: 16px; color: #aaa; margin-bottom: 12px; text-align: center; font-weight: 600;">🚰 AID STATION SCHEDULE</div>
+                    <div style="font-size: 16px; color: #aaa; margin-bottom: 12px; text-align: center; font-weight: 600;">⏱️ RACE SCHEDULE</div>
                     <div style="display: flex; align-items: center; padding: 6px 0; border-bottom: 2px solid rgba(255,255,255,0.2); margin-bottom: 8px;">
-                        <span style="color: #888; min-width: 60px; font-size: 12px; font-weight: 600;">${unitLabel.toUpperCase()}</span>
-                        <span style="flex: 1; margin: 0 8px; font-size: 12px; color: #888; font-weight: 600;">STATION</span>
-                        <span style="color: #888; font-size: 12px; margin-right: 12px; font-weight: 600;">RACE</span>
-                        <span style="color: #888; min-width: 80px; text-align: right; font-size: 12px; font-weight: 600;">CLOCK</span>
+                        <span style="color: #888; min-width: 55px; font-size: 12px; font-weight: 600;">${unitLabel.toUpperCase()}</span>
+                        <span style="flex: 1; margin: 0 6px; font-size: 12px; color: #888; font-weight: 600;">STATION</span>
+                        <span style="color: #888; font-size: 12px; margin-right: 10px; font-weight: 600;">RACE</span>
+                        <span style="color: #888; min-width: 75px; text-align: right; font-size: 12px; font-weight: 600;">CLOCK</span>
                     </div>
                     ${aidStationsList}
                 </div>
