@@ -12,9 +12,35 @@
 <body>
     <div class="container">
         <header>
-            <h1>🏃 GPXray</h1>
-            <p class="tagline">See through your runs.</p>
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>🏃 GPXray</h1>
+                    <p class="tagline">See through your runs.</p>
+                </div>
+                <button type="button" class="history-btn" id="historyBtn" title="View History">📋 History</button>
+            </div>
         </header>
+
+        <!-- History Panel -->
+        <div class="history-overlay" id="historyOverlay"></div>
+        <aside class="history-panel" id="historyPanel">
+            <div class="history-header">
+                <h3>📋 Analysis History</h3>
+                <button type="button" class="history-close" id="historyClose">✕</button>
+            </div>
+            <div class="history-content">
+                <div class="history-empty" id="historyEmpty">
+                    <p>No saved analyses yet.</p>
+                    <p class="history-hint">Your analyses will appear here after you save them.</p>
+                </div>
+                <div class="history-list" id="historyList"></div>
+            </div>
+            <div class="history-footer">
+                <button type="button" class="history-export-btn" id="historyExportBtn">📥 Export All</button>
+                <button type="button" class="history-import-btn" id="historyImportBtn">📤 Import</button>
+                <input type="file" id="historyImportInput" accept=".json" hidden>
+            </div>
+        </aside>
 
         <section class="upload-section">
             <div class="upload-box" id="dropZone">

@@ -10,9 +10,11 @@ let aidStations = []; // Stores AID station data
 let useMetric = true; // true = km, false = miles
 let surfaceData = []; // Stores surface data from OSM
 let surfaceEnabled = true; // Whether to use surface multipliers
+let currentRouteName = ''; // Name of current loaded route
 
 // Constants
 const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
+const HISTORY_KEY = 'gpxray_history'; // localStorage key for history
 const KM_TO_MILES = 0.621371;
 const MILES_TO_KM = 1.60934;
 
@@ -64,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSaveLoad();
     setupPrintRaceCard();
     setupChartSelector();
+    setupHistory();
 });
 
 // Drag and Drop functionality
@@ -109,6 +112,9 @@ function setupFileInput() {
 
 // Process GPX file
 function processFile(file) {
+    // Store filename (without extension) as default route name
+    currentRouteName = file.name.replace(/\.gpx$/i, '');
+    
     const reader = new FileReader();
     reader.onload = (e) => {
         const gpxContent = e.target.result;
@@ -127,6 +133,14 @@ function parseGPX(gpxContent) {
     if (parseError) {
         alert('Error parsing GPX file. Please check the file format.');
         return;
+    }
+    
+    // Try to extract route name from GPX metadata
+    const nameTag = xmlDoc.querySelector('metadata > name') || 
+                    xmlDoc.querySelector('trk > name') || 
+                    xmlDoc.querySelector('rte > name');
+    if (nameTag && nameTag.textContent.trim()) {
+        currentRouteName = nameTag.textContent.trim();
     }
 
     // Extract track points
@@ -1117,6 +1131,18 @@ function setupSaveLoad() {
 }
 
 function savePlan() {
+    if (!gpxData) {
+        alert('Please load a GPX file first.');
+        return;
+    }
+    
+    // Prompt for name
+    const name = prompt('Save as:', currentRouteName || 'My Race Plan');
+    if (name === null) return; // Cancelled
+    
+    const entry = saveToHistory(name.trim() || currentRouteName || 'My Race Plan');
+    
+    // Also save to legacy single-plan storage for backward compatibility
     const plan = {
         aidStations: aidStations,
         mode: currentMode,
@@ -1136,7 +1162,7 @@ function savePlan() {
     };
     
     localStorage.setItem('gpxray_plan', JSON.stringify(plan));
-    alert('Plan saved successfully!');
+    alert('Plan saved to history! Click the History button to view all saved plans.');
 }
 
 function loadPlan() {
@@ -1204,6 +1230,294 @@ function loadPlan() {
         alert('Error loading plan.');
         console.error(e);
     }
+}
+
+// History Panel functionality
+function setupHistory() {
+    const historyBtn = document.getElementById('historyBtn');
+    const historyPanel = document.getElementById('historyPanel');
+    const historyOverlay = document.getElementById('historyOverlay');
+    const historyClose = document.getElementById('historyClose');
+    const historyExportBtn = document.getElementById('historyExportBtn');
+    const historyImportBtn = document.getElementById('historyImportBtn');
+    const historyImportInput = document.getElementById('historyImportInput');
+    
+    if (!historyBtn || !historyPanel) return;
+    
+    // Open panel
+    historyBtn.addEventListener('click', () => {
+        historyPanel.classList.add('active');
+        historyOverlay.classList.add('active');
+        renderHistory();
+    });
+    
+    // Close panel
+    const closePanel = () => {
+        historyPanel.classList.remove('active');
+        historyOverlay.classList.remove('active');
+    };
+    
+    historyClose?.addEventListener('click', closePanel);
+    historyOverlay?.addEventListener('click', closePanel);
+    
+    // Export all history
+    historyExportBtn?.addEventListener('click', exportHistory);
+    
+    // Import history
+    historyImportBtn?.addEventListener('click', () => historyImportInput?.click());
+    historyImportInput?.addEventListener('change', importHistory);
+}
+
+function getHistory() {
+    try {
+        const data = localStorage.getItem(HISTORY_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch (e) {
+        console.error('Error reading history:', e);
+        return [];
+    }
+}
+
+function saveToHistory(name) {
+    if (!gpxData) {
+        alert('Please load a GPX file first.');
+        return;
+    }
+    
+    const history = getHistory();
+    
+    const entry = {
+        id: Date.now(),
+        name: name || currentRouteName || 'Unnamed Route',
+        date: new Date().toISOString(),
+        distance: gpxData.totalDistance,
+        elevation: gpxData.elevationGain,
+        plan: {
+            aidStations: aidStations,
+            mode: currentMode,
+            useMetric: useMetric,
+            startTime: document.getElementById('raceStartTime')?.value || '09:00',
+            flatPaceMin: document.getElementById('flatPaceMin')?.value || '5',
+            flatPaceSec: document.getElementById('flatPaceSec')?.value || '30',
+            uphillPaceMin: document.getElementById('uphillPaceMin')?.value || '6',
+            uphillPaceSec: document.getElementById('uphillPaceSec')?.value || '30',
+            downhillPaceMin: document.getElementById('downhillPaceMin')?.value || '5',
+            downhillPaceSec: document.getElementById('downhillPaceSec')?.value || '0',
+            targetHours: document.getElementById('targetHours')?.value || '0',
+            targetMinutes: document.getElementById('targetMinutes')?.value || '45',
+            targetSeconds: document.getElementById('targetSeconds')?.value || '0',
+            uphillRatio: document.getElementById('uphillRatio')?.value || '1.2',
+            downhillRatio: document.getElementById('downhillRatio')?.value || '0.9',
+            itraScore: document.getElementById('itraScore')?.value || '550',
+            itraUphillRatio: document.getElementById('itraUphillRatio')?.value || '1.3',
+            itraDownhillRatio: document.getElementById('itraDownhillRatio')?.value || '0.85'
+        }
+    };
+    
+    // Add to beginning of history
+    history.unshift(entry);
+    
+    // Limit to 50 entries
+    if (history.length > 50) {
+        history.splice(50);
+    }
+    
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    return entry;
+}
+
+function renderHistory() {
+    const historyList = document.getElementById('historyList');
+    const historyEmpty = document.getElementById('historyEmpty');
+    const history = getHistory();
+    
+    if (!historyList) return;
+    
+    if (history.length === 0) {
+        historyEmpty.style.display = 'block';
+        historyList.innerHTML = '';
+        return;
+    }
+    
+    historyEmpty.style.display = 'none';
+    
+    historyList.innerHTML = history.map(entry => {
+        const date = new Date(entry.date);
+        const dateStr = date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+        });
+        
+        return `
+            <div class="history-item" data-id="${entry.id}">
+                <div class="history-item-header">
+                    <span class="history-item-name">${escapeHtml(entry.name)}</span>
+                    <span class="history-item-date">${dateStr}</span>
+                </div>
+                <div class="history-item-stats">
+                    <span>📏 ${entry.distance.toFixed(1)} km</span>
+                    <span>⛰️ ${Math.round(entry.elevation)} m</span>
+                </div>
+                <div class="history-item-actions">
+                    <button type="button" class="history-item-btn history-load-btn" onclick="loadFromHistory(${entry.id})">Load Plan</button>
+                    <button type="button" class="history-item-btn history-delete-btn" onclick="deleteFromHistory(${entry.id})">Delete</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function loadFromHistory(id) {
+    const history = getHistory();
+    const entry = history.find(e => e.id === id);
+    
+    if (!entry || !entry.plan) {
+        alert('Could not load this plan.');
+        return;
+    }
+    
+    const plan = entry.plan;
+    
+    // Restore AID stations
+    aidStations = plan.aidStations || [];
+    renderAidStations();
+    
+    // Restore mode
+    currentMode = plan.mode || 'target';
+    const manualBtn = document.getElementById('manualModeBtn');
+    const targetBtn = document.getElementById('targetModeBtn');
+    const itraBtn = document.getElementById('itraModeBtn');
+    const manualMode = document.getElementById('manualMode');
+    const targetMode = document.getElementById('targetMode');
+    const itraMode = document.getElementById('itraMode');
+    
+    // Reset all modes
+    [manualBtn, targetBtn, itraBtn].forEach(btn => btn?.classList.remove('active'));
+    [manualMode, targetMode, itraMode].forEach(mode => { if (mode) mode.style.display = 'none'; });
+    
+    // Activate current mode
+    if (currentMode === 'manual') {
+        manualBtn?.classList.add('active');
+        if (manualMode) manualMode.style.display = 'block';
+    } else if (currentMode === 'itra') {
+        itraBtn?.classList.add('active');
+        if (itraMode) itraMode.style.display = 'block';
+    } else {
+        targetBtn?.classList.add('active');
+        if (targetMode) targetMode.style.display = 'block';
+    }
+    
+    // Restore unit
+    useMetric = plan.useMetric !== false;
+    const kmBtn = document.getElementById('kmBtn');
+    const milesBtn = document.getElementById('milesBtn');
+    if (useMetric) {
+        kmBtn?.classList.add('active');
+        milesBtn?.classList.remove('active');
+    } else {
+        milesBtn?.classList.add('active');
+        kmBtn?.classList.remove('active');
+    }
+    
+    // Restore values
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+    setVal('raceStartTime', plan.startTime);
+    setVal('flatPaceMin', plan.flatPaceMin);
+    setVal('flatPaceSec', plan.flatPaceSec);
+    setVal('uphillPaceMin', plan.uphillPaceMin);
+    setVal('uphillPaceSec', plan.uphillPaceSec);
+    setVal('downhillPaceMin', plan.downhillPaceMin);
+    setVal('downhillPaceSec', plan.downhillPaceSec);
+    setVal('targetHours', plan.targetHours);
+    setVal('targetMinutes', plan.targetMinutes);
+    setVal('targetSeconds', plan.targetSeconds);
+    setVal('uphillRatio', plan.uphillRatio);
+    setVal('downhillRatio', plan.downhillRatio);
+    setVal('itraScore', plan.itraScore);
+    setVal('itraUphillRatio', plan.itraUphillRatio);
+    setVal('itraDownhillRatio', plan.itraDownhillRatio);
+    
+    // Close panel
+    document.getElementById('historyPanel')?.classList.remove('active');
+    document.getElementById('historyOverlay')?.classList.remove('active');
+    
+    alert(`Loaded plan: ${entry.name}\n\nNote: You'll need to load the same GPX file to recalculate the race plan.`);
+}
+
+function deleteFromHistory(id) {
+    if (!confirm('Delete this saved analysis?')) return;
+    
+    let history = getHistory();
+    history = history.filter(e => e.id !== id);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    renderHistory();
+}
+
+function exportHistory() {
+    const history = getHistory();
+    if (history.length === 0) {
+        alert('No history to export.');
+        return;
+    }
+    
+    const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gpxray-history-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importHistory(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const imported = JSON.parse(event.target.result);
+            if (!Array.isArray(imported)) {
+                throw new Error('Invalid format');
+            }
+            
+            const history = getHistory();
+            const existingIds = new Set(history.map(h => h.id));
+            
+            // Add non-duplicate entries
+            let added = 0;
+            for (const entry of imported) {
+                if (entry.id && !existingIds.has(entry.id)) {
+                    history.push(entry);
+                    existingIds.add(entry.id);
+                    added++;
+                }
+            }
+            
+            // Sort by date (newest first)
+            history.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Limit to 50
+            if (history.length > 50) {
+                history.splice(50);
+            }
+            
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            renderHistory();
+            alert(`Imported ${added} new entries.`);
+        } catch (err) {
+            alert('Error importing history: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset for re-import
 }
 
 // Print Race Card functionality
