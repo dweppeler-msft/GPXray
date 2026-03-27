@@ -425,6 +425,27 @@
                     <button id="exportCsv" class="export-btn">📥 Export CSV</button>
                 </div>
             </div>
+            
+            <!-- Leg Summary (between AID stations) -->
+            <div class="leg-summary" id="legSummary" style="display: none;">
+                <h3>🚰 Leg Summary</h3>
+                <div class="leg-summary-table-container">
+                    <table class="leg-summary-table">
+                        <thead>
+                            <tr>
+                                <th>Leg</th>
+                                <th>Distance</th>
+                                <th>Elevation</th>
+                                <th>Est. Time</th>
+                                <th>Arrival</th>
+                            </tr>
+                        </thead>
+                        <tbody id="legSummaryBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
             <div class="splits-table-container">
                 <table id="splitsTable">
                     <thead>

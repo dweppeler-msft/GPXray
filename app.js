@@ -2327,6 +2327,10 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
     const [startHours, startMinutes] = startTimeValue.split(':').map(Number);
     const startTimeInMinutes = startHours * 60 + startMinutes;
     
+    // Check if surface multipliers are enabled (defined here for use throughout)
+    const surfaceToggle = document.getElementById('surfaceEnabled');
+    const applySurface = surfaceToggle ? surfaceToggle.checked : false;
+    
     let cumulativeTime = 0;
     
     // Get average pace for AID station time calculations
@@ -2372,10 +2376,6 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         // Calculate elevation change
         const elevationChange = endElevation - startElevation;
         const distanceKm = unitEndKm - unitStartKm;
-        
-        // Check if surface multipliers are enabled
-        const surfaceToggle = document.getElementById('surfaceEnabled');
-        const applySurface = surfaceToggle ? surfaceToggle.checked : false;
         
         // Calculate pace for this unit based on terrain and surface distribution (using km internally)
         let unitTime = 0;
@@ -2508,8 +2508,109 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         splitsBody.appendChild(row);
     }
     
+    // Generate leg summary if AID stations exist
+    renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, startTimeInMinutes);
+    
     // Show splits section
     document.getElementById('splitsSection').style.display = 'block';
+}
+
+// Render leg summary table
+function renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, startTimeInMinutes) {
+    const legSummary = document.getElementById('legSummary');
+    const legSummaryBody = document.getElementById('legSummaryBody');
+    
+    if (!legSummary || !legSummaryBody) return;
+    
+    // Need at least one AID station for leg summary
+    if (aidStations.length === 0) {
+        legSummary.style.display = 'none';
+        return;
+    }
+    
+    // Sort AID stations by km
+    const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
+    
+    // Build legs
+    const legs = [];
+    
+    // Start → First AID
+    legs.push({
+        name: `Start → ${sortedStations[0].name}`,
+        fromKm: 0,
+        toKm: sortedStations[0].km,
+        stopMin: 0
+    });
+    
+    // Between AID stations
+    for (let i = 0; i < sortedStations.length - 1; i++) {
+        legs.push({
+            name: `${sortedStations[i].name} → ${sortedStations[i + 1].name}`,
+            fromKm: sortedStations[i].km,
+            toKm: sortedStations[i + 1].km,
+            stopMin: sortedStations[i].stopMin || 0
+        });
+    }
+    
+    // Last AID → Finish
+    const lastStation = sortedStations[sortedStations.length - 1];
+    legs.push({
+        name: `${lastStation.name} → Finish`,
+        fromKm: lastStation.km,
+        toKm: gpxData.totalDistance,
+        stopMin: lastStation.stopMin || 0,
+        isFinish: true
+    });
+    
+    // Calculate times for each leg
+    let cumulativeTime = 0;
+    
+    legSummaryBody.innerHTML = legs.map(leg => {
+        const distance = leg.toKm - leg.fromKm;
+        const elevGain = calculateElevationGainBetween(leg.fromKm, leg.toKm);
+        const elevLoss = calculateElevationLossBetween(leg.fromKm, leg.toKm);
+        
+        // Calculate leg time based on segments
+        let legTime = 0;
+        for (const segment of segments) {
+            if (segment.endDistance >= leg.fromKm && segment.startDistance < leg.toKm) {
+                const overlapStart = Math.max(segment.startDistance, leg.fromKm);
+                const overlapEnd = Math.min(segment.endDistance, leg.toKm);
+                const overlapDistance = overlapEnd - overlapStart;
+                
+                const surfaceMultiplier = applySurface && SURFACE_TYPES[segment.surfaceType]
+                    ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType]
+                    : 1.0;
+                
+                let basePace;
+                switch (segment.terrainType) {
+                    case 'uphill': basePace = uphillPace; break;
+                    case 'downhill': basePace = downhillPace; break;
+                    default: basePace = flatPace;
+                }
+                
+                legTime += overlapDistance * basePace * surfaceMultiplier;
+            }
+        }
+        
+        // Add previous stop time to cumulative
+        cumulativeTime += leg.stopMin;
+        cumulativeTime += legTime;
+        
+        const arrivalTime = formatClockTime(startTimeInMinutes + cumulativeTime);
+        
+        return `
+            <tr class="${leg.isFinish ? 'leg-finish' : ''}">
+                <td class="leg-name">${leg.name}</td>
+                <td>${distance.toFixed(1)} km</td>
+                <td>⬆️${elevGain.toFixed(0)}m ⬇️${elevLoss.toFixed(0)}m</td>
+                <td>${formatTime(legTime)}</td>
+                <td>${arrivalTime}</td>
+            </tr>
+        `;
+    }).join('');
+    
+    legSummary.style.display = 'block';
 }
 
 // CSV Export functionality
