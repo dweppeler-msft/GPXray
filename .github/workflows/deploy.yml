@@ -35,16 +35,20 @@ jobs:
       - name: Prepare deployment folder
         run: |
           mkdir -p _site
-          # Copy main branch to root
-          cp -r main/* _site/ || true
+          # Copy main branch to root (including hidden files)
+          shopt -s dotglob
+          cp -r main/* _site/ 2>/dev/null || true
           # Copy v2 branch to /v2 subdirectory
           if [ -d "v2" ]; then
             mkdir -p _site/v2
-            cp -r v2/* _site/v2/
-            rm -rf _site/v2/.github
+            cp -r v2/* _site/v2/ 2>/dev/null || true
+            rm -rf _site/v2/.github _site/v2/.git
           fi
           # Remove workflow files from root
-          rm -rf _site/.github
+          rm -rf _site/.github _site/.git
+          # Debug: list what's in v2
+          echo "Contents of _site/v2:"
+          ls -la _site/v2/ || echo "v2 folder not found"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
