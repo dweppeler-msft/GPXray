@@ -365,6 +365,34 @@ h2 {
     font-size: 1.5rem;
 }
 
+/* Route Name Display */
+.route-name-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.route-icon {
+    font-size: 1.8rem;
+}
+
+.route-name-display h2 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: #fff;
+    font-weight: 600;
+}
+
+.section-subtitle {
+    color: #00d4ff;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
