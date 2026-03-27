@@ -3463,10 +3463,7 @@ async function exportShareCard() {
                 </div>
             </div>
             
-            <div style="text-align: center; margin-bottom: 20px;">
-                ${raceDate ? `<div style="font-size: 16px; color: #ccc; font-weight: 500;">📅 ${raceDate} at ${raceTime}</div>` : ''}
-                ${sunTimesHtml}
-            </div>
+            ${sunTimesHtml ? `<div style="text-align: center; margin-bottom: 20px;">${sunTimesHtml}</div>` : ''}
             
             <div style="background: rgba(76,175,80,0.15); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 16px; color: #aaa; margin-bottom: 5px; font-weight: 500;">Estimated Finish</div>
