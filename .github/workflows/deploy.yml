@@ -38,17 +38,17 @@ jobs:
           # Copy main branch to root (including hidden files)
           shopt -s dotglob
           cp -r main/* _site/ 2>/dev/null || true
-          # Copy v2 branch to /v2 subdirectory
+          # Copy v2-features branch to /beta subdirectory
           if [ -d "v2" ]; then
-            mkdir -p _site/v2
-            cp -r v2/* _site/v2/ 2>/dev/null || true
-            rm -rf _site/v2/.github _site/v2/.git
+            mkdir -p _site/beta
+            cp -r v2/* _site/beta/ 2>/dev/null || true
+            rm -rf _site/beta/.github _site/beta/.git
           fi
           # Remove workflow files from root
           rm -rf _site/.github _site/.git
-          # Debug: list what's in v2
-          echo "Contents of _site/v2:"
-          ls -la _site/v2/ || echo "v2 folder not found"
+          # Debug: list what's in beta
+          echo "Contents of _site/beta:"
+          ls -la _site/beta/ || echo "beta folder not found"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
