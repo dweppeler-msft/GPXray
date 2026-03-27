@@ -1654,6 +1654,105 @@ h2 {
     background: rgba(244, 67, 54, 0.5);
 }
 
+.aid-station-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.edit-aid-btn {
+    background: rgba(0, 212, 255, 0.2);
+    border: none;
+    color: #00d4ff;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.edit-aid-btn:hover {
+    background: rgba(0, 212, 255, 0.4);
+}
+
+/* AID Station Edit Form */
+.aid-station-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 0;
+}
+
+.aid-station-edit-form .edit-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.aid-station-edit-form label {
+    color: #aaa;
+    font-size: 0.85rem;
+    min-width: 70px;
+}
+
+.aid-station-edit-form input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.aid-station-edit-form input:focus {
+    outline: none;
+    border-color: #00d4ff;
+    background: rgba(0, 212, 255, 0.1);
+}
+
+.aid-station-edit-form .edit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.save-edit-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.save-edit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+}
+
+.cancel-edit-btn {
+    padding: 8px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: transparent;
+    color: #aaa;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancel-edit-btn:hover {
+    border-color: #888;
+    color: #fff;
+}
+
 .add-aid-station {
     display: flex;
     gap: 10px;

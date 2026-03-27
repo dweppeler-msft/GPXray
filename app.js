@@ -2196,14 +2196,17 @@ function renderAidStations() {
         }
         
         return `
-            <div class="aid-station-item">
+            <div class="aid-station-item" id="aid-station-${index}">
                 <div class="aid-station-info">
                     <span class="aid-station-km">KM ${station.km}</span>
                     <span class="aid-station-name">${station.name}</span>
                     <span class="aid-station-stop">(${station.stopMin || 0} min stop)</span>
                 </div>
                 ${legInfo}
-                <button type="button" class="remove-aid-btn" onclick="removeAidStation(${index})">×</button>
+                <div class="aid-station-actions">
+                    <button type="button" class="edit-aid-btn" onclick="editAidStation(${index})" title="Edit">✏️</button>
+                    <button type="button" class="remove-aid-btn" onclick="removeAidStation(${index})" title="Remove">×</button>
+                </div>
             </div>
         `;
     }).join('');
@@ -2297,8 +2300,63 @@ function removeAidStation(index) {
     renderAidStations();
 }
 
+function editAidStation(index) {
+    const station = aidStations[index];
+    if (!station) return;
+    
+    const item = document.getElementById(`aid-station-${index}`);
+    if (!item) return;
+    
+    // Replace content with edit form
+    item.innerHTML = `
+        <div class="aid-station-edit-form">
+            <div class="edit-row">
+                <label>KM:</label>
+                <input type="number" id="edit-km-${index}" value="${station.km}" step="0.1" min="0">
+            </div>
+            <div class="edit-row">
+                <label>Name:</label>
+                <input type="text" id="edit-name-${index}" value="${station.name}">
+            </div>
+            <div class="edit-row">
+                <label>Stop (min):</label>
+                <input type="number" id="edit-stop-${index}" value="${station.stopMin || 0}" min="0">
+            </div>
+            <div class="edit-actions">
+                <button type="button" class="save-edit-btn" onclick="saveAidStation(${index})">Save</button>
+                <button type="button" class="cancel-edit-btn" onclick="renderAidStations()">Cancel</button>
+            </div>
+        </div>
+    `;
+    
+    // Focus on name input
+    document.getElementById(`edit-name-${index}`).focus();
+}
+
+function saveAidStation(index) {
+    const km = parseFloat(document.getElementById(`edit-km-${index}`).value);
+    const name = document.getElementById(`edit-name-${index}`).value.trim();
+    const stopMin = parseInt(document.getElementById(`edit-stop-${index}`).value) || 0;
+    
+    if (isNaN(km) || km < 0) {
+        alert('Please enter a valid kilometer value.');
+        return;
+    }
+    
+    if (!name) {
+        alert('Please enter a station name.');
+        return;
+    }
+    
+    aidStations[index] = { km, name, stopMin };
+    renderAidStations();
+}
+
 // Make removeAidStation available globally
 window.removeAidStation = removeAidStation;
+window.editAidStation = editAidStation;
+window.saveAidStation = saveAidStation;
+window.renderAidStations = renderAidStations;
 
 function getAidStationForKm(km) {
     // Find AID station that falls within or at this km
