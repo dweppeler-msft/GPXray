@@ -12,8 +12,13 @@
 <body>
     <div class="container">
         <header>
-            <h1>🏃 GPXray</h1>
-            <p class="tagline">X-ray your route.</p>
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>🏃 GPXray</h1>
+                    <p class="tagline">X-ray your route.</p>
+                </div>
+                <button type="button" class="feedback-btn" id="feedbackBtn" title="Send Feedback">💬 Feedback</button>
+            </div>
         </header>
 
         <section class="upload-section">
@@ -374,6 +379,42 @@
                 </table>
             </div>
         </section>
+
+        <!-- Feedback Panel -->
+        <div class="feedback-overlay" id="feedbackOverlay"></div>
+        <aside class="feedback-panel" id="feedbackPanel">
+            <div class="feedback-header">
+                <h3>💬 Send Feedback</h3>
+                <button type="button" class="feedback-close" id="feedbackClose">✕</button>
+            </div>
+            <form class="feedback-form" id="feedbackForm">
+                <div class="feedback-field">
+                    <label for="feedbackLike">What do you like about GPXray?</label>
+                    <textarea id="feedbackLike" name="like" rows="2" placeholder="The features I find most useful..."></textarea>
+                </div>
+                <div class="feedback-field">
+                    <label for="feedbackMissing">What features are missing?</label>
+                    <textarea id="feedbackMissing" name="missing" rows="2" placeholder="I wish GPXray could..."></textarea>
+                </div>
+                <div class="feedback-field">
+                    <label for="feedbackBugs">Any bugs or issues?</label>
+                    <textarea id="feedbackBugs" name="bugs" rows="2" placeholder="I noticed that..."></textarea>
+                </div>
+                <div class="feedback-field">
+                    <label for="feedbackEmail">Email (optional, for follow-up)</label>
+                    <input type="email" id="feedbackEmail" name="email" placeholder="your@email.com">
+                </div>
+                <div class="feedback-actions">
+                    <button type="submit" class="feedback-submit">📨 Send Feedback</button>
+                    <a href="mailto:gpxrayrun@gmail.com?subject=GPXray%20Feedback" class="feedback-email-link">or email us directly</a>
+                </div>
+            </form>
+            <div class="feedback-success" id="feedbackSuccess" style="display: none;">
+                <div class="feedback-success-icon">✅</div>
+                <h4>Thank you!</h4>
+                <p>Your feedback helps us improve GPXray.</p>
+            </div>
+        </aside>
     </div>
 
     <script src="app.js"></script>
