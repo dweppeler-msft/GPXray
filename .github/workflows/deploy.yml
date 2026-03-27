@@ -1,0 +1,63 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - v2-features
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Checkout v2-features branch
+        uses: actions/checkout@v4
+        with:
+          ref: v2-features
+          path: v2
+        continue-on-error: true
+
+      - name: Prepare deployment folder
+        run: |
+          mkdir -p _site
+          # Copy main branch to root
+          cp -r main/* _site/ || true
+          # Copy v2 branch to /v2 subdirectory
+          if [ -d "v2" ]; then
+            mkdir -p _site/v2
+            cp -r v2/* _site/v2/
+            rm -rf _site/v2/.github
+          fi
+          # Remove workflow files from root
+          rm -rf _site/.github
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
