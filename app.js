@@ -151,17 +151,7 @@ const raceDatabase = [
     // ===== AVAILABLE RACES =====
     
     // ZUT - Zugspitz Ultratrail (Germany)
-    { id: 'zut-grainau', name: 'ZUT Grainau Trail', country: '🇩🇪', distance: 16, elevation: 800, category: 'short', gpxUrl: 'Grainau_Trail_ZUT_2025_01bfa09fb6.gpx', available: true },
-    { id: 'zut-mittenwald', name: 'ZUT Mittenwald Trail', country: '🇩🇪', distance: 43, elevation: 2100, category: 'marathon', gpxUrl: 'Mittenwald_Trail_ZUT_2025_fa6c0d4010.gpx', available: true },
-    { id: 'zut-leutasch', name: 'ZUT Leutasch Trail', country: '🇩🇪', distance: 68, elevation: 3500, category: 'marathon', gpxUrl: 'Leutasch_Trail_ZUT_2025_620e36ae36.gpx', available: true },
-    { id: 'zut-ehrwald', name: 'ZUT Ehrwald Trail', country: '🇩🇪', distance: 85, elevation: 4500, category: 'marathon', gpxUrl: 'Ehrwald_Trail_ZUT_2025_85a841b963.gpx', available: true },
-    { id: 'zut-ultratrail', name: 'ZUT Ultratrail', country: '🇩🇪', distance: 106, elevation: 5400, category: 'ultra', gpxUrl: 'Ultratrail_ZUT_2025_3b6cbaa510.gpx', available: true },
-    { id: 'zut-100', name: 'ZUT 100', country: '🇩🇪', distance: 164, elevation: 8500, category: 'ultra', gpxUrl: 'ZUT_100_2025_71c0e173fd.gpx', available: true },
-    
-    // Rureifel Trail (Germany)
-    { id: 'ret-44', name: 'Rureifel Trail RET 44', country: '🇩🇪', distance: 46, elevation: 1200, category: 'marathon', gpxUrl: 'rureifel-trail-2026-ret44.gpx', available: true },
-    { id: 'ret-77', name: 'Rureifel Trail RET 77', country: '🇩🇪', distance: 76, elevation: 2000, category: 'marathon', gpxUrl: 'rureifel-trail-2026-ret77.gpx', available: true },
-    races/Grainau_Trail_ZUT_2025_01bfa09fb6.gpx', available: true },
+    { id: 'zut-grainau', name: 'ZUT Grainau Trail', country: '🇩🇪', distance: 16, elevation: 800, category: 'short', gpxUrl: 'races/Grainau_Trail_ZUT_2025_01bfa09fb6.gpx', available: true },
     { id: 'zut-mittenwald', name: 'ZUT Mittenwald Trail', country: '🇩🇪', distance: 43, elevation: 2100, category: 'marathon', gpxUrl: 'races/Mittenwald_Trail_ZUT_2025_fa6c0d4010.gpx', available: true },
     { id: 'zut-leutasch', name: 'ZUT Leutasch Trail', country: '🇩🇪', distance: 68, elevation: 3500, category: 'marathon', gpxUrl: 'races/Leutasch_Trail_ZUT_2025_620e36ae36.gpx', available: true },
     { id: 'zut-ehrwald', name: 'ZUT Ehrwald Trail', country: '🇩🇪', distance: 85, elevation: 4500, category: 'marathon', gpxUrl: 'races/Ehrwald_Trail_ZUT_2025_85a841b963.gpx', available: true },
@@ -170,7 +160,17 @@ const raceDatabase = [
     
     // Rureifel Trail (Germany)
     { id: 'ret-44', name: 'Rureifel Trail RET 44', country: '🇩🇪', distance: 46, elevation: 1200, category: 'marathon', gpxUrl: 'races/rureifel-trail-2026-ret44.gpx', available: true },
-    { id: 'ret-77', name: 'Rureifel Trail RET 77', country: '🇩🇪', distance: 76, elevation: 2000, category: 'marathon', gpxUrl: 'races/false },
+    { id: 'ret-77', name: 'Rureifel Trail RET 77', country: '🇩🇪', distance: 76, elevation: 2000, category: 'marathon', gpxUrl: 'races/rureifel-trail-2026-ret77.gpx', available: true },
+    
+    // ===== COMING SOON =====
+    
+    // Ultra Trail (100km+)
+    { id: 'utmb', name: 'UTMB - Ultra-Trail du Mont-Blanc', country: '🇫🇷', distance: 171, elevation: 10000, category: 'ultra', available: false },
+    { id: 'wser', name: 'Western States 100', country: '🇺🇸', distance: 161, elevation: 5500, category: 'ultra', available: false },
+    { id: 'hardrock', name: 'Hardrock 100', country: '🇺🇸', distance: 161, elevation: 10000, category: 'ultra', available: false },
+    { id: 'lavaredo', name: 'Lavaredo Ultra Trail', country: '🇮🇹', distance: 120, elevation: 5800, category: 'ultra', available: false },
+    { id: 'transgrancanaria', name: 'Transgrancanaria', country: '🇪🇸', distance: 128, elevation: 7500, category: 'ultra', available: false },
+    { id: 'eiger', name: 'Eiger Ultra Trail E101', country: '🇨🇭', distance: 101, elevation: 6700, category: 'ultra', available: false },
     { id: 'madeira', name: 'Madeira Island Ultra Trail', country: '🇵🇹', distance: 115, elevation: 7200, category: 'ultra', available: false },
     { id: 'penyagolosa', name: 'Penyagolosa Trails MiM', country: '🇪🇸', distance: 109, elevation: 5700, category: 'ultra', available: false },
     
