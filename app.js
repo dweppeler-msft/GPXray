@@ -92,7 +92,7 @@ async function loadDemoGpx() {
         }
         
         const gpxContent = await response.text();
-        currentRouteName = 'ZUT Garmisch Trail';
+        currentRouteName = 'ZUT Garmisch-Partenkirchen Trail';
         parseGPX(gpxContent);
         
         // Add sample AID stations for demo
