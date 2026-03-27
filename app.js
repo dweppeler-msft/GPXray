@@ -691,14 +691,13 @@ function exportToCsv() {
         csvContent += rowData.join(',') + '\n';
     });
 
-    // Create and download the file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
+    // Create and download the file using data URI (more compatible)
+    const encodedContent = encodeURIComponent(csvContent);
+    const dataUri = 'data:text/csv;charset=utf-8,' + encodedContent;
     
-    link.setAttribute('href', url);
+    const link = document.createElement('a');
+    link.setAttribute('href', dataUri);
     link.setAttribute('download', 'gpx_race_plan.csv');
-    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
