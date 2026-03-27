@@ -8,11 +8,44 @@ let segments = []; // Stores segment data with terrain type
 let currentMode = 'manual'; // 'manual' or 'target'
 let aidStations = []; // Stores AID station data
 let useMetric = true; // true = km, false = miles
+let surfaceData = []; // Stores surface data from OSM
+let surfaceEnabled = true; // Whether to use surface multipliers
 
 // Constants
 const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
 const KM_TO_MILES = 0.621371;
 const MILES_TO_KM = 1.60934;
+
+// Surface type categories and their pace multipliers
+// Multipliers are applied on top of terrain (flat/uphill/downhill) paces
+const SURFACE_TYPES = {
+    road: { name: 'Road', color: '#4CAF50', multiplier: { flat: 1.0, uphill: 1.0, downhill: 1.0 } },
+    trail: { name: 'Trail', color: '#FF9800', multiplier: { flat: 1.05, uphill: 1.08, downhill: 1.10 } },
+    technical: { name: 'Technical', color: '#9C27B0', multiplier: { flat: 1.15, uphill: 1.20, downhill: 1.25 } },
+    unknown: { name: 'Unknown', color: '#9E9E9E', multiplier: { flat: 1.0, uphill: 1.0, downhill: 1.0 } }
+};
+
+// OSM surface tag to category mapping
+const OSM_SURFACE_MAP = {
+    // Road surfaces
+    'asphalt': 'road', 'concrete': 'road', 'paved': 'road', 'concrete:plates': 'road',
+    'concrete:lanes': 'road', 'paving_stones': 'road', 'sett': 'road', 'cobblestone': 'road',
+    // Trail surfaces
+    'compacted': 'trail', 'fine_gravel': 'trail', 'gravel': 'trail', 'dirt': 'trail',
+    'earth': 'trail', 'ground': 'trail', 'grass': 'trail', 'unpaved': 'trail',
+    'sand': 'trail', 'woodchips': 'trail', 'mud': 'trail',
+    // Technical surfaces
+    'rock': 'technical', 'rocks': 'technical', 'pebblestone': 'technical', 'stepping_stones': 'technical',
+    'stone': 'technical', 'boulders': 'technical'
+};
+
+// OSM highway type fallback mapping (when no surface tag)
+const OSM_HIGHWAY_MAP = {
+    'motorway': 'road', 'trunk': 'road', 'primary': 'road', 'secondary': 'road',
+    'tertiary': 'road', 'residential': 'road', 'service': 'road', 'unclassified': 'road',
+    'path': 'trail', 'footway': 'trail', 'cycleway': 'trail', 'bridleway': 'trail',
+    'track': 'trail', 'steps': 'technical'
+};
 
 // DOM Elements
 const dropZone = document.getElementById('dropZone');
@@ -117,12 +150,15 @@ function parseGPX(gpxContent) {
     // Calculate derived data
     calculateSegments();
     
-    // Display everything
+    // Display everything (initial view)
     showSections();
     displayStats();
     displayMap();
     displayElevationChart();
     displayGradientChart();
+    
+    // Fetch surface data from OSM (async, will update display when done)
+    fetchSurfaceData();
 }
 
 // Extract points from XML nodes
@@ -281,6 +317,7 @@ function calculateSegments() {
                 elevationChange,
                 grade,
                 terrainType,
+                surfaceType: 'unknown', // Will be updated by fetchSurfaceData
                 startPoint: points[segments.length > 0 ? segments[segments.length - 1].endIndex : 0],
                 endPoint: points[i]
             });
@@ -291,12 +328,307 @@ function calculateSegments() {
     }
 }
 
+// Fetch surface data from OpenStreetMap via Overpass API
+async function fetchSurfaceData() {
+    if (!gpxData || segments.length === 0) return;
+    
+    // Show loading indicator
+    updateSurfaceStatus('Loading surface data from OpenStreetMap...');
+    
+    try {
+        // Sample points along the route (every ~200m to avoid too many queries)
+        const samplePoints = [];
+        const SAMPLE_INTERVAL = 0.2; // km
+        let lastSampleDist = -SAMPLE_INTERVAL;
+        
+        for (const point of gpxData.points) {
+            if (point.distance - lastSampleDist >= SAMPLE_INTERVAL) {
+                samplePoints.push({
+                    lat: point.lat,
+                    lon: point.lon,
+                    distance: point.distance
+                });
+                lastSampleDist = point.distance;
+            }
+        }
+        
+        // Build Overpass query for all sample points
+        // Query ways near sample points in a single batch
+        const bbox = calculateBoundingBox(gpxData.points);
+        const overpassQuery = buildOverpassQuery(bbox); 
+        
+        const response = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: overpassQuery
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Overpass API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Process OSM ways and build spatial index
+        const ways = processOSMWays(data);
+        
+        // Match sample points to nearest ways
+        const surfaceResults = matchPointsToWays(samplePoints, ways);
+        
+        // Apply surface data to segments
+        applySurfaceToSegments(surfaceResults);
+        
+        // Update display with surface info
+        displayMap(); // Redraw map with surface colors
+        displaySurfaceChart();
+        updateSurfaceStatus(`Surface data loaded: ${countSurfaces()}`);
+        
+    } catch (error) {
+        console.error('Error fetching surface data:', error);
+        updateSurfaceStatus('Could not load surface data. Using default surfaces.');
+    }
+}
+
+// Calculate bounding box for GPX points
+function calculateBoundingBox(points) {
+    let minLat = Infinity, maxLat = -Infinity;
+    let minLon = Infinity, maxLon = -Infinity;
+    
+    for (const point of points) {
+        minLat = Math.min(minLat, point.lat);
+        maxLat = Math.max(maxLat, point.lat);
+        minLon = Math.min(minLon, point.lon);
+        maxLon = Math.max(maxLon, point.lon);
+    }
+    
+    // Add small buffer (~100m)
+    const buffer = 0.001;
+    return {
+        south: minLat - buffer,
+        north: maxLat + buffer,
+        west: minLon - buffer,
+        east: maxLon + buffer
+    };
+}
+
+// Build Overpass API query
+function buildOverpassQuery(bbox) {
+    return `[out:json][timeout:30];
+(
+  way["highway"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});
+);
+out body geom;`;
+}
+
+// Process OSM ways from Overpass response
+function processOSMWays(data) {
+    const ways = [];
+    
+    for (const element of data.elements) {
+        if (element.type !== 'way' || !element.geometry) continue;
+        
+        const tags = element.tags || {};
+        const surface = tags.surface || null;
+        const highway = tags.highway || null;
+        
+        // Determine surface category
+        let surfaceType = 'unknown';
+        if (surface && OSM_SURFACE_MAP[surface]) {
+            surfaceType = OSM_SURFACE_MAP[surface];
+        } else if (highway && OSM_HIGHWAY_MAP[highway]) {
+            surfaceType = OSM_HIGHWAY_MAP[highway];
+        }
+        
+        // Store way with its geometry
+        ways.push({
+            id: element.id,
+            surfaceType,
+            surfaceTag: surface,
+            highway,
+            geometry: element.geometry.map(g => ({ lat: g.lat, lon: g.lon }))
+        });
+    }
+    
+    return ways;
+}
+
+// Match sample points to nearest OSM ways
+function matchPointsToWays(samplePoints, ways) {
+    const results = [];
+    
+    for (const point of samplePoints) {
+        let nearestWay = null;
+        let minDistance = Infinity;
+        
+        for (const way of ways) {
+            // Find minimum distance from point to any segment of the way
+            for (let i = 0; i < way.geometry.length - 1; i++) {
+                const dist = pointToLineDistance(
+                    point.lat, point.lon,
+                    way.geometry[i].lat, way.geometry[i].lon,
+                    way.geometry[i + 1].lat, way.geometry[i + 1].lon
+                );
+                
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    nearestWay = way;
+                }
+            }
+        }
+        
+        // Only accept matches within ~30 meters
+        const MAX_MATCH_DISTANCE = 0.03; // km
+        results.push({
+            distance: point.distance,
+            surfaceType: (nearestWay && minDistance < MAX_MATCH_DISTANCE) ? nearestWay.surfaceType : 'unknown',
+            matchDistance: minDistance,
+            surfaceTag: nearestWay?.surfaceTag || null
+        });
+    }
+    
+    return results;
+}
+
+// Calculate perpendicular distance from point to line segment (in km)
+function pointToLineDistance(px, py, x1, y1, x2, y2) {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+    
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    
+    let param = -1;
+    if (lenSq !== 0) param = dot / lenSq;
+    
+    let xx, yy;
+    if (param < 0) {
+        xx = x1; yy = y1;
+    } else if (param > 1) {
+        xx = x2; yy = y2;
+    } else {
+        xx = x1 + param * C;
+        yy = y1 + param * D;
+    }
+    
+    return calculateDistance(px, py, xx, yy);
+}
+
+// Apply surface results to segments
+function applySurfaceToSegments(surfaceResults) {
+    surfaceData = surfaceResults;
+    
+    for (const segment of segments) {
+        // Find surface samples within this segment
+        const samplesInSegment = surfaceResults.filter(s => 
+            s.distance >= segment.startDistance && s.distance <= segment.endDistance
+        );
+        
+        if (samplesInSegment.length > 0) {
+            // Use most common surface type in segment
+            const counts = {};
+            for (const sample of samplesInSegment) {
+                counts[sample.surfaceType] = (counts[sample.surfaceType] || 0) + 1;
+            }
+            
+            let maxCount = 0;
+            let dominantSurface = 'unknown';
+            for (const [type, count] of Object.entries(counts)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    dominantSurface = type;
+                }
+            }
+            
+            segment.surfaceType = dominantSurface;
+        }
+    }
+}
+
+// Count surfaces for status display
+function countSurfaces() {
+    const counts = { road: 0, trail: 0, technical: 0, unknown: 0 };
+    let totalDist = 0;
+    
+    for (const segment of segments) {
+        counts[segment.surfaceType] += segment.distance;
+        totalDist += segment.distance;
+    }
+    
+    const parts = [];
+    for (const [type, dist] of Object.entries(counts)) {
+        if (dist > 0) {
+            const pct = Math.round((dist / totalDist) * 100);
+            parts.push(`${SURFACE_TYPES[type].name}: ${pct}%`);
+        }
+    }
+    
+    return parts.join(', ');
+}
+
+// Update surface status display
+function updateSurfaceStatus(message) {
+    const statusEl = document.getElementById('surfaceStatus');
+    if (statusEl) {
+        statusEl.textContent = message;
+    }
+}
+
+// Display surface type chart
+function displaySurfaceChart() {
+    const ctx = document.getElementById('surfaceChart');
+    if (!ctx) return;
+    
+    const surfaceDistances = { road: 0, trail: 0, technical: 0, unknown: 0 };
+    for (const segment of segments) {
+        surfaceDistances[segment.surfaceType] += segment.distance;
+    }
+    
+    const labels = [];
+    const data = [];
+    const colors = [];
+    
+    for (const [type, dist] of Object.entries(surfaceDistances)) {
+        if (dist > 0) {
+            labels.push(SURFACE_TYPES[type].name);
+            data.push(dist.toFixed(2));
+            colors.push(SURFACE_TYPES[type].color);
+        }
+    }
+    
+    new Chart(ctx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: colors
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#fff' }
+                },
+                title: {
+                    display: true,
+                    text: 'Surface Distribution (km)',
+                    color: '#fff'
+                }
+            }
+        }
+    });
+}
+
 // Show hidden sections
 function showSections() {
     document.getElementById('statsSection').style.display = 'block';
     document.getElementById('mapSection').style.display = 'block';
     document.getElementById('elevationSection').style.display = 'block';
     document.getElementById('gradientSection').style.display = 'block';
+    document.getElementById('surfaceSection').style.display = 'block';
     document.getElementById('paceSection').style.display = 'block';
 }
 
@@ -334,8 +666,8 @@ function displayMap() {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
     
-    // Draw route segments with colors based on terrain
-    const colors = {
+    // Draw route segments with colors based on terrain AND surface
+    const terrainColors = {
         flat: '#4CAF50',
         uphill: '#f44336',
         downhill: '#2196F3'
@@ -343,38 +675,41 @@ function displayMap() {
     
     const points = gpxData.points;
     
-    // Group consecutive segments of the same type for smoother rendering
-    let currentType = null;
-    let currentPath = [];
+    // Check if we have surface data
+    const hasSurfaceData = segments.some(s => s.surfaceType !== 'unknown');
     
-    segments.forEach((segment, index) => {
-        if (segment.terrainType !== currentType && currentPath.length > 0) {
-            // Draw the previous path
-            const polyline = L.polyline(currentPath, {
-                color: colors[currentType],
-                weight: 4,
-                opacity: 0.8
-            }).addTo(map);
-            routeLayers.push(polyline);
-            currentPath = [currentPath[currentPath.length - 1]]; // Start new path from last point
-        }
-        
-        currentType = segment.terrainType;
-        
-        // Add points for this segment
+    // Draw each segment individually for accurate surface/terrain representation
+    segments.forEach((segment) => {
+        const segmentPoints = [];
         for (let i = segment.startIndex; i <= segment.endIndex; i++) {
-            currentPath.push([points[i].lat, points[i].lon]);
+            segmentPoints.push([points[i].lat, points[i].lon]);
         }
         
-        // Draw final segment
-        if (index === segments.length - 1 && currentPath.length > 0) {
-            const polyline = L.polyline(currentPath, {
-                color: colors[currentType],
-                weight: 4,
-                opacity: 0.8
-            }).addTo(map);
-            routeLayers.push(polyline);
+        if (segmentPoints.length < 2) return;
+        
+        // Create tooltip content
+        const tooltipContent = `
+            ${segment.terrainType.charAt(0).toUpperCase() + segment.terrainType.slice(1)}
+            ${hasSurfaceData ? ' | ' + SURFACE_TYPES[segment.surfaceType].name : ''}
+            | ${segment.grade.toFixed(1)}% grade
+        `;
+        
+        // Use surface color if available, otherwise terrain color
+        let color;
+        if (hasSurfaceData && segment.surfaceType !== 'unknown') {
+            color = SURFACE_TYPES[segment.surfaceType].color;
+        } else {
+            color = terrainColors[segment.terrainType];
         }
+        
+        const polyline = L.polyline(segmentPoints, {
+            color: color,
+            weight: 5,
+            opacity: 0.8
+        }).addTo(map);
+        
+        polyline.bindTooltip(tooltipContent, { sticky: true });
+        routeLayers.push(polyline);
     });
     
     // Add start marker
@@ -387,9 +722,33 @@ function displayMap() {
         .addTo(map)
         .bindPopup('Finish');
     
+    // Update map legend based on surface data availability
+    updateMapLegend(hasSurfaceData);
+    
     // Fit map to route bounds
     const latLngs = points.map(p => [p.lat, p.lon]);
     map.fitBounds(L.latLngBounds(latLngs), { padding: [20, 20] });
+}
+
+// Update map legend to show either terrain or surface colors
+function updateMapLegend(showSurfaceColors) {
+    const legendEl = document.querySelector('.map-legend');
+    if (!legendEl) return;
+    
+    if (showSurfaceColors) {
+        legendEl.innerHTML = `
+            <span class="legend-item"><span class="legend-color" style="background: #4CAF50;"></span> Road</span>
+            <span class="legend-item"><span class="legend-color" style="background: #FF9800;"></span> Trail</span>
+            <span class="legend-item"><span class="legend-color" style="background: #9C27B0;"></span> Technical</span>
+            <span class="legend-item"><span class="legend-color" style="background: #9E9E9E;"></span> Unknown</span>
+        `;
+    } else {
+        legendEl.innerHTML = `
+            <span class="legend-item"><span class="legend-color flat"></span> Flat</span>
+            <span class="legend-item"><span class="legend-color uphill"></span> Uphill</span>
+            <span class="legend-item"><span class="legend-color downhill"></span> Downhill</span>
+        `;
+    }
 }
 
 // Display elevation chart
@@ -1032,19 +1391,28 @@ function calculateRacePlan() {
     let flatDistance = 0, uphillDistance = 0, downhillDistance = 0;
     let flatTime = 0, uphillTime = 0, downhillTime = 0;
     
+    // Check if surface multipliers are enabled
+    const surfaceToggle = document.getElementById('surfaceEnabled');
+    const applySurface = surfaceToggle ? surfaceToggle.checked : false;
+    
     segments.forEach(segment => {
+        // Get surface multiplier if enabled
+        const surfaceMultiplier = applySurface && SURFACE_TYPES[segment.surfaceType] 
+            ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType]
+            : 1.0;
+        
         switch (segment.terrainType) {
             case 'flat':
                 flatDistance += segment.distance;
-                flatTime += segment.distance * flatPace;
+                flatTime += segment.distance * flatPace * surfaceMultiplier;
                 break;
             case 'uphill':
                 uphillDistance += segment.distance;
-                uphillTime += segment.distance * uphillPace;
+                uphillTime += segment.distance * uphillPace * surfaceMultiplier;
                 break;
             case 'downhill':
                 downhillDistance += segment.distance;
-                downhillTime += segment.distance * downhillPace;
+                downhillTime += segment.distance * downhillPace * surfaceMultiplier;
                 break;
         }
     });
@@ -1138,11 +1506,47 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         const elevationChange = endElevation - startElevation;
         const distanceKm = unitEndKm - unitStartKm;
         
-        // Calculate pace for this unit based on terrain distribution (using km internally)
+        // Check if surface multipliers are enabled
+        const surfaceToggle = document.getElementById('surfaceEnabled');
+        const applySurface = surfaceToggle ? surfaceToggle.checked : false;
+        
+        // Calculate pace for this unit based on terrain and surface distribution (using km internally)
         let unitTime = 0;
-        unitTime += dominantTerrain.flat * flatPace;
-        unitTime += dominantTerrain.uphill * uphillPace;
-        unitTime += dominantTerrain.downhill * downhillPace;
+        let dominantSurface = 'unknown';
+        let maxSurfaceDist = 0;
+        
+        // Calculate time with surface multipliers if enabled
+        for (const segment of segments) {
+            if (segment.endDistance >= unitStartKm && segment.startDistance < unitEndKm) {
+                const overlapStart = Math.max(segment.startDistance, unitStartKm);
+                const overlapEnd = Math.min(segment.endDistance, unitEndKm);
+                const overlapDistance = overlapEnd - overlapStart;
+                
+                // Track dominant surface for this unit
+                if (applySurface && segment.surfaceType !== 'unknown') {
+                    // Simple tracking - could be improved with proper counting
+                    if (overlapDistance > maxSurfaceDist) {
+                        maxSurfaceDist = overlapDistance;
+                        dominantSurface = segment.surfaceType;
+                    }
+                }
+                
+                // Get surface multiplier
+                const surfaceMultiplier = applySurface && SURFACE_TYPES[segment.surfaceType]
+                    ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType]
+                    : 1.0;
+                
+                // Calculate time for this overlap
+                let basePace;
+                switch (segment.terrainType) {
+                    case 'uphill': basePace = uphillPace; break;
+                    case 'downhill': basePace = downhillPace; break;
+                    default: basePace = flatPace;
+                }
+                
+                unitTime += overlapDistance * basePace * surfaceMultiplier;
+            }
+        }
         
         // Check for AID stations within this unit (before adding main row)
         const aidStationsInUnit = aidStations.filter(station => {
@@ -1165,6 +1569,7 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             aidRow.classList.add('aid-station-row');
             aidRow.innerHTML = `
                 <td>${displayDistance.toFixed(1)}</td>
+                <td>-</td>
                 <td>-</td>
                 <td>-</td>
                 <td class="aid-station-cell">${station.name}</td>
@@ -1206,10 +1611,15 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         if (hasAidStation) {
             row.classList.add('aid-station-row');
         }
+        
+        // Get surface display name
+        const surfaceDisplay = SURFACE_TYPES[dominantSurface] ? SURFACE_TYPES[dominantSurface].name : 'Unknown';
+        
         row.innerHTML = `
             <td>${unit}</td>
             <td>${elevationChange >= 0 ? '+' : ''}${elevationChange.toFixed(0)} m</td>
             <td class="terrain-${terrain}">${terrain.charAt(0).toUpperCase() + terrain.slice(1)}</td>
+            <td class="surface-${dominantSurface}">${surfaceDisplay}</td>
             <td class="${hasAidStation ? 'aid-station-cell' : ''}">${aidStationText}</td>
             <td>${formatPace(targetPace)} /${unitLabel}</td>
             <td>${formatTime(splitTime)}</td>
