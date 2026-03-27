@@ -1,0 +1,606 @@
+// Global state
+let gpxData = null;
+let map = null;
+let routeLayers = [];
+let elevationChart = null;
+let segments = []; // Stores segment data with terrain type
+
+// Constants
+const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
+
+// DOM Elements
+const dropZone = document.getElementById('dropZone');
+const gpxInput = document.getElementById('gpxInput');
+const browseBtn = document.getElementById('browseBtn');
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    setupDragAndDrop();
+    setupFileInput();
+    setupPaceCalculation();
+});
+
+// Drag and Drop functionality
+function setupDragAndDrop() {
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.gpx')) {
+            processFile(file);
+        } else {
+            alert('Please drop a valid GPX file.');
+        }
+    });
+}
+
+function setupFileInput() {
+    browseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        gpxInput.click();
+    });
+
+    dropZone.addEventListener('click', () => {
+        gpxInput.click();
+    });
+
+    gpxInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            processFile(file);
+        }
+    });
+}
+
+// Process GPX file
+function processFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const gpxContent = e.target.result;
+        parseGPX(gpxContent);
+    };
+    reader.readAsText(file);
+}
+
+// Parse GPX XML
+function parseGPX(gpxContent) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(gpxContent, 'text/xml');
+    
+    // Check for parsing errors
+    const parseError = xmlDoc.querySelector('parsererror');
+    if (parseError) {
+        alert('Error parsing GPX file. Please check the file format.');
+        return;
+    }
+
+    // Extract track points
+    const trackPoints = xmlDoc.querySelectorAll('trkpt');
+    if (trackPoints.length === 0) {
+        // Try route points if no track points
+        const routePoints = xmlDoc.querySelectorAll('rtept');
+        if (routePoints.length === 0) {
+            alert('No track or route points found in the GPX file.');
+            return;
+        }
+        gpxData = extractPoints(routePoints);
+    } else {
+        gpxData = extractPoints(trackPoints);
+    }
+
+    if (gpxData.points.length < 2) {
+        alert('Not enough points in the GPX file for analysis.');
+        return;
+    }
+
+    // Calculate derived data
+    calculateSegments();
+    
+    // Display everything
+    showSections();
+    displayStats();
+    displayMap();
+    displayElevationChart();
+}
+
+// Extract points from XML nodes
+function extractPoints(nodes) {
+    const points = [];
+    let totalDistance = 0;
+    let elevationGain = 0;
+    let elevationLoss = 0;
+    let minElevation = Infinity;
+    let maxElevation = -Infinity;
+
+    nodes.forEach((node, index) => {
+        const lat = parseFloat(node.getAttribute('lat'));
+        const lon = parseFloat(node.getAttribute('lon'));
+        const eleNode = node.querySelector('ele');
+        const elevation = eleNode ? parseFloat(eleNode.textContent) : 0;
+
+        const point = { lat, lon, elevation, distance: 0 };
+
+        if (index > 0) {
+            const prevPoint = points[index - 1];
+            const segmentDistance = calculateDistance(
+                prevPoint.lat, prevPoint.lon,
+                lat, lon
+            );
+            totalDistance += segmentDistance;
+            point.distance = totalDistance;
+
+            const elevationChange = elevation - prevPoint.elevation;
+            if (elevationChange > 0) {
+                elevationGain += elevationChange;
+            } else {
+                elevationLoss += Math.abs(elevationChange);
+            }
+        }
+
+        minElevation = Math.min(minElevation, elevation);
+        maxElevation = Math.max(maxElevation, elevation);
+
+        points.push(point);
+    });
+
+    return {
+        points,
+        totalDistance,
+        elevationGain,
+        elevationLoss,
+        minElevation,
+        maxElevation
+    };
+}
+
+// Haversine formula for distance calculation
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+function toRad(deg) {
+    return deg * (Math.PI / 180);
+}
+
+// Calculate segments with terrain classification
+function calculateSegments() {
+    segments = [];
+    const points = gpxData.points;
+    
+    // Create segments every 100m or so for smooth gradient calculation
+    const segmentLength = 0.1; // km
+    let currentSegmentStart = 0;
+    let segmentStartElevation = points[0].elevation;
+    
+    for (let i = 1; i < points.length; i++) {
+        const distanceFromSegmentStart = points[i].distance - (segments.length * segmentLength);
+        
+        if (distanceFromSegmentStart >= segmentLength || i === points.length - 1) {
+            const segmentDistance = points[i].distance - currentSegmentStart;
+            const elevationChange = points[i].elevation - segmentStartElevation;
+            
+            // Calculate grade percentage
+            const grade = segmentDistance > 0 ? (elevationChange / (segmentDistance * 1000)) * 100 : 0;
+            
+            let terrainType;
+            if (grade > GRADE_THRESHOLD) {
+                terrainType = 'uphill';
+            } else if (grade < -GRADE_THRESHOLD) {
+                terrainType = 'downhill';
+            } else {
+                terrainType = 'flat';
+            }
+            
+            segments.push({
+                startIndex: currentSegmentStart === 0 ? 0 : segments.length > 0 ? segments[segments.length - 1].endIndex : 0,
+                endIndex: i,
+                startDistance: currentSegmentStart,
+                endDistance: points[i].distance,
+                distance: segmentDistance,
+                elevationChange,
+                grade,
+                terrainType,
+                startPoint: points[segments.length > 0 ? segments[segments.length - 1].endIndex : 0],
+                endPoint: points[i]
+            });
+            
+            currentSegmentStart = points[i].distance;
+            segmentStartElevation = points[i].elevation;
+        }
+    }
+}
+
+// Show hidden sections
+function showSections() {
+    document.getElementById('statsSection').style.display = 'block';
+    document.getElementById('mapSection').style.display = 'block';
+    document.getElementById('elevationSection').style.display = 'block';
+    document.getElementById('paceSection').style.display = 'block';
+}
+
+// Display statistics
+function displayStats() {
+    document.getElementById('totalDistance').textContent = `${gpxData.totalDistance.toFixed(2)} km`;
+    document.getElementById('elevationGain').textContent = `${gpxData.elevationGain.toFixed(0)} m`;
+    document.getElementById('elevationLoss').textContent = `${gpxData.elevationLoss.toFixed(0)} m`;
+    document.getElementById('minElevation').textContent = `${gpxData.minElevation.toFixed(0)} m`;
+    document.getElementById('maxElevation').textContent = `${gpxData.maxElevation.toFixed(0)} m`;
+}
+
+// Display map with colored route
+function displayMap() {
+    // Clear existing map
+    if (map) {
+        map.remove();
+    }
+    
+    // Clear layer references
+    routeLayers = [];
+    
+    // Initialize map
+    map = L.map('map');
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Draw route segments with colors based on terrain
+    const colors = {
+        flat: '#4CAF50',
+        uphill: '#f44336',
+        downhill: '#2196F3'
+    };
+    
+    const points = gpxData.points;
+    
+    // Group consecutive segments of the same type for smoother rendering
+    let currentType = null;
+    let currentPath = [];
+    
+    segments.forEach((segment, index) => {
+        if (segment.terrainType !== currentType && currentPath.length > 0) {
+            // Draw the previous path
+            const polyline = L.polyline(currentPath, {
+                color: colors[currentType],
+                weight: 4,
+                opacity: 0.8
+            }).addTo(map);
+            routeLayers.push(polyline);
+            currentPath = [currentPath[currentPath.length - 1]]; // Start new path from last point
+        }
+        
+        currentType = segment.terrainType;
+        
+        // Add points for this segment
+        for (let i = segment.startIndex; i <= segment.endIndex; i++) {
+            currentPath.push([points[i].lat, points[i].lon]);
+        }
+        
+        // Draw final segment
+        if (index === segments.length - 1 && currentPath.length > 0) {
+            const polyline = L.polyline(currentPath, {
+                color: colors[currentType],
+                weight: 4,
+                opacity: 0.8
+            }).addTo(map);
+            routeLayers.push(polyline);
+        }
+    });
+    
+    // Add start marker
+    L.marker([points[0].lat, points[0].lon])
+        .addTo(map)
+        .bindPopup('Start');
+    
+    // Add end marker
+    L.marker([points[points.length - 1].lat, points[points.length - 1].lon])
+        .addTo(map)
+        .bindPopup('Finish');
+    
+    // Fit map to route bounds
+    const latLngs = points.map(p => [p.lat, p.lon]);
+    map.fitBounds(L.latLngBounds(latLngs), { padding: [20, 20] });
+}
+
+// Display elevation chart
+function displayElevationChart() {
+    const ctx = document.getElementById('elevationChart').getContext('2d');
+    
+    // Destroy existing chart
+    if (elevationChart) {
+        elevationChart.destroy();
+    }
+    
+    const points = gpxData.points;
+    
+    // Prepare data with colors
+    const labels = points.map(p => p.distance.toFixed(2));
+    const elevations = points.map(p => p.elevation);
+    
+    // Create gradient colors based on terrain
+    const colors = points.map((p, i) => {
+        if (i === 0) return 'rgba(76, 175, 80, 0.8)';
+        
+        // Find which segment this point belongs to
+        for (const segment of segments) {
+            if (p.distance <= segment.endDistance) {
+                switch (segment.terrainType) {
+                    case 'uphill': return 'rgba(244, 67, 54, 0.8)';
+                    case 'downhill': return 'rgba(33, 150, 243, 0.8)';
+                    default: return 'rgba(76, 175, 80, 0.8)';
+                }
+            }
+        }
+        return 'rgba(76, 175, 80, 0.8)';
+    });
+    
+    elevationChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Elevation (m)',
+                data: elevations,
+                borderColor: '#00d4ff',
+                backgroundColor: function(context) {
+                    const chart = context.chart;
+                    const {ctx, chartArea} = chart;
+                    if (!chartArea) return;
+                    
+                    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                    gradient.addColorStop(0, 'rgba(0, 212, 255, 0.1)');
+                    gradient.addColorStop(1, 'rgba(0, 212, 255, 0.4)');
+                    return gradient;
+                },
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return `Distance: ${context[0].label} km`;
+                        },
+                        label: function(context) {
+                            return `Elevation: ${context.raw.toFixed(0)} m`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Distance (km)',
+                        color: '#888'
+                    },
+                    ticks: {
+                        color: '#888',
+                        maxTicksLimit: 10
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Elevation (m)',
+                        color: '#888'
+                    },
+                    ticks: {
+                        color: '#888'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Make chart container responsive
+    document.querySelector('.chart-container').style.height = '300px';
+}
+
+// Pace calculation
+function setupPaceCalculation() {
+    document.getElementById('calculatePace').addEventListener('click', calculateRacePlan);
+}
+
+function getPaceInMinutes(minInput, secInput) {
+    const min = parseInt(minInput.value) || 0;
+    const sec = parseInt(secInput.value) || 0;
+    return min + sec / 60;
+}
+
+function formatTime(totalMinutes) {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = Math.floor(totalMinutes % 60);
+    const seconds = Math.round((totalMinutes % 1) * 60);
+    
+    if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function formatPace(paceMinutes) {
+    const min = Math.floor(paceMinutes);
+    const sec = Math.round((paceMinutes % 1) * 60);
+    return `${min}:${sec.toString().padStart(2, '0')}`;
+}
+
+function calculateRacePlan() {
+    if (!gpxData || segments.length === 0) {
+        alert('Please load a GPX file first.');
+        return;
+    }
+    
+    // Get pace values
+    const flatPace = getPaceInMinutes(
+        document.getElementById('flatPaceMin'),
+        document.getElementById('flatPaceSec')
+    );
+    const uphillPace = getPaceInMinutes(
+        document.getElementById('uphillPaceMin'),
+        document.getElementById('uphillPaceSec')
+    );
+    const downhillPace = getPaceInMinutes(
+        document.getElementById('downhillPaceMin'),
+        document.getElementById('downhillPaceSec')
+    );
+    
+    // Calculate distances and times for each terrain type
+    let flatDistance = 0, uphillDistance = 0, downhillDistance = 0;
+    let flatTime = 0, uphillTime = 0, downhillTime = 0;
+    
+    segments.forEach(segment => {
+        switch (segment.terrainType) {
+            case 'flat':
+                flatDistance += segment.distance;
+                flatTime += segment.distance * flatPace;
+                break;
+            case 'uphill':
+                uphillDistance += segment.distance;
+                uphillTime += segment.distance * uphillPace;
+                break;
+            case 'downhill':
+                downhillDistance += segment.distance;
+                downhillTime += segment.distance * downhillPace;
+                break;
+        }
+    });
+    
+    const totalTime = flatTime + uphillTime + downhillTime;
+    
+    // Display results
+    document.getElementById('paceResults').style.display = 'block';
+    document.getElementById('flatDistance').textContent = `${flatDistance.toFixed(2)} km`;
+    document.getElementById('uphillDistance').textContent = `${uphillDistance.toFixed(2)} km`;
+    document.getElementById('downhillDistance').textContent = `${downhillDistance.toFixed(2)} km`;
+    
+    document.getElementById('flatTime').textContent = formatTime(flatTime);
+    document.getElementById('uphillTime').textContent = formatTime(uphillTime);
+    document.getElementById('downhillTime').textContent = formatTime(downhillTime);
+    
+    document.getElementById('totalTime').textContent = formatTime(totalTime);
+    document.getElementById('estimatedTime').textContent = formatTime(totalTime);
+    
+    // Generate splits table
+    generateSplitsTable(flatPace, uphillPace, downhillPace);
+}
+
+// Generate kilometer splits table
+function generateSplitsTable(flatPace, uphillPace, downhillPace) {
+    const splitsBody = document.getElementById('splitsBody');
+    splitsBody.innerHTML = '';
+    
+    const points = gpxData.points;
+    const totalKm = Math.ceil(gpxData.totalDistance);
+    
+    let cumulativeTime = 0;
+    let currentKm = 1;
+    
+    // Calculate splits per kilometer
+    for (let km = 1; km <= totalKm; km++) {
+        const kmStart = km - 1;
+        const kmEnd = Math.min(km, gpxData.totalDistance);
+        
+        // Find elevation change for this km
+        let startElevation = 0, endElevation = 0;
+        let segmentDistance = 0;
+        let dominantTerrain = { flat: 0, uphill: 0, downhill: 0 };
+        
+        // Find points within this km range
+        for (const segment of segments) {
+            if (segment.endDistance >= kmStart && segment.startDistance < kmEnd) {
+                const overlapStart = Math.max(segment.startDistance, kmStart);
+                const overlapEnd = Math.min(segment.endDistance, kmEnd);
+                const overlapDistance = overlapEnd - overlapStart;
+                
+                dominantTerrain[segment.terrainType] += overlapDistance;
+                
+                if (startElevation === 0) {
+                    startElevation = segment.startPoint.elevation;
+                }
+                endElevation = segment.endPoint.elevation;
+            }
+        }
+        
+        // Determine dominant terrain for this km
+        let terrain = 'flat';
+        let maxDist = dominantTerrain.flat;
+        if (dominantTerrain.uphill > maxDist) {
+            terrain = 'uphill';
+            maxDist = dominantTerrain.uphill;
+        }
+        if (dominantTerrain.downhill > maxDist) {
+            terrain = 'downhill';
+        }
+        
+        // Calculate elevation change
+        const elevationChange = endElevation - startElevation;
+        const distance = kmEnd - kmStart;
+        
+        // Calculate pace for this km based on terrain distribution
+        let kmTime = 0;
+        kmTime += dominantTerrain.flat * flatPace;
+        kmTime += dominantTerrain.uphill * uphillPace;
+        kmTime += dominantTerrain.downhill * downhillPace;
+        
+        // If it's a partial km (last one), adjust
+        if (distance < 1) {
+            const avgPace = kmTime / distance;
+            cumulativeTime += kmTime;
+        } else {
+            cumulativeTime += kmTime;
+        }
+        
+        // Get target pace for dominant terrain
+        let targetPace;
+        switch (terrain) {
+            case 'uphill': targetPace = uphillPace; break;
+            case 'downhill': targetPace = downhillPace; break;
+            default: targetPace = flatPace;
+        }
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${km}</td>
+            <td>${elevationChange >= 0 ? '+' : ''}${elevationChange.toFixed(0)} m</td>
+            <td class="terrain-${terrain}">${terrain.charAt(0).toUpperCase() + terrain.slice(1)}</td>
+            <td>${formatPace(targetPace)} /km</td>
+            <td>${formatTime(cumulativeTime)}</td>
+        `;
+        splitsBody.appendChild(row);
+    }
+    
+    // Show splits section
+    document.getElementById('splitsSection').style.display = 'block';
+}

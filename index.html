@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPX Running Analyzer & Pace Planner</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏃 GPX Running Analyzer & Pace Planner</h1>
+        </header>
+
+        <section class="upload-section">
+            <div class="upload-box" id="dropZone">
+                <input type="file" id="gpxInput" accept=".gpx" hidden>
+                <div class="upload-content">
+                    <span class="upload-icon">📁</span>
+                    <p>Drag & drop a GPX file here or <button id="browseBtn">Browse</button></p>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats-section" id="statsSection" style="display: none;">
+            <h2>Route Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Total Distance</span>
+                    <span class="stat-value" id="totalDistance">-</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Elevation Gain</span>
+                    <span class="stat-value" id="elevationGain">-</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Elevation Loss</span>
+                    <span class="stat-value" id="elevationLoss">-</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Min Elevation</span>
+                    <span class="stat-value" id="minElevation">-</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Max Elevation</span>
+                    <span class="stat-value" id="maxElevation">-</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Estimated Time</span>
+                    <span class="stat-value" id="estimatedTime">-</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="map-section" id="mapSection" style="display: none;">
+            <h2>Route Map</h2>
+            <div id="map"></div>
+            <div class="map-legend">
+                <span class="legend-item"><span class="legend-color flat"></span> Flat</span>
+                <span class="legend-item"><span class="legend-color uphill"></span> Uphill</span>
+                <span class="legend-item"><span class="legend-color downhill"></span> Downhill</span>
+            </div>
+        </section>
+
+        <section class="elevation-section" id="elevationSection" style="display: none;">
+            <h2>Elevation Profile</h2>
+            <div class="chart-container">
+                <canvas id="elevationChart"></canvas>
+            </div>
+        </section>
+
+        <section class="pace-section" id="paceSection" style="display: none;">
+            <h2>Pace Planner</h2>
+            <p class="pace-description">Set your target pace for different terrain types. Pace is in minutes per kilometer (min/km).</p>
+            
+            <div class="pace-inputs">
+                <div class="pace-input-group">
+                    <label for="flatPace">
+                        <span class="terrain-icon flat-icon">➡️</span>
+                        Flat Pace (grade -2% to 2%)
+                    </label>
+                    <div class="pace-input-wrapper">
+                        <input type="number" id="flatPaceMin" value="5" min="1" max="20" step="1">
+                        <span>:</span>
+                        <input type="number" id="flatPaceSec" value="30" min="0" max="59" step="1">
+                        <span>min/km</span>
+                    </div>
+                </div>
+                
+                <div class="pace-input-group">
+                    <label for="uphillPace">
+                        <span class="terrain-icon uphill-icon">⬆️</span>
+                        Uphill Pace (grade > 2%)
+                    </label>
+                    <div class="pace-input-wrapper">
+                        <input type="number" id="uphillPaceMin" value="6" min="1" max="20" step="1">
+                        <span>:</span>
+                        <input type="number" id="uphillPaceSec" value="30" min="0" max="59" step="1">
+                        <span>min/km</span>
+                    </div>
+                </div>
+                
+                <div class="pace-input-group">
+                    <label for="downhillPace">
+                        <span class="terrain-icon downhill-icon">⬇️</span>
+                        Downhill Pace (grade < -2%)
+                    </label>
+                    <div class="pace-input-wrapper">
+                        <input type="number" id="downhillPaceMin" value="5" min="1" max="20" step="1">
+                        <span>:</span>
+                        <input type="number" id="downhillPaceSec" value="0" min="0" max="59" step="1">
+                        <span>min/km</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="calculatePace" class="calculate-btn">Calculate Race Plan</button>
+            
+            <div id="paceResults" class="pace-results" style="display: none;">
+                <h3>Race Plan Summary</h3>
+                <div class="terrain-breakdown">
+                    <div class="terrain-stat">
+                        <span class="terrain-label">Flat Distance:</span>
+                        <span class="terrain-value" id="flatDistance">-</span>
+                    </div>
+                    <div class="terrain-stat">
+                        <span class="terrain-label">Uphill Distance:</span>
+                        <span class="terrain-value" id="uphillDistance">-</span>
+                    </div>
+                    <div class="terrain-stat">
+                        <span class="terrain-label">Downhill Distance:</span>
+                        <span class="terrain-value" id="downhillDistance">-</span>
+                    </div>
+                </div>
+                
+                <div class="time-breakdown">
+                    <div class="time-stat">
+                        <span class="time-label">Flat Time:</span>
+                        <span class="time-value" id="flatTime">-</span>
+                    </div>
+                    <div class="time-stat">
+                        <span class="time-label">Uphill Time:</span>
+                        <span class="time-value" id="uphillTime">-</span>
+                    </div>
+                    <div class="time-stat">
+                        <span class="time-label">Downhill Time:</span>
+                        <span class="time-value" id="downhillTime">-</span>
+                    </div>
+                </div>
+                
+                <div class="total-time">
+                    <span class="total-label">Total Estimated Time:</span>
+                    <span class="total-value" id="totalTime">-</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="splits-section" id="splitsSection" style="display: none;">
+            <h2>Kilometer Splits</h2>
+            <div class="splits-table-container">
+                <table id="splitsTable">
+                    <thead>
+                        <tr>
+                            <th>KM</th>
+                            <th>Elevation Change</th>
+                            <th>Terrain</th>
+                            <th>Target Pace</th>
+                            <th>Cumulative Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="splitsBody">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
