@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDragAndDrop();
     setupFileInput();
     setupPaceCalculation();
+    setupExport();
 });
 
 // Drag and Drop functionality
@@ -603,4 +604,102 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
     
     // Show splits section
     document.getElementById('splitsSection').style.display = 'block';
+}
+
+// CSV Export functionality
+function setupExport() {
+    document.getElementById('exportCsv').addEventListener('click', exportToCsv);
+}
+
+function exportToCsv() {
+    if (!gpxData || segments.length === 0) {
+        alert('Please load a GPX file and calculate a race plan first.');
+        return;
+    }
+
+    const splitsTable = document.getElementById('splitsTable');
+    if (!splitsTable || splitsTable.rows.length <= 1) {
+        alert('Please calculate a race plan first to generate splits.');
+        return;
+    }
+
+    // Get pace values for summary
+    const flatPace = getPaceInMinutes(
+        document.getElementById('flatPaceMin'),
+        document.getElementById('flatPaceSec')
+    );
+    const uphillPace = getPaceInMinutes(
+        document.getElementById('uphillPaceMin'),
+        document.getElementById('uphillPaceSec')
+    );
+    const downhillPace = getPaceInMinutes(
+        document.getElementById('downhillPaceMin'),
+        document.getElementById('downhillPaceSec')
+    );
+
+    let csvContent = '';
+
+    // Add summary section
+    csvContent += 'GPX RACE PLAN EXPORT\n';
+    csvContent += '\n';
+    csvContent += 'ROUTE STATISTICS\n';
+    csvContent += `Total Distance,${gpxData.totalDistance.toFixed(2)} km\n`;
+    csvContent += `Elevation Gain,${gpxData.elevationGain.toFixed(0)} m\n`;
+    csvContent += `Elevation Loss,${gpxData.elevationLoss.toFixed(0)} m\n`;
+    csvContent += `Min Elevation,${gpxData.minElevation.toFixed(0)} m\n`;
+    csvContent += `Max Elevation,${gpxData.maxElevation.toFixed(0)} m\n`;
+    csvContent += '\n';
+    csvContent += 'PACE SETTINGS\n';
+    csvContent += `Flat Pace,${formatPace(flatPace)} /km\n`;
+    csvContent += `Uphill Pace,${formatPace(uphillPace)} /km\n`;
+    csvContent += `Downhill Pace,${formatPace(downhillPace)} /km\n`;
+    csvContent += '\n';
+    csvContent += 'TERRAIN BREAKDOWN\n';
+    csvContent += `Flat Distance,${document.getElementById('flatDistance').textContent}\n`;
+    csvContent += `Uphill Distance,${document.getElementById('uphillDistance').textContent}\n`;
+    csvContent += `Downhill Distance,${document.getElementById('downhillDistance').textContent}\n`;
+    csvContent += `Flat Time,${document.getElementById('flatTime').textContent}\n`;
+    csvContent += `Uphill Time,${document.getElementById('uphillTime').textContent}\n`;
+    csvContent += `Downhill Time,${document.getElementById('downhillTime').textContent}\n`;
+    csvContent += `Total Estimated Time,${document.getElementById('totalTime').textContent}\n`;
+    csvContent += '\n';
+
+    // Add splits table
+    csvContent += 'KILOMETER SPLITS\n';
+    
+    // Get table headers
+    const headers = [];
+    const headerCells = splitsTable.querySelectorAll('thead th');
+    headerCells.forEach(cell => {
+        headers.push(cell.textContent);
+    });
+    csvContent += headers.join(',') + '\n';
+
+    // Get table rows
+    const rows = splitsTable.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const rowData = [];
+        const cells = row.querySelectorAll('td');
+        cells.forEach(cell => {
+            // Escape commas and quotes in cell content
+            let content = cell.textContent.trim();
+            if (content.includes(',') || content.includes('"')) {
+                content = '"' + content.replace(/"/g, '""') + '"';
+            }
+            rowData.push(content);
+        });
+        csvContent += rowData.join(',') + '\n';
+    });
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'gpx_race_plan.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
