@@ -762,7 +762,9 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
     const startTimeInMinutes = startHours * 60 + startMinutes;
     
     let cumulativeTime = 0;
-    let currentKm = 1;
+    
+    // Get average pace for AID station time calculations
+    const avgPace = (flatPace + uphillPace + downhillPace) / 3;
     
     // Calculate splits per kilometer
     for (let km = 1; km <= totalKm; km++) {
@@ -771,7 +773,6 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         
         // Find elevation change for this km
         let startElevation = 0, endElevation = 0;
-        let segmentDistance = 0;
         let dominantTerrain = { flat: 0, uphill: 0, downhill: 0 };
         
         // Find points within this km range
@@ -811,13 +812,35 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         kmTime += dominantTerrain.uphill * uphillPace;
         kmTime += dominantTerrain.downhill * downhillPace;
         
-        // If it's a partial km (last one), adjust
-        if (distance < 1) {
-            const avgPace = kmTime / distance;
-            cumulativeTime += kmTime;
-        } else {
-            cumulativeTime += kmTime;
+        // Check for AID stations within this km (before adding main row)
+        const aidStationsInKm = aidStations.filter(station => 
+            station.km > kmStart && station.km < km && station.km % 1 !== 0
+        );
+        
+        // Add AID station rows for fractional positions
+        for (const station of aidStationsInKm) {
+            const fractionOfKm = station.km - kmStart;
+            const timeToStation = cumulativeTime + (kmTime * fractionOfKm);
+            const clockTimeMinutes = startTimeInMinutes + timeToStation;
+            const clockTime = formatClockTime(clockTimeMinutes);
+            
+            const aidRow = document.createElement('tr');
+            aidRow.classList.add('aid-station-row');
+            aidRow.innerHTML = `
+                <td>${station.km.toFixed(1)}</td>
+                <td>-</td>
+                <td>-</td>
+                <td class="aid-station-cell">${station.name}</td>
+                <td>-</td>
+                <td>-</td>
+                <td>${formatTime(timeToStation)}</td>
+                <td>${clockTime}</td>
+            `;
+            splitsBody.appendChild(aidRow);
         }
+        
+        // Update cumulative time
+        cumulativeTime += kmTime;
         
         // Get target pace for dominant terrain
         let targetPace;
@@ -834,8 +857,8 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         // Split time is the time for this km
         const splitTime = kmTime;
         
-        // Check for AID station at this km
-        const aidStation = getAidStationForKm(km);
+        // Check for AID station exactly at this km
+        const aidStation = aidStations.find(s => Math.floor(s.km) === km || s.km === km);
         const aidStationText = aidStation ? aidStation.name : '-';
         const hasAidStation = aidStation !== undefined;
         
