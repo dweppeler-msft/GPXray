@@ -16,6 +16,96 @@ body {
     padding: 20px;
 }
 
+/* Beta Password Gate */
+.beta-gate {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.beta-gate-content {
+    text-align: center;
+    padding: 40px;
+    max-width: 400px;
+}
+
+.beta-gate-content h1 {
+    font-size: 2rem;
+    color: #00d4ff;
+    margin-bottom: 15px;
+}
+
+.beta-gate-content > p {
+    color: #888;
+    margin-bottom: 25px;
+}
+
+.beta-gate-form {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.beta-gate-form input {
+    padding: 12px 18px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    font-size: 1rem;
+    width: 200px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.beta-gate-form input:focus {
+    border-color: #00d4ff;
+}
+
+.beta-gate-form button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    color: #1a1a2e;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.beta-gate-form button:hover {
+    transform: scale(1.05);
+}
+
+.beta-gate-error {
+    color: #ff6b6b;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.beta-gate-hint {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.beta-gate-hint a {
+    color: #00d4ff;
+    text-decoration: none;
+}
+
+.beta-gate-hint a:hover {
+    text-decoration: underline;
+}
+
 input, select, textarea {
     color-scheme: dark;
 }

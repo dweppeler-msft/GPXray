@@ -10,7 +10,21 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
+    <!-- Beta Password Gate -->
+    <div class="beta-gate" id="betaGate">
+        <div class="beta-gate-content">
+            <h1>🏃 GPXray <span class="beta-badge">BETA</span></h1>
+            <p>This is a beta version with experimental features.</p>
+            <div class="beta-gate-form">
+                <input type="password" id="betaPassword" placeholder="Enter beta password" autocomplete="off">
+                <button type="button" id="betaSubmit">Enter</button>
+            </div>
+            <p class="beta-gate-error" id="betaError" style="display: none;">Incorrect password</p>
+            <p class="beta-gate-hint">Don't have a password? Visit the <a href="https://gpxray.run/">stable version</a></p>
+        </div>
+    </div>
+
+    <div class="container" id="mainContent" style="display: none;">
         <header>
             <div class="header-content">
                 <div class="header-title">
@@ -508,6 +522,40 @@
         </div>
     </div>
 
+    <script>
+    // Beta password gate
+    (function() {
+        const BETA_PASSWORD = 'gpxray2026';
+        const STORAGE_KEY = 'gpxray_beta_access';
+        
+        // Check if already authenticated
+        if (sessionStorage.getItem(STORAGE_KEY) === 'granted') {
+            document.getElementById('betaGate').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            return;
+        }
+        
+        document.getElementById('betaSubmit').addEventListener('click', checkPassword);
+        document.getElementById('betaPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
+        });
+        
+        function checkPassword() {
+            const input = document.getElementById('betaPassword').value;
+            const error = document.getElementById('betaError');
+            
+            if (input === BETA_PASSWORD) {
+                sessionStorage.setItem(STORAGE_KEY, 'granted');
+                document.getElementById('betaGate').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+            } else {
+                error.style.display = 'block';
+                document.getElementById('betaPassword').value = '';
+                document.getElementById('betaPassword').focus();
+            }
+        }
+    })();
+    </script>
     <script src="app.js"></script>
 </body>
 </html>
