@@ -756,12 +756,16 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         const clockTimeMinutes = startTimeInMinutes + cumulativeTime;
         const clockTime = formatClockTime(clockTimeMinutes);
         
+        // Split time is the time for this km
+        const splitTime = kmTime;
+        
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${km}</td>
             <td>${elevationChange >= 0 ? '+' : ''}${elevationChange.toFixed(0)} m</td>
             <td class="terrain-${terrain}">${terrain.charAt(0).toUpperCase() + terrain.slice(1)}</td>
             <td>${formatPace(targetPace)} /km</td>
+            <td>${formatTime(splitTime)}</td>
             <td>${formatTime(cumulativeTime)}</td>
             <td>${clockTime}</td>
         `;
