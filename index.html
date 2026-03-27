@@ -184,6 +184,13 @@
                 </div>
             </div>
             
+            <div class="start-time-input">
+                <label>🕐 Race Start Time (optional)</label>
+                <div class="start-time-wrapper">
+                    <input type="time" id="raceStartTime" value="09:00">
+                </div>
+            </div>
+            
             <button id="calculatePace" class="calculate-btn">Calculate Race Plan</button>
             
             <div id="paceResults" class="pace-results" style="display: none;">
@@ -239,6 +246,7 @@
                             <th>Terrain</th>
                             <th>Target Pace</th>
                             <th>Cumulative Time</th>
+                            <th>Clock Time</th>
                         </tr>
                     </thead>
                     <tbody id="splitsBody">

@@ -490,6 +490,15 @@ function formatPace(paceMinutes) {
     return `${min}:${sec.toString().padStart(2, '0')}`;
 }
 
+function formatClockTime(totalMinutes) {
+    // Handle overflow past 24 hours
+    let hours = Math.floor(totalMinutes / 60) % 24;
+    const minutes = Math.floor(totalMinutes % 60);
+    const seconds = Math.round((totalMinutes % 1) * 60);
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
 function calculateTerrainDistances() {
     let flatDistance = 0, uphillDistance = 0, downhillDistance = 0;
     
@@ -619,6 +628,12 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
     const points = gpxData.points;
     const totalKm = Math.ceil(gpxData.totalDistance);
     
+    // Get start time
+    const startTimeInput = document.getElementById('raceStartTime');
+    const startTimeValue = startTimeInput ? startTimeInput.value : '09:00';
+    const [startHours, startMinutes] = startTimeValue.split(':').map(Number);
+    const startTimeInMinutes = startHours * 60 + startMinutes;
+    
     let cumulativeTime = 0;
     let currentKm = 1;
     
@@ -685,6 +700,10 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             default: targetPace = flatPace;
         }
         
+        // Calculate clock time
+        const clockTimeMinutes = startTimeInMinutes + cumulativeTime;
+        const clockTime = formatClockTime(clockTimeMinutes);
+        
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${km}</td>
@@ -692,6 +711,7 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             <td class="terrain-${terrain}">${terrain.charAt(0).toUpperCase() + terrain.slice(1)}</td>
             <td>${formatPace(targetPace)} /km</td>
             <td>${formatTime(cumulativeTime)}</td>
+            <td>${clockTime}</td>
         `;
         splitsBody.appendChild(row);
     }
@@ -742,9 +762,14 @@ function exportToCsv() {
 
     let csvContent = '';
 
+    // Get start time
+    const startTimeInput = document.getElementById('raceStartTime');
+    const startTimeValue = startTimeInput ? startTimeInput.value : '09:00';
+
     // Add summary section
     csvContent += 'GPX RACE PLAN EXPORT\n';
     csvContent += `Mode,${currentMode === 'manual' ? 'Manual Pace' : 'Target Time'}\n`;
+    csvContent += `Race Start Time,${startTimeValue}\n`;
     csvContent += '\n';
     csvContent += 'ROUTE STATISTICS\n';
     csvContent += `Total Distance,${gpxData.totalDistance.toFixed(2)} km\n`;

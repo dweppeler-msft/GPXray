@@ -418,6 +418,48 @@ h2 {
     color: #fff;
 }
 
+/* Start Time Input */
+.start-time-input {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.start-time-input label {
+    display: block;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 12px;
+    color: #00d4ff;
+}
+
+.start-time-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.start-time-wrapper input[type="time"] {
+    padding: 12px 20px;
+    border: 2px solid #4a4a6a;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.start-time-wrapper input[type="time"]:focus {
+    outline: none;
+    border-color: #00d4ff;
+}
+
+.start-time-wrapper input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
 .calculate-btn {
     display: block;
     width: 100%;
