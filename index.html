@@ -67,15 +67,17 @@
         </section>
 
         <section class="elevation-section" id="elevationSection" style="display: none;">
-            <h2>Elevation Profile</h2>
-            <div class="chart-container">
+            <div class="chart-header">
+                <h2>Profile</h2>
+                <select id="chartSelector" class="chart-selector">
+                    <option value="elevation">Elevation Profile</option>
+                    <option value="gradient">Gradient Profile</option>
+                </select>
+            </div>
+            <div class="chart-container" id="elevationChartContainer">
                 <canvas id="elevationChart"></canvas>
             </div>
-        </section>
-
-        <section class="gradient-section" id="gradientSection" style="display: none;">
-            <h2>Gradient Profile</h2>
-            <div class="chart-container">
+            <div class="chart-container" id="gradientChartContainer" style="display: none;">
                 <canvas id="gradientChart"></canvas>
             </div>
         </section>
@@ -126,13 +128,13 @@
             </div>
             
             <div class="mode-selector">
-                <button type="button" class="mode-btn active" id="manualModeBtn">Manual Pace</button>
-                <button type="button" class="mode-btn" id="targetModeBtn">Target Time</button>
+                <button type="button" class="mode-btn active" id="targetModeBtn">Target Time</button>
                 <button type="button" class="mode-btn" id="itraModeBtn">ITRA Index</button>
+                <button type="button" class="mode-btn" id="manualModeBtn">Manual Pace</button>
             </div>
             
             <!-- Manual Mode -->
-            <div id="manualMode" class="pace-mode">
+            <div id="manualMode" class="pace-mode" style="display: none;">
                 <p class="pace-description">Set your target pace for different terrain types. Pace is in minutes per kilometer (min/km).</p>
                 
                 <div class="pace-inputs">
@@ -178,7 +180,7 @@
             </div>
             
             <!-- Target Time Mode -->
-            <div id="targetMode" class="pace-mode" style="display: none;">
+            <div id="targetMode" class="pace-mode">
                 <p class="pace-description">Enter your target finish time and adjust the pace ratios for different terrain.</p>
                 
                 <div class="target-time-input">

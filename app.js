@@ -5,7 +5,7 @@ let routeLayers = [];
 let elevationChart = null;
 let gradientChart = null;
 let segments = []; // Stores segment data with terrain type
-let currentMode = 'manual'; // 'manual' or 'target'
+let currentMode = 'target'; // 'manual', 'target', or 'itra'
 let aidStations = []; // Stores AID station data
 let useMetric = true; // true = km, false = miles
 let surfaceData = []; // Stores surface data from OSM
@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupUnitToggle();
     setupSaveLoad();
     setupPrintRaceCard();
+    setupChartSelector();
 });
 
 // Drag and Drop functionality
@@ -713,9 +714,27 @@ function showSections() {
     document.getElementById('statsSection').style.display = 'block';
     document.getElementById('mapSection').style.display = 'block';
     document.getElementById('elevationSection').style.display = 'block';
-    document.getElementById('gradientSection').style.display = 'block';
     document.getElementById('surfaceSection').style.display = 'block';
     document.getElementById('paceSection').style.display = 'block';
+}
+
+// Setup chart selector for elevation/gradient toggle
+function setupChartSelector() {
+    const selector = document.getElementById('chartSelector');
+    if (!selector) return;
+    
+    selector.addEventListener('change', () => {
+        const elevationContainer = document.getElementById('elevationChartContainer');
+        const gradientContainer = document.getElementById('gradientChartContainer');
+        
+        if (selector.value === 'elevation') {
+            elevationContainer.style.display = 'block';
+            gradientContainer.style.display = 'none';
+        } else {
+            elevationContainer.style.display = 'none';
+            gradientContainer.style.display = 'block';
+        }
+    });
 }
 
 // Display statistics

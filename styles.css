@@ -180,6 +180,43 @@ h2 {
 }
 
 /* Elevation Chart */
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.chart-header h2 {
+    margin: 0;
+}
+
+.chart-selector {
+    padding: 8px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.chart-selector:hover {
+    border-color: #00d4ff;
+}
+
+.chart-selector:focus {
+    border-color: #00d4ff;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+.chart-selector option {
+    background: #1a1a2e;
+    color: #fff;
+}
+
 .chart-container {
     background: rgba(0, 0, 0, 0.3);
     border-radius: 10px;
