@@ -1470,10 +1470,10 @@ function savePlan() {
     }
     
     // Prompt for name
-    const name = prompt('Save as:', currentRouteName || 'My Race Plan');
+    const name = prompt('Save as:', currentRouteName || 'My Race Strategy');
     if (name === null) return; // Cancelled
     
-    const entry = saveToHistory(name.trim() || currentRouteName || 'My Race Plan');
+    const entry = saveToHistory(name.trim() || currentRouteName || 'My Race Strategy');
     
     // Also save to legacy single-plan storage for backward compatibility
     const plan = {
@@ -1861,7 +1861,7 @@ function loadFromHistory(id) {
     document.getElementById('historyPanel')?.classList.remove('active');
     document.getElementById('historyOverlay')?.classList.remove('active');
     
-    alert(`Loaded plan: ${entry.name}\n\nNote: You'll need to load the same GPX file to recalculate the race plan.`);
+    alert(`Loaded plan: ${entry.name}\n\nNote: You'll need to load the same GPX file to recalculate your race strategy.`);
 }
 
 function deleteFromHistory(id) {
@@ -1949,7 +1949,7 @@ function printRaceCard() {
     
     const splitsBody = document.getElementById('splitsBody');
     if (!splitsBody || splitsBody.children.length === 0) {
-        alert('Please calculate a race plan first.');
+        alert('Please calculate your race strategy first.');
         return;
     }
     
@@ -1957,7 +1957,7 @@ function printRaceCard() {
     const distanceUnit = useMetric ? 'km' : 'mi';
     const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
     
-    document.getElementById('printTitle').textContent = 'Race Plan';
+    document.getElementById('printTitle').textContent = 'Race Strategy';
     document.getElementById('printDistance').textContent = `${distance.toFixed(2)} ${distanceUnit}`;
     document.getElementById('printElevation').textContent = `↑${gpxData.elevationGain.toFixed(0)}m ↓${gpxData.elevationLoss.toFixed(0)}m`;
     document.getElementById('printTime').textContent = document.getElementById('totalTime')?.textContent || '-';
@@ -3194,13 +3194,13 @@ function setupExport() {
 
 function exportToCsv() {
     if (!gpxData || segments.length === 0) {
-        alert('Please load a GPX file and calculate a race plan first.');
+        alert('Please load a GPX file and calculate your race strategy first.');
         return;
     }
 
     const splitsTable = document.getElementById('splitsTable');
     if (!splitsTable || splitsTable.rows.length <= 1) {
-        alert('Please calculate a race plan first to generate splits.');
+        alert('Please calculate your race strategy first to generate splits.');
         return;
     }
 
@@ -3242,7 +3242,7 @@ function exportToCsv() {
     const distanceDisplay = useMetric ? gpxData.totalDistance.toFixed(2) : (gpxData.totalDistance * KM_TO_MILES).toFixed(2);
 
     // Add summary section
-    csvContent += 'GPX RACE PLAN EXPORT\n';
+    csvContent += 'GPX RACE STRATEGY EXPORT\n';
     csvContent += `Mode,${currentMode === 'manual' ? 'Manual Pace' : 'Target Time'}\n`;
     csvContent += `Race Date,${raceDateValue || 'Not set'}\n`;
     csvContent += `Race Start Time,${startTimeValue}\n`;
@@ -3338,13 +3338,13 @@ function exportToCsv() {
 // PDF Race Card Export
 async function exportToPdf() {
     if (!gpxData || segments.length === 0) {
-        alert('Please load a GPX file and calculate a race plan first.');
+        alert('Please load a GPX file and calculate your race strategy first.');
         return;
     }
 
     const splitsTable = document.getElementById('splitsTable');
     if (!splitsTable || splitsTable.rows.length <= 1) {
-        alert('Please calculate a race plan first to generate splits.');
+        alert('Please calculate your race strategy first to generate splits.');
         return;
     }
 
@@ -3383,7 +3383,7 @@ async function exportToPdf() {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
         doc.setTextColor(0, 0, 0);
-        let routeName = currentRouteName || 'Race Plan';
+        let routeName = currentRouteName || 'Race Strategy';
         
         // Truncate long titles to fit header (max ~50 chars)
         const maxTitleLength = 50;
@@ -3583,7 +3583,7 @@ async function exportToPdf() {
 // Share Card Export (Phone format image)
 async function exportShareCard() {
     if (!gpxData || segments.length === 0) {
-        alert('Please load a GPX file and calculate a race plan first.');
+        alert('Please load a GPX file and calculate your race strategy first.');
         return;
     }
 
@@ -3829,7 +3829,7 @@ async function exportShareCard() {
             `;
         }
 
-        let routeName = currentRouteName || 'Race Plan';
+        let routeName = currentRouteName || 'Race Strategy';
         if (routeName.length > 35) {
             routeName = routeName.substring(0, 32) + '...';
         }
@@ -3837,7 +3837,7 @@ async function exportShareCard() {
         card.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 28px; font-weight: bold; color: #00d4ff; margin-bottom: 5px;">GPXray</div>
-                <div style="font-size: 14px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; font-weight: 500;">Race Plan</div>
+                <div style="font-size: 14px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; font-weight: 500;">Race Strategy</div>
             </div>
             
             <div style="background: rgba(0,212,255,0.15); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
