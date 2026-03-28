@@ -462,9 +462,17 @@ function setLanguage(lang) {
     localStorage.setItem('gpxray-lang', lang);
     translatePage();
     
-    // Update language selector if it exists
-    const langSelect = document.getElementById('langSelect');
-    if (langSelect) langSelect.value = lang;
+    // Update language toggle buttons if they exist
+    const langToggle = document.getElementById('langToggle');
+    if (langToggle) {
+        langToggle.querySelectorAll('.lang-btn').forEach(btn => {
+            if (btn.dataset.lang === lang) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
     
     // Re-render dynamic content if GPX is loaded
     if (typeof updateHeroSection === 'function' && typeof gpxData !== 'undefined' && gpxData) {

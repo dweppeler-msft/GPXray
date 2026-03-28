@@ -121,18 +121,34 @@ document.addEventListener('DOMContentLoaded', () => {
     setupRunnerLevel();
 });
 
-// Language Selector
+// Language Selector (Toggle Buttons)
 function setupLanguageSelector() {
-    const langSelect = document.getElementById('langSelect');
-    if (!langSelect) return;
+    const langToggle = document.getElementById('langToggle');
+    if (!langToggle) return;
     
-    // Set current language
-    langSelect.value = typeof getLang === 'function' ? getLang() : 'en';
+    const langBtns = langToggle.querySelectorAll('.lang-btn');
+    const currentLang = typeof getLang === 'function' ? getLang() : 'en';
     
-    langSelect.addEventListener('change', () => {
-        if (typeof setLanguage === 'function') {
-            setLanguage(langSelect.value);
+    // Set initial active state
+    langBtns.forEach(btn => {
+        if (btn.dataset.lang === currentLang) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
         }
+        
+        btn.addEventListener('click', () => {
+            const lang = btn.dataset.lang;
+            
+            // Update active state
+            langBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Set language
+            if (typeof setLanguage === 'function') {
+                setLanguage(lang);
+            }
+        });
     });
 }
 
