@@ -1742,6 +1742,18 @@ h2 {
     margin-top: 2px;
 }
 
+.hero-metric-insight {
+    display: block;
+    font-size: 0.75rem;
+    color: #ff9800;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+.hero-metric-insight.warning {
+    color: #ff6b6b;
+}
+
 /* Info Tooltip */
 .info-tooltip {
     display: inline-block;

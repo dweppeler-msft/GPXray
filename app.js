@@ -3612,8 +3612,15 @@ function updateHeroSection(totalTime) {
     // Update Descent Load (gradient-weighted muscular load)
     const heroDescentLoad = document.getElementById('heroDescentLoad');
     const heroDescentDetail = document.getElementById('heroDescentDetail');
+    const heroDescentInsight = document.getElementById('heroDescentInsight');
     if (heroDescentLoad && segments.length > 0) {
         let descentLoadTotal = 0;
+        let steepDescentStart = null;
+        let heaviestDescentKm = null;
+        let maxDLInSegment = 0;
+        
+        // Track DL accumulation per km for insight
+        const dlByKm = {};
         
         for (const segment of segments) {
             if (segment.terrainType === 'downhill' && segment.elevationChange < 0) {
@@ -3621,9 +3628,22 @@ function updateHeroSection(totalTime) {
                 const gradePercent = Math.abs(segment.grade);
                 
                 // Gradient weight: steeper = exponentially harder on quads
-                // 5% grade = 1.35x, 10% = 2.2x, 15% = 3.4x, 20% = 4.9x
                 const gradientWeight = 1 + Math.pow(gradePercent / 10, 1.5);
-                descentLoadTotal += descentM * gradientWeight;
+                const segmentDL = descentM * gradientWeight;
+                descentLoadTotal += segmentDL;
+                
+                // Track where steep descents are (grade > 12%)
+                if (gradePercent > 12 && !steepDescentStart) {
+                    steepDescentStart = Math.floor(segment.startDistance);
+                }
+                
+                // Track heaviest DL per km
+                const km = Math.floor(segment.startDistance);
+                dlByKm[km] = (dlByKm[km] || 0) + segmentDL;
+                if (dlByKm[km] > maxDLInSegment) {
+                    maxDLInSegment = dlByKm[km];
+                    heaviestDescentKm = km;
+                }
             }
         }
         
@@ -3634,10 +3654,27 @@ function updateHeroSection(totalTime) {
         if (heroDescentDetail && gpxData) {
             const dlPerKm = descentLoadTotal / gpxData.totalDistance;
             heroDescentDetail.textContent = `${Math.round(dlPerKm)} DL/km`;
+        }
+        
+        // Generate auto-insight
+        if (heroDescentInsight && gpxData) {
+            const dlPerKm = descentLoadTotal / gpxData.totalDistance;
+            const totalDist = gpxData.totalDistance;
             
-            // High quad fatigue warning
-            if (dlPerKm > 80) {
-                heroDescentDetail.textContent += ' ⚠️';
+            // Check if steep descent in final third
+            const isFinalThird = heaviestDescentKm && heaviestDescentKm > (totalDist * 0.66);
+            
+            if (dlPerKm > 80 && steepDescentStart) {
+                heroDescentInsight.textContent = `⚠ High quad fatigue risk after KM${steepDescentStart}`;
+                heroDescentInsight.className = 'hero-metric-insight warning';
+            } else if (dlPerKm > 60 && isFinalThird) {
+                heroDescentInsight.textContent = `Expect pace degradation on final descent`;
+                heroDescentInsight.className = 'hero-metric-insight';
+            } else if (dlPerKm > 60 && steepDescentStart) {
+                heroDescentInsight.textContent = `Steep sections start KM${steepDescentStart}`;
+                heroDescentInsight.className = 'hero-metric-insight';
+            } else {
+                heroDescentInsight.textContent = '';
             }
         }
     }
