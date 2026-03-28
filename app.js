@@ -1485,13 +1485,13 @@ function setupExport() {
 
 function exportToCsv() {
     if (!gpxData || segments.length === 0) {
-        alert('Please load a GPX file and calculate a race plan first.');
+        alert('Please load a GPX file and calculate your race strategy first.');
         return;
     }
 
     const splitsTable = document.getElementById('splitsTable');
     if (!splitsTable || splitsTable.rows.length <= 1) {
-        alert('Please calculate a race plan first to generate splits.');
+        alert('Please calculate your race strategy first to generate splits.');
         return;
     }
 
@@ -1525,7 +1525,7 @@ function exportToCsv() {
     const startTimeValue = startTimeInput ? startTimeInput.value : '09:00';
 
     // Add summary section
-    csvContent += 'GPX RACE PLAN EXPORT\n';
+    csvContent += 'GPX RACE STRATEGY EXPORT\n';
     csvContent += `Mode,${currentMode === 'manual' ? 'Manual Pace' : 'Target Time'}\n`;
     csvContent += `Race Start Time,${startTimeValue}\n`;
     csvContent += '\n';
