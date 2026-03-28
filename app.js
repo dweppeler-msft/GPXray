@@ -5,7 +5,7 @@ let routeLayers = [];
 let elevationChart = null;
 let gradientChart = null;
 let segments = []; // Stores segment data with terrain type
-let currentMode = 'target'; // 'manual', 'target', or 'itra'
+let currentMode = 'manual'; // 'manual', 'target', or 'itra'
 let aidStations = []; // Stores AID station data
 let useMetric = true; // true = km, false = miles
 let surfaceData = []; // Stores surface data from OSM
@@ -706,6 +706,9 @@ function parseGPX(gpxContent) {
     
     // Update sun times display based on route center
     updateSunTimesDisplay();
+    
+    // Auto-calculate race plan with default paces for immediate value
+    calculateRacePlan();
     
     // Track GPX load
     trackEvent('gpx_loaded', { 
