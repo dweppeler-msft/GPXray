@@ -710,10 +710,6 @@ function parseGPX(gpxContent) {
     // Auto-calculate race plan with default paces for immediate value
     calculateRacePlan();
     
-    // Generate course insights
-    generateCourseSummary();
-    findHardestSegment();
-    
     // Track GPX load
     trackEvent('gpx_loaded', { 
         race_name: currentRouteName || 'custom_upload',
@@ -3498,27 +3494,118 @@ function renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, star
 
 // Update Hero Result Section with finish time and AID checkpoints
 function updateHeroSection(totalTime) {
-    const heroSection = document.getElementById('heroResult');
     const heroTime = document.getElementById('heroFinishTime');
     const heroCheckpoints = document.getElementById('heroCheckpoints');
     
-    if (!heroSection || !heroTime) return;
-    
-    // Show hero section
-    heroSection.style.display = 'block';
+    if (!heroTime) return;
     
     // Update finish time
     heroTime.textContent = formatTime(totalTime);
     
-    // Populate AID station checkpoints
+    // Update Climb Load
+    const heroClimbLoad = document.getElementById('heroClimbLoad');
+    const heroClimbDistribution = document.getElementById('heroClimbDistribution');
+    if (heroClimbLoad && gpxData) {
+        heroClimbLoad.textContent = `${Math.round(gpxData.elevationGain)}m`;
+        
+        // Calculate where 80% of climbing occurs
+        if (heroClimbDistribution && segments.length > 0) {
+            const totalGain = gpxData.elevationGain;
+            let cumulativeGain = 0;
+            let eightyPercentKm = null;
+            
+            for (const segment of segments) {
+                if (segment.terrainType === 'uphill') {
+                    cumulativeGain += segment.elevationGain || 0;
+                }
+                if (cumulativeGain >= totalGain * 0.8 && !eightyPercentKm) {
+                    eightyPercentKm = segment.endDistance;
+                    break;
+                }
+            }
+            
+            if (eightyPercentKm && eightyPercentKm < gpxData.totalDistance * 0.7) {
+                heroClimbDistribution.textContent = `80% before KM ${Math.round(eightyPercentKm)}`;
+            } else {
+                heroClimbDistribution.textContent = '';
+            }
+        }
+    }
+    
+    // Update Longest Climb
+    const heroLongestClimb = document.getElementById('heroLongestClimb');
+    const heroLongestClimbGain = document.getElementById('heroLongestClimbGain');
+    if (heroLongestClimb && segments.length > 0) {
+        const longestClimb = findLongestClimb();
+        if (longestClimb && longestClimb.gain > 200) {
+            heroLongestClimb.textContent = `KM ${Math.round(longestClimb.start)}-${Math.round(longestClimb.end)}`;
+            if (heroLongestClimbGain) {
+                heroLongestClimbGain.textContent = `+${Math.round(longestClimb.gain)}m`;
+            }
+        } else {
+            heroLongestClimb.textContent = '-';
+            if (heroLongestClimbGain) heroLongestClimbGain.textContent = '';
+        }
+    }
+    
+    // Update Descent Load
+    const heroDescentLoad = document.getElementById('heroDescentLoad');
+    if (heroDescentLoad && segments.length > 0) {
+        let downhillDistance = 0;
+        for (const segment of segments) {
+            if (segment.terrainType === 'downhill') {
+                downhillDistance += segment.distance;
+            }
+        }
+        heroDescentLoad.textContent = `${downhillDistance.toFixed(1)}km`;
+    }
+    
+    // Populate AID station checkpoints (only if stations configured)
     if (heroCheckpoints && aidStations.length > 0 && lastCalculatedPaces) {
         const checkpointsHtml = calculateCheckpointTimes();
         heroCheckpoints.innerHTML = checkpointsHtml;
         heroCheckpoints.style.display = 'flex';
-    } else {
+    } else if (heroCheckpoints) {
         heroCheckpoints.innerHTML = '';
         heroCheckpoints.style.display = 'none';
     }
+}
+
+// Find the longest continuous climb
+function findLongestClimb() {
+    if (!segments || segments.length === 0) return null;
+    
+    let longestClimb = null;
+    let currentClimb = null;
+    
+    for (const segment of segments) {
+        if (segment.terrainType === 'uphill') {
+            if (!currentClimb) {
+                currentClimb = {
+                    start: segment.startDistance,
+                    end: segment.endDistance,
+                    gain: segment.elevationGain || 0
+                };
+            } else {
+                currentClimb.end = segment.endDistance;
+                currentClimb.gain += segment.elevationGain || 0;
+            }
+        } else {
+            if (currentClimb) {
+                if (!longestClimb || currentClimb.gain > longestClimb.gain) {
+                    longestClimb = { ...currentClimb };
+                }
+                currentClimb = null;
+            }
+        }
+    }
+    
+    // Check last segment
+    if (currentClimb && (!longestClimb || currentClimb.gain > longestClimb.gain)) {
+        longestClimb = { ...currentClimb };
+    }
+    
+    return longestClimb;
 }
 
 // Calculate arrival times at each checkpoint/AID station
@@ -3576,159 +3663,6 @@ function calculateCheckpointTimes() {
     });
     
     return checkpointsHtml;
-}
-
-// Generate Course Summary Insights
-function generateCourseSummary() {
-    if (!gpxData || segments.length === 0) return;
-    
-    const summarySection = document.getElementById('courseSummary');
-    const summaryList = document.getElementById('courseSummaryList');
-    if (!summarySection || !summaryList) return;
-    
-    const insights = [];
-    const totalDist = gpxData.totalDistance;
-    const totalGain = gpxData.elevationGain;
-    
-    // Find where 80% of elevation gain occurs
-    let cumulativeGain = 0;
-    let eightyPercentKm = null;
-    for (const segment of segments) {
-        if (segment.terrainType === 'uphill') {
-            cumulativeGain += segment.elevationGain || 0;
-        }
-        if (cumulativeGain >= totalGain * 0.8 && !eightyPercentKm) {
-            eightyPercentKm = segment.endDistance;
-        }
-    }
-    if (eightyPercentKm && eightyPercentKm < totalDist * 0.7) {
-        insights.push(`80% of elevation gain occurs before km ${Math.round(eightyPercentKm)}`);
-    }
-    
-    // Find longest continuous climb
-    let longestClimb = { start: 0, end: 0, gain: 0 };
-    let currentClimb = { start: 0, end: 0, gain: 0 };
-    let inClimb = false;
-    
-    for (const segment of segments) {
-        if (segment.terrainType === 'uphill') {
-            if (!inClimb) {
-                currentClimb = { start: segment.startDistance, end: segment.endDistance, gain: segment.elevationGain || 0 };
-                inClimb = true;
-            } else {
-                currentClimb.end = segment.endDistance;
-                currentClimb.gain += segment.elevationGain || 0;
-            }
-        } else {
-            if (inClimb && currentClimb.gain > longestClimb.gain) {
-                longestClimb = { ...currentClimb };
-            }
-            inClimb = false;
-        }
-    }
-    if (inClimb && currentClimb.gain > longestClimb.gain) {
-        longestClimb = { ...currentClimb };
-    }
-    
-    if (longestClimb.gain > 300) {
-        insights.push(`Largest climb between km ${Math.round(longestClimb.start)}-${Math.round(longestClimb.end)} (+${Math.round(longestClimb.gain)}m)`);
-    }
-    
-    // Find long continuous descent at end
-    let descentAtEnd = { start: totalDist, gain: 0 };
-    for (let i = segments.length - 1; i >= 0; i--) {
-        const segment = segments[i];
-        if (segment.terrainType === 'downhill') {
-            descentAtEnd.start = segment.startDistance;
-            descentAtEnd.gain += Math.abs(segment.elevationGain || 0);
-        } else if (segment.terrainType === 'uphill') {
-            break; // Stop when we hit an uphill
-        }
-    }
-    if (descentAtEnd.gain > 300 && (totalDist - descentAtEnd.start) > 5) {
-        insights.push(`Long descent in final ${Math.round(totalDist - descentAtEnd.start)}km (-${Math.round(descentAtEnd.gain)}m)`);
-    }
-    
-    // Calculate percentage of technical terrain
-    let technicalDist = 0;
-    for (const segment of segments) {
-        if (['trail', 'path', 'rock', 'gravel'].includes(segment.surfaceType)) {
-            technicalDist += segment.distance;
-        }
-    }
-    const technicalPercent = (technicalDist / totalDist * 100);
-    if (technicalPercent > 60) {
-        insights.push(`${Math.round(technicalPercent)}% technical terrain (trail/path)`);
-    }
-    
-    // Show insights
-    if (insights.length > 0) {
-        summaryList.innerHTML = insights.map(i => `<li>${i}</li>`).join('');
-        summarySection.style.display = 'block';
-    } else {
-        summarySection.style.display = 'none';
-    }
-}
-
-// Find and highlight hardest segment
-function findHardestSegment() {
-    if (!gpxData || segments.length === 0) return;
-    
-    const hardestSection = document.getElementById('hardestSegment');
-    const hardestText = document.getElementById('hardestSegmentText');
-    if (!hardestSection || !hardestText) return;
-    
-    // Find the hardest climb (longest continuous uphill with most elevation gain)
-    let hardest = null;
-    let currentClimb = null;
-    
-    for (const segment of segments) {
-        if (segment.terrainType === 'uphill') {
-            if (!currentClimb) {
-                currentClimb = {
-                    startKm: segment.startDistance,
-                    endKm: segment.endDistance,
-                    gain: segment.elevationGain || 0
-                };
-            } else {
-                currentClimb.endKm = segment.endDistance;
-                currentClimb.gain += segment.elevationGain || 0;
-            }
-        } else {
-            if (currentClimb) {
-                if (!hardest || currentClimb.gain > hardest.gain) {
-                    hardest = { ...currentClimb };
-                }
-                currentClimb = null;
-            }
-        }
-    }
-    // Check last segment
-    if (currentClimb && (!hardest || currentClimb.gain > hardest.gain)) {
-        hardest = { ...currentClimb };
-    }
-    
-    // Only show if significant (>400m gain or >3km length)
-    if (hardest && (hardest.gain > 400 || (hardest.endKm - hardest.startKm) > 3)) {
-        const distance = hardest.endKm - hardest.startKm;
-        
-        // Estimate time for this segment using default paces
-        let estimatedTime = 0;
-        if (lastCalculatedPaces) {
-            estimatedTime = distance * lastCalculatedPaces.uphill;
-        } else {
-            estimatedTime = distance * 7; // Default uphill pace ~7 min/km
-        }
-        
-        hardestText.innerHTML = `
-            <strong>KM ${Math.round(hardest.startKm)} – ${Math.round(hardest.endKm)}</strong><br>
-            +${Math.round(hardest.gain)}m climb<br>
-            Expected Time: ${formatTime(estimatedTime)}
-        `;
-        hardestSection.style.display = 'flex';
-    } else {
-        hardestSection.style.display = 'none';
-    }
 }
 
 // CSV Export functionality

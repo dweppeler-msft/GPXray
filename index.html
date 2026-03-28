@@ -202,62 +202,79 @@
                 <span class="route-icon">🏞️</span>
                 <h2 id="routeName">Route</h2>
             </div>
-            <h3 class="section-subtitle">Course Overview</h3>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <span class="stat-label">Total Distance</span>
-                    <span class="stat-value" id="totalDistance">-</span>
+            
+            <!-- Hero Result Section - immediate value -->
+            <div class="hero-result" id="heroResult">
+                <div class="hero-main">
+                    <div class="hero-time">
+                        <span class="hero-label">Estimated Finish Time</span>
+                        <span class="hero-value" id="heroFinishTime">-</span>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <span class="stat-label">Elevation Gain</span>
-                    <span class="stat-value" id="elevationGain">-</span>
+                
+                <div class="hero-metrics">
+                    <div class="hero-metric">
+                        <span class="hero-metric-icon">⛰️</span>
+                        <div class="hero-metric-content">
+                            <span class="hero-metric-label">Climb Load</span>
+                            <span class="hero-metric-value" id="heroClimbLoad">-</span>
+                            <span class="hero-metric-detail" id="heroClimbDistribution"></span>
+                        </div>
+                    </div>
+                    <div class="hero-metric">
+                        <span class="hero-metric-icon">🏔️</span>
+                        <div class="hero-metric-content">
+                            <span class="hero-metric-label">Longest Climb</span>
+                            <span class="hero-metric-value" id="heroLongestClimb">-</span>
+                            <span class="hero-metric-detail" id="heroLongestClimbGain"></span>
+                        </div>
+                    </div>
+                    <div class="hero-metric">
+                        <span class="hero-metric-icon">⬇️</span>
+                        <div class="hero-metric-content">
+                            <span class="hero-metric-label">Descent Load</span>
+                            <span class="hero-metric-value" id="heroDescentLoad">-</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <span class="stat-label">Elevation Loss</span>
-                    <span class="stat-value" id="elevationLoss">-</span>
+                
+                <div class="hero-checkpoints" id="heroCheckpoints" style="display: none;">
+                    <!-- AID station times will appear here -->
                 </div>
-                <div class="stat-card">
-                    <span class="stat-label">Min Elevation</span>
-                    <span class="stat-value" id="minElevation">-</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Max Elevation</span>
-                    <span class="stat-value" id="maxElevation">-</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Estimated Time</span>
-                    <span class="stat-value" id="estimatedTime">-</span>
-                </div>
+                
+                <p class="hero-hint">Based on default paces • <a href="#paceSection">Customize strategy ↓</a></p>
             </div>
             
-            <!-- Course Summary Insights -->
-            <div class="course-summary" id="courseSummary" style="display: none;">
-                <h4>📊 Course Summary</h4>
-                <ul id="courseSummaryList">
-                    <!-- Auto-generated insights will appear here -->
-                </ul>
-            </div>
-            
-            <!-- Hardest Segment Highlight -->
-            <div class="hardest-segment" id="hardestSegment" style="display: none;">
-                <div class="hardest-segment-icon">🔥</div>
-                <div class="hardest-segment-content">
-                    <h4>Critical Segment</h4>
-                    <p id="hardestSegmentText">-</p>
+            <!-- Secondary stats (collapsed) -->
+            <details class="stats-details">
+                <summary>📊 Course Details</summary>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Distance</span>
+                        <span class="stat-value" id="totalDistance">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Elevation Gain</span>
+                        <span class="stat-value" id="elevationGain">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Elevation Loss</span>
+                        <span class="stat-value" id="elevationLoss">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Min Elevation</span>
+                        <span class="stat-value" id="minElevation">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Max Elevation</span>
+                        <span class="stat-value" id="maxElevation">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Estimated Time</span>
+                        <span class="stat-value" id="estimatedTime">-</span>
+                    </div>
                 </div>
-            </div>
-        </section>
-        
-        <!-- Hero Result Section -->
-        <section class="hero-result" id="heroResult" style="display: none;">
-            <div class="hero-time">
-                <span class="hero-label">Estimated Finish Time</span>
-                <span class="hero-value" id="heroFinishTime">-</span>
-            </div>
-            <div class="hero-checkpoints" id="heroCheckpoints">
-                <!-- AID station times will appear here -->
-            </div>
-            <p class="hero-hint">Based on default paces • <a href="#paceSection">Customize strategy ↓</a></p>
+            </details>
         </section>
 
         <section class="map-section" id="mapSection" style="display: none;">
