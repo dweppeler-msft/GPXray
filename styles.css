@@ -1055,10 +1055,12 @@ header h1 {
 }
 
 .early-access-instagram {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 12px 20px;
+    width: 100%;
+    padding: 14px 20px;
     background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
     color: white !important;
     text-decoration: none;
@@ -1067,6 +1069,7 @@ header h1 {
     font-weight: 500;
     margin-bottom: 15px;
     transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 .early-access-instagram:hover {
@@ -1076,6 +1079,7 @@ header h1 {
 
 .instagram-icon {
     font-size: 1.1rem;
+    flex-shrink: 0;
 }
 
 /* Toast Notifications */
@@ -3231,10 +3235,8 @@ h2 {
     }
     
     .early-access-instagram {
-        width: 100%;
-        justify-content: center;
         font-size: 0.85rem;
-        padding: 14px;
+        padding: 12px;
     }
     
     .early-access-divider {
