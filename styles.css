@@ -1562,6 +1562,30 @@ h2 {
     margin-bottom: 0;
 }
 
+.hero-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.hero-distance {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-distance-value {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #fff;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
 .hero-label {
     display: block;
     font-size: 0.9rem;
@@ -3418,8 +3442,18 @@ h2 {
         padding-bottom: 15px;
     }
     
+    .hero-primary {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
     .hero-value {
         font-size: 2.5rem;
+    }
+    
+    .hero-distance-value {
+        font-size: 1.5rem;
+        padding: 8px 16px;
     }
     
     .hero-metrics {
