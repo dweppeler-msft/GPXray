@@ -30,7 +30,35 @@ document.addEventListener('DOMContentLoaded', () => {
     setupFeedback();
     setupRaceBrowser();
     setupFooter();
+    setupCookieConsent();
 });
+
+// Cookie Consent
+function setupCookieConsent() {
+    const banner = document.getElementById('cookieBanner');
+    const acceptBtn = document.getElementById('cookieAccept');
+    const declineBtn = document.getElementById('cookieDecline');
+    
+    if (!banner) return;
+    
+    // Show banner if no preference saved
+    const consent = localStorage.getItem('gpxray-cookies');
+    if (!consent) {
+        setTimeout(() => banner.classList.add('visible'), 1000);
+    }
+    
+    acceptBtn?.addEventListener('click', () => {
+        localStorage.setItem('gpxray-cookies', 'accepted');
+        banner.classList.remove('visible');
+        loadGA(); // Load GA after consent
+        trackEvent('cookie_consent', { action: 'accepted' });
+    });
+    
+    declineBtn?.addEventListener('click', () => {
+        localStorage.setItem('gpxray-cookies', 'declined');
+        banner.classList.remove('visible');
+    });
+}
 
 // Footer links
 function setupFooter() {
@@ -41,7 +69,7 @@ function setupFooter() {
     
     document.getElementById('privacyLink')?.addEventListener('click', (e) => {
         e.preventDefault();
-        alert('Privacy Policy\n\n✅ 100% Local Processing\nYour GPX files are processed entirely in your browser. No data is uploaded to any server.\n\n✅ No Tracking\nWe don\'t use cookies or analytics to track you.\n\n✅ No Account Required\nUse GPXray without creating an account or providing any personal information.');
+        alert('Privacy Policy\n\n✅ 100% Local Processing\nYour GPX files are processed entirely in your browser. No data is uploaded to any server.\n\n✅ Analytics (with consent)\nIf you accept cookies, we use Google Analytics to understand which features are most useful.\n\n✅ No Account Required\nUse GPXray without creating an account or providing any personal information.');
     });
     
     document.getElementById('impressumLink')?.addEventListener('click', (e) => {
@@ -349,6 +377,14 @@ async function loadRace(raceId) {
         currentRouteName = race.name;
         parseGPX(gpxContent);
         
+        // Track race browser selection
+        trackEvent('race_browser_load', { 
+            race_id: raceId,
+            race_name: race.name,
+            distance: race.distance,
+            category: race.category
+        });
+        
         // Clear AID stations for new race (user can add their own)
         aidStations = [];
         renderAidStations();
@@ -482,6 +518,13 @@ function parseGPX(gpxContent) {
     
     // Update ITRA effort display
     updateItraEffortDisplay();
+    
+    // Track GPX load
+    trackEvent('gpx_loaded', { 
+        race_name: currentRouteName || 'custom_upload',
+        distance_km: gpxData.totalDistance.toFixed(1),
+        elevation_gain: gpxData.elevationGain.toFixed(0)
+    });
 }
 
 // Extract points from XML nodes
@@ -1710,6 +1753,9 @@ async function exportShareCard() {
         link.download = `${fileName}_share_card.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
+        
+        // Track export
+        trackEvent('export_share_card', { race_name: currentRouteName || 'unknown' });
 
     } catch (error) {
         console.error('Share card generation error:', error);
@@ -1973,6 +2019,9 @@ function downloadCrewCard(canvas, fileName) {
     link.download = `${fileName}_crew_card.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+    
+    // Track export
+    trackEvent('export_crew_card', { race_name: currentRouteName || 'unknown' });
 }
 
 // CSV Export functionality
@@ -2097,4 +2146,7 @@ function exportToCsv() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    // Track export
+    trackEvent('export_csv', { race_name: currentRouteName || 'unknown' });
 }

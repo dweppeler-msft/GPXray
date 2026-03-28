@@ -9,6 +9,35 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <!-- Google Analytics 4 - loads after consent -->
+    <script id="ga-script"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        
+        // Check for existing consent
+        function initGA() {
+            if (localStorage.getItem('gpxray-cookies') === 'accepted') {
+                loadGA();
+            }
+        }
+        
+        function loadGA() {
+            const script = document.getElementById('ga-script');
+            script.src = 'https://www.googletagmanager.com/gtag/js?id=G-YGERMKGYQG';
+            gtag('js', new Date());
+            gtag('config', 'G-YGERMKGYQG');
+        }
+        
+        // Track custom events
+        function trackEvent(eventName, params = {}) {
+            if (localStorage.getItem('gpxray-cookies') === 'accepted') {
+                gtag('event', eventName, params);
+            }
+        }
+        
+        initGA();
+    </script>
 </head>
 <body>
     <div class="container">
@@ -484,6 +513,18 @@
             </div>
         </div>
     </footer>
+
+    <!-- Cookie Consent Banner -->
+    <div class="cookie-banner" id="cookieBanner">
+        <div class="cookie-content">
+            <span class="cookie-icon">🍪</span>
+            <p class="cookie-text">We use cookies to understand how you use GPXray and improve your experience. Your GPX data stays 100% local.</p>
+            <div class="cookie-buttons">
+                <button class="cookie-btn cookie-accept" id="cookieAccept">Accept</button>
+                <button class="cookie-btn cookie-decline" id="cookieDecline">Decline</button>
+            </div>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
