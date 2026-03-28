@@ -169,6 +169,11 @@ header h1 {
     transform: scale(1.05);
 }
 
+/* Mobile upload button - hidden by default */
+.upload-text-mobile {
+    display: none;
+}
+
 /* Demo Section */
 .demo-section {
     display: flex;
@@ -1633,6 +1638,19 @@ h2 {
     .intro-text {
         font-size: 1rem;
         margin-bottom: 15px;
+    }
+    
+    .upload-text-desktop {
+        display: none;
+    }
+
+    .upload-text-mobile {
+        display: block;
+    }
+
+    .upload-text-mobile button {
+        padding: 14px 28px;
+        font-size: 1.1rem;
     }
     
     .feature-pill {
