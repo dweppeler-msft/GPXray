@@ -252,11 +252,11 @@
                         <span class="hero-metric-icon">⬇️</span>
                         <div class="hero-metric-content">
                             <span class="hero-metric-label">
-                                Descent Load
+                                DDL
                                 <span class="info-tooltip" tabindex="0">
                                     ⓘ
                                     <span class="info-tooltip-content">
-                                        <strong>Dynamic Descent Load (DDL)</strong><br>
+                                        <strong>Dynamic Descent Load</strong><br>
                                         Measures <em>time spent braking</em>, not just elevation.<br><br>
                                         <em>Factors:</em><br>
                                         • Gradient → braking force<br>
@@ -274,7 +274,34 @@
                             <span class="hero-metric-value" id="heroDescentLoad">-</span>
                             <span class="hero-metric-detail" id="heroDescentDetail"></span>
                             <span class="hero-metric-insight" id="heroDescentInsight"></span>
+                            <a href="#" class="ddl-learn-more" id="ddlLearnMore">What's DDL?</a>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- DDL Explainer Modal -->
+                <div class="ddl-explainer" id="ddlExplainer" style="display: none;">
+                    <div class="ddl-explainer-content">
+                        <button class="ddl-explainer-close" id="ddlExplainerClose">✕</button>
+                        <h4>🧠 DDL = Dynamic Descent Load</h4>
+                        <p class="ddl-tagline">Measures quad damage, not just elevation dropped.</p>
+                        
+                        <div class="ddl-comparison">
+                            <div class="ddl-example bad">
+                                <span class="ddl-example-label">-100m @ 5% grade</span>
+                                <span class="ddl-example-detail">= 2000m of braking</span>
+                                <span class="ddl-example-result">→ Long eccentric load ⚠️</span>
+                            </div>
+                            <div class="ddl-example good">
+                                <span class="ddl-example-label">-100m @ 20% grade</span>
+                                <span class="ddl-example-detail">= 500m of braking</span>
+                                <span class="ddl-example-result">→ Short but intense</span>
+                            </div>
+                        </div>
+                        
+                        <p class="ddl-formula">DDL = time × slope × surface × speed × fatigue</p>
+                        
+                        <p class="ddl-takeaway">💡 <strong>Takeaway:</strong> Shallow descents can destroy your quads more than steep ones due to longer braking time.</p>
                     </div>
                 </div>
                 

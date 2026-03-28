@@ -105,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSunTimes();
     setupRaceBrowser();
     setupFooter();
+    setupDDLExplainer();
     setupCookieConsent();
     setupEarlyAccess();
     setupRunnerLevel();
@@ -341,6 +342,38 @@ function setupFooter() {
     document.getElementById('impressumLink')?.addEventListener('click', (e) => {
         e.preventDefault();
         alert('Impressum\n\nGPXray\ngpxray.run\n\nDaniel Weppeler\n📷 @daniel.runs.trails\n\nBuilt by trail runners, for trail runners.');
+    });
+}
+
+// DDL Explainer Modal
+function setupDDLExplainer() {
+    const learnMoreLink = document.getElementById('ddlLearnMore');
+    const explainer = document.getElementById('ddlExplainer');
+    const closeBtn = document.getElementById('ddlExplainerClose');
+    
+    if (!learnMoreLink || !explainer) return;
+    
+    learnMoreLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        explainer.classList.add('active');
+    });
+    
+    closeBtn?.addEventListener('click', () => {
+        explainer.classList.remove('active');
+    });
+    
+    // Close on overlay click
+    explainer.addEventListener('click', (e) => {
+        if (e.target === explainer) {
+            explainer.classList.remove('active');
+        }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && explainer.classList.contains('active')) {
+            explainer.classList.remove('active');
+        }
     });
 }
 
