@@ -24,7 +24,7 @@ const TRANSLATIONS = {
         'upload.or': 'or',
         'upload.tryDemo': 'ZUT Garmisch-Partenkirchen Trail Strategy',
         'upload.browseRaces': 'Browse Popular Races',
-        'upload.demoHint': 'Load a sample trail or browse our curated race database',
+        'upload.demoHint': 'Load a sample trail to explore the features',
         'upload.privacy': '100% Local Processing – Your GPX data never leaves your device',
         
         // Beta gate
@@ -286,7 +286,7 @@ const TRANSLATIONS = {
         'upload.or': 'oder',
         'upload.tryDemo': 'ZUT Garmisch-Partenkirchen Trail Strategie',
         'upload.browseRaces': 'Bekannte Rennen durchsuchen',
-        'upload.demoHint': 'Lade einen Beispiel-Trail oder durchsuche unsere Renndatenbank',
+        'upload.demoHint': 'Lade einen Beispiel-Trail um die Funktionen zu entdecken',
         'upload.privacy': '100% lokale Verarbeitung – Deine GPX-Daten verlassen nie dein Gerät',
         
         // Beta gate
