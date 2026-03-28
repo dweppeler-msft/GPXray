@@ -3647,12 +3647,11 @@ function updateHeroSection(totalTime) {
     const heroDescentLoad = document.getElementById('heroDescentLoad');
     const heroDescentDetail = document.getElementById('heroDescentDetail');
     const heroDescentInsight = document.getElementById('heroDescentInsight');
-    if (heroDescentLoad && segments.length > 0) {
+    if (heroDescentLoad && segments.length > 0 && gpxData) {
         let ddlTotal = 0;
         let cumulativeDDL = 0;
-        let steepDescentStart = null;
-        let heaviestDescentKm = null;
-        let maxDDLInKm = 0;
+        let ddlAfter60Pct = 0;
+        const threshold60Pct = gpxData.totalDistance * 0.6;
         
         // Track DDL accumulation per km for insight
         const ddlByKm = {};
@@ -3683,49 +3682,48 @@ function updateHeroSection(totalTime) {
                 ddlTotal += segmentDDL;
                 cumulativeDDL += segmentDDL;
                 
-                // Track where steep descents are (grade > 12%)
-                if (gradePercent > 12 && !steepDescentStart) {
-                    steepDescentStart = Math.floor(segment.startDistance);
+                // Track late race load (after 60% of distance)
+                if (segment.startDistance >= threshold60Pct) {
+                    ddlAfter60Pct += segmentDDL;
                 }
                 
-                // Track heaviest DDL per km
+                // Track DDL per km
                 const km = Math.floor(segment.startDistance);
                 ddlByKm[km] = (ddlByKm[km] || 0) + segmentDDL;
-                if (ddlByKm[km] > maxDDLInKm) {
-                    maxDDLInKm = ddlByKm[km];
-                    heaviestDescentKm = km;
-                }
             }
         }
         
-        // Show total descent load score
-        heroDescentLoad.textContent = Math.round(ddlTotal).toLocaleString();
+        // Calculate per-km rate and late race percentage
+        const ddlPerKm = ddlTotal / gpxData.totalDistance;
+        const lateRacePct = ddlTotal > 0 ? Math.round((ddlAfter60Pct / ddlTotal) * 100) : 0;
+        const lateRaceKm = Math.round(threshold60Pct);
         
-        // Show per-km rate
-        if (heroDescentDetail && gpxData) {
-            const ddlPerKm = ddlTotal / gpxData.totalDistance;
-            heroDescentDetail.textContent = `${Math.round(ddlPerKm)}/km`;
+        // Show per-km rate as main value
+        heroDescentLoad.textContent = `${Math.round(ddlPerKm)}/km`;
+        
+        // Show intensity label
+        if (heroDescentDetail) {
+            if (ddlPerKm > 200) {
+                heroDescentDetail.textContent = 'Muscular damage zone';
+            } else if (ddlPerKm > 140) {
+                heroDescentDetail.textContent = 'High braking exposure';
+            } else if (ddlPerKm > 80) {
+                heroDescentDetail.textContent = 'Moderate braking';
+            } else {
+                heroDescentDetail.textContent = 'Runnable descents';
+            }
         }
         
-        // Generate auto-insight
-        if (heroDescentInsight && gpxData) {
-            const ddlPerKm = ddlTotal / gpxData.totalDistance;
-            const totalDist = gpxData.totalDistance;
-            
-            // Check if steep descent in final third
-            const isFinalThird = heaviestDescentKm && heaviestDescentKm > (totalDist * 0.66);
-            
-            if (ddlPerKm > 200) {
-                heroDescentInsight.textContent = `⚠ Muscular damage zone - train downhills!`;
+        // Generate late-race insight (coaching relevant)
+        if (heroDescentInsight) {
+            if (lateRacePct >= 40) {
+                heroDescentInsight.textContent = `⚠ ${lateRacePct}% of descent load after KM${lateRaceKm} - expect pace drop`;
                 heroDescentInsight.className = 'hero-metric-insight warning';
-            } else if (ddlPerKm > 140 && steepDescentStart) {
-                heroDescentInsight.textContent = `Quad fatigue risk after KM${steepDescentStart}`;
-                heroDescentInsight.className = 'hero-metric-insight warning';
-            } else if (ddlPerKm > 140 && isFinalThird) {
-                heroDescentInsight.textContent = `Expect pace degradation on final descent`;
+            } else if (lateRacePct >= 30 && ddlPerKm > 100) {
+                heroDescentInsight.textContent = `${lateRacePct}% late race descent load`;
                 heroDescentInsight.className = 'hero-metric-insight';
-            } else if (ddlPerKm > 80) {
-                heroDescentInsight.textContent = `Moderate braking load - poles recommended`;
+            } else if (ddlPerKm > 140) {
+                heroDescentInsight.textContent = 'Train steep downhills';
                 heroDescentInsight.className = 'hero-metric-insight';
             } else {
                 heroDescentInsight.textContent = '';
