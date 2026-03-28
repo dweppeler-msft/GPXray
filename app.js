@@ -46,7 +46,7 @@ function setupFooter() {
     
     document.getElementById('impressumLink')?.addEventListener('click', (e) => {
         e.preventDefault();
-        alert('Impressum\n\nGPXray\ngpxray.run\n\nContact: feedback via the app\n\nThis is a hobby project for the trail running community.');
+        alert('Impressum\n\nGPXray\ngpxray.run\n\nContact: feedback via the app\n\nBuilt by trail runners, for trail runners.');
     });
 }
 
