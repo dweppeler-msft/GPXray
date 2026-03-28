@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -400,7 +401,11 @@
         <section class="splits-section" id="splitsSection" style="display: none;">
             <div class="section-header">
                 <h2>Strategy Details</h2>
-                <button id="exportCsv" class="export-btn">📥 Export CSV</button>
+                <div class="splits-actions">
+                    <button id="exportShareCard" class="share-btn">📤 Share Card</button>
+                    <button id="exportCrewCard" class="crew-btn">👥 Crew Card</button>
+                    <button id="exportCsv" class="export-btn">📥 Export CSV</button>
+                </div>
             </div>
             <div class="splits-table-container">
                 <table id="splitsTable">

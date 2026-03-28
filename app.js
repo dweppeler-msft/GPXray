@@ -1487,9 +1487,474 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
     document.getElementById('splitsSection').style.display = 'block';
 }
 
+// Share Card Export functionality
+async function exportShareCard() {
+    if (!gpxData || segments.length === 0) {
+        alert('Please load a GPX file and calculate your race strategy first.');
+        return;
+    }
+
+    const btn = document.getElementById('exportShareCard');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ Creating...';
+    btn.disabled = true;
+
+    try {
+        // Create a hidden container for the share card
+        const card = document.createElement('div');
+        card.id = 'shareCardContainer';
+        card.style.cssText = `
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 540px;
+            height: 960px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            padding: 30px;
+            box-sizing: border-box;
+        `;
+
+        // Build card content
+        const unitLabel = useMetric ? 'km' : 'mi';
+        const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
+        const totalTime = document.getElementById('totalTime')?.textContent || '-';
+        const dateInput = document.getElementById('raceStartDate');
+        const timeInput = document.getElementById('raceStartTime');
+        const raceDate = dateInput?.value || '';
+        const raceTime = timeInput?.value || '06:00';
+
+        // Get finish clock time from the last row of splits table
+        let finishClockTime = '';
+        const splitsTable = document.getElementById('splitsTable');
+        if (splitsTable) {
+            const allRows = splitsTable.querySelectorAll('tbody tr');
+            if (allRows.length > 0) {
+                const lastRow = allRows[allRows.length - 1];
+                const cells = lastRow.querySelectorAll('td');
+                finishClockTime = cells[7]?.textContent || '';
+            }
+        }
+
+        // Get AID station times from the splits table
+        let aidStationsList = '';
+        if (splitsTable && aidStations.length > 0) {
+            const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
+            
+            const stationData = [];
+            const rows = splitsTable.querySelectorAll('tbody tr.aid-station-row');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const distCell = cells[0]?.textContent?.trim() || '';
+                const aidName = cells[3]?.textContent || '';
+                const raceTime = cells[6]?.textContent || '';
+                const clockTime = cells[7]?.textContent || '';
+                
+                if (aidName && aidName !== '-') {
+                    const rowDist = parseFloat(distCell);
+                    const rowKm = useMetric ? rowDist : rowDist * MILES_TO_KM;
+                    const matchingStation = sortedStations.find(s => Math.abs(s.km - rowKm) < 0.5);
+                    
+                    if (matchingStation) {
+                        stationData.push({ dist: distCell, name: aidName, raceTime, clockTime });
+                    }
+                }
+            });
+
+            // Dynamic sizing based on station count
+            const stationCount = stationData.length;
+            let rowPadding, kmSize, nameSize, timeSize, clockSize;
+            
+            if (stationCount <= 4) {
+                rowPadding = '14px 0';
+                kmSize = '20px';
+                nameSize = '18px';
+                timeSize = '16px';
+                clockSize = '20px';
+            } else if (stationCount <= 7) {
+                rowPadding = '10px 0';
+                kmSize = '17px';
+                nameSize = '15px';
+                timeSize = '14px';
+                clockSize = '17px';
+            } else {
+                rowPadding = '8px 0';
+                kmSize = '15px';
+                nameSize = '13px';
+                timeSize = '12px';
+                clockSize = '15px';
+            }
+
+            stationData.forEach((station, index) => {
+                aidStationsList += `
+                    <div style="display: flex; align-items: center; padding: ${rowPadding}; border-bottom: 1px solid rgba(255,255,255,0.15);">
+                        <span style="color: #00d4ff; min-width: 55px; font-size: ${kmSize}; font-weight: bold;">📍 ${station.dist}</span>
+                        <span style="flex: 1; margin: 0 6px; font-size: ${nameSize}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${station.name}</span>
+                        <span style="color: #ddd; font-size: ${timeSize}; font-weight: 600; margin-right: 10px;">${station.raceTime}</span>
+                        <span style="font-weight: bold; color: #4CAF50; min-width: 75px; text-align: right; font-size: ${clockSize};">${station.clockTime}</span>
+                    </div>
+                `;
+            });
+
+            // Add FINISH row
+            aidStationsList += `
+                <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(76,175,80,0.2); border-radius: 8px; margin-top: 4px;">
+                    <span style="color: #4CAF50; min-width: 55px; font-size: ${kmSize}; font-weight: bold;">🏁 ${distance.toFixed(1)}</span>
+                    <span style="flex: 1; margin: 0 6px; font-size: ${nameSize}; font-weight: 700; color: #4CAF50;">FINISH</span>
+                    <span style="color: #4CAF50; font-size: ${timeSize}; font-weight: 700; margin-right: 10px;">${totalTime.split('(')[0].trim()}</span>
+                    <span style="font-weight: bold; color: #4CAF50; min-width: 75px; text-align: right; font-size: ${clockSize};">${finishClockTime}</span>
+                </div>
+            `;
+        } else {
+            // No AID stations - show just FINISH row
+            aidStationsList = `
+                <div style="display: flex; align-items: center; padding: 14px 0; background: rgba(76,175,80,0.2); border-radius: 8px;">
+                    <span style="color: #4CAF50; min-width: 55px; font-size: 20px; font-weight: bold;">🏁 ${distance.toFixed(1)}</span>
+                    <span style="flex: 1; margin: 0 6px; font-size: 18px; font-weight: 700; color: #4CAF50;">FINISH</span>
+                    <span style="color: #4CAF50; font-size: 16px; font-weight: 700; margin-right: 10px;">${totalTime.split('(')[0].trim()}</span>
+                    <span style="font-weight: bold; color: #4CAF50; min-width: 75px; text-align: right; font-size: 20px;">${finishClockTime}</span>
+                </div>
+            `;
+        }
+
+        let routeName = currentRouteName || 'Race Strategy';
+        if (routeName.length > 35) {
+            routeName = routeName.substring(0, 32) + '...';
+        }
+
+        card.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 28px; font-weight: bold; color: #00d4ff; margin-bottom: 5px;">GPXray</div>
+                <div style="font-size: 14px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; font-weight: 500;">Race Strategy</div>
+            </div>
+            
+            <div style="background: rgba(0,212,255,0.15); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div style="font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 15px;">${routeName}</div>
+                
+                <div style="display: flex; justify-content: space-around; text-align: center;">
+                    <div>
+                        <div style="font-size: 32px; font-weight: bold;">${distance.toFixed(1)}</div>
+                        <div style="font-size: 14px; color: #aaa; font-weight: 500;">${unitLabel}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 32px; font-weight: bold;">+${gpxData.elevationGain.toFixed(0)}</div>
+                        <div style="font-size: 14px; color: #aaa; font-weight: 500;">m gain</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 32px; font-weight: bold;">-${gpxData.elevationLoss.toFixed(0)}</div>
+                        <div style="font-size: 14px; color: #aaa; font-weight: 500;">m loss</div>
+                    </div>
+                </div>
+            </div>
+            
+            ${aidStationsList ? `
+                <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                    <div style="font-size: 16px; color: #aaa; margin-bottom: 12px; text-align: center; font-weight: 600;">🏃 RACE SCHEDULE</div>
+                    <div style="display: flex; align-items: center; padding: 6px 0; border-bottom: 2px solid rgba(255,255,255,0.2); margin-bottom: 8px;">
+                        <span style="color: #888; min-width: 55px; font-size: 12px; font-weight: 600;">${unitLabel.toUpperCase()}</span>
+                        <span style="flex: 1; margin: 0 6px; font-size: 12px; color: #888; font-weight: 600;">STATION</span>
+                        <span style="color: #888; font-size: 12px; margin-right: 10px; font-weight: 600;">RACE</span>
+                        <span style="color: #888; min-width: 75px; text-align: right; font-size: 12px; font-weight: 600;">CLOCK</span>
+                    </div>
+                    ${aidStationsList}
+                </div>
+            ` : ''}
+            
+            <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center;">
+                <div style="font-size: 12px; color: #555;">© gpxray.run</div>
+            </div>
+        `;
+
+        document.body.appendChild(card);
+
+        // Use html2canvas to capture the card
+        const canvas = await html2canvas(card, {
+            width: 540,
+            height: 960,
+            scale: 2,
+            backgroundColor: null,
+            logging: false
+        });
+
+        document.body.removeChild(card);
+
+        // Download as PNG
+        const link = document.createElement('a');
+        const fileName = (currentRouteName || 'race_plan').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        link.download = `${fileName}_share_card.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+    } catch (error) {
+        console.error('Share card generation error:', error);
+        alert('Failed to generate share card. Please try again.');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Crew Card Export functionality
+async function exportCrewCard() {
+    if (!gpxData || segments.length === 0) {
+        alert('Please load a GPX file and calculate your race strategy first.');
+        return;
+    }
+
+    if (aidStations.length === 0) {
+        alert('Please add AID stations first. Your crew needs to know where to meet you!');
+        return;
+    }
+
+    const btn = document.getElementById('exportCrewCard');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ Creating...';
+    btn.disabled = true;
+
+    try {
+        // Get race info
+        const unitLabel = useMetric ? 'km' : 'mi';
+        const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
+        const totalTime = document.getElementById('totalTime')?.textContent || '-';
+        const dateInput = document.getElementById('raceStartDate');
+        const timeInput = document.getElementById('raceStartTime');
+        const raceDate = dateInput?.value || '';
+        const raceTime = timeInput?.value || '06:00';
+
+        // Format date nicely
+        let formattedDate = '';
+        if (raceDate) {
+            const d = new Date(raceDate);
+            formattedDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        // Get finish clock time
+        let finishClockTime = '';
+        const splitsTable = document.getElementById('splitsTable');
+        if (splitsTable) {
+            const allRows = splitsTable.querySelectorAll('tbody tr');
+            if (allRows.length > 0) {
+                const lastRow = allRows[allRows.length - 1];
+                const cells = lastRow.querySelectorAll('td');
+                finishClockTime = cells[7]?.textContent || '';
+            }
+        }
+
+        // Get AID station data from splits table
+        const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
+        const stationData = [];
+        
+        if (splitsTable) {
+            const rows = splitsTable.querySelectorAll('tbody tr.aid-station-row');
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const distCell = cells[0]?.textContent?.trim() || '';
+                const aidName = cells[3]?.textContent || '';
+                const clockTime = cells[7]?.textContent || '';
+                
+                if (aidName && aidName !== '-') {
+                    const rowDist = parseFloat(distCell);
+                    const rowKm = useMetric ? rowDist : rowDist * MILES_TO_KM;
+                    const station = sortedStations.find(s => Math.abs(s.km - rowKm) < 0.5);
+                    
+                    if (station) {
+                        const stopMin = station.stopMin || 0;
+                        stationData.push({ 
+                            dist: distCell, 
+                            name: aidName, 
+                            clockTime,
+                            stopMin
+                        });
+                    }
+                }
+            });
+        }
+
+        // Dynamic sizing based on station count
+        const stationCount = stationData.length;
+        let rowPadding, iconSize, nameSize, detailSize, timeSize, etaSize, rowGap, headerPadding;
+        
+        if (stationCount <= 4) {
+            rowPadding = '15px 20px';
+            iconSize = '28px';
+            nameSize = '17px';
+            detailSize = '13px';
+            timeSize = '26px';
+            etaSize = '11px';
+            rowGap = '10px';
+            headerPadding = '25px';
+        } else if (stationCount <= 7) {
+            rowPadding = '12px 16px';
+            iconSize = '24px';
+            nameSize = '15px';
+            detailSize = '12px';
+            timeSize = '22px';
+            etaSize = '10px';
+            rowGap = '8px';
+            headerPadding = '20px';
+        } else {
+            rowPadding = '10px 14px';
+            iconSize = '20px';
+            nameSize = '14px';
+            detailSize = '11px';
+            timeSize = '20px';
+            etaSize = '9px';
+            rowGap = '6px';
+            headerPadding = '15px';
+        }
+
+        // Calculate card height (9:16 aspect ratio)
+        const cardWidth = 540;
+        const targetHeight = 960;
+        const rowHeightEstimate = stationCount <= 4 ? 70 : (stationCount <= 7 ? 58 : 50);
+        const headerHeight = stationCount <= 4 ? 140 : (stationCount <= 7 ? 120 : 100);
+        const footerHeight = 80;
+        const contentHeight = headerHeight + (stationData.length + 1) * rowHeightEstimate + footerHeight + 60;
+        const cardHeight = Math.max(targetHeight, contentHeight);
+
+        // Create card container
+        const card = document.createElement('div');
+        card.id = 'crewCardContainer';
+        card.style.cssText = `
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: ${cardWidth}px;
+            height: ${cardHeight}px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            padding: 30px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        `;
+
+        // Handle title
+        let routeName = currentRouteName || 'Race';
+        let titleSize = '24px';
+        let titleLineHeight = '1.2';
+        
+        if (routeName.length > 40) {
+            titleSize = '20px';
+        } else if (routeName.length > 30) {
+            titleSize = '22px';
+        }
+
+        // Build station rows HTML
+        let stationsHtml = stationData.map((station, index) => {
+            let stationName = station.name;
+            const maxNameLen = stationCount <= 4 ? 25 : (stationCount <= 7 ? 22 : 20);
+            if (stationName.length > maxNameLen) {
+                stationName = stationName.substring(0, maxNameLen - 2) + '...';
+            }
+            
+            return `
+                <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: ${rowGap};">
+                    <div style="font-size: ${iconSize}; margin-right: 12px;">📍</div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: ${nameSize}; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${stationName}</div>
+                        <div style="font-size: ${detailSize}; opacity: 0.8;">${station.dist} ${unitLabel}${station.stopMin > 0 ? ' · ' + station.stopMin + ' min stop' : ''}</div>
+                    </div>
+                    <div style="text-align: right; margin-left: 10px;">
+                        <div style="font-size: ${timeSize}; font-weight: 800;">${station.clockTime}</div>
+                        <div style="font-size: ${etaSize}; opacity: 0.7;">ETA</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Add finish row
+        stationsHtml += `
+            <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(76,175,80,0.4); border-radius: 10px; border: 2px solid rgba(76,175,80,0.8);">
+                <div style="font-size: ${iconSize}; margin-right: 12px;">🏁</div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: ${nameSize}; font-weight: 700; margin-bottom: 2px;">FINISH</div>
+                    <div style="font-size: ${detailSize}; opacity: 0.8;">${distance.toFixed(1)} ${unitLabel} · ${totalTime.split('(')[0].trim()}</div>
+                </div>
+                <div style="text-align: right; margin-left: 10px;">
+                    <div style="font-size: ${timeSize}; font-weight: 800;">${finishClockTime}</div>
+                    <div style="font-size: ${etaSize}; opacity: 0.7;">ETA</div>
+                </div>
+            </div>
+        `;
+
+        card.innerHTML = `
+            <div style="text-align: center; margin-bottom: ${headerPadding};">
+                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 3px; opacity: 0.8; margin-bottom: 8px;">👥 CREW SCHEDULE</div>
+                <div style="font-size: ${titleSize}; font-weight: 800; margin-bottom: 8px; line-height: ${titleLineHeight}; padding: 0 10px;">${routeName}</div>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    ${formattedDate ? `📅 ${formattedDate} · ` : ''}🏃 Start: ${raceTime}
+                </div>
+            </div>
+            
+            <div style="flex: 1;">
+                ${stationsHtml}
+            </div>
+            
+            <div style="text-align: center; padding-top: 15px; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 16px; font-weight: 700; color: #00d4ff;">GPXray</div>
+                <div style="font-size: 10px; opacity: 0.6; margin-top: 2px;">© gpxray.run</div>
+            </div>
+        `;
+
+        document.body.appendChild(card);
+
+        // Capture with html2canvas
+        const canvas = await html2canvas(card, {
+            width: cardWidth,
+            height: cardHeight,
+            scale: 2,
+            backgroundColor: null,
+            logging: false
+        });
+
+        document.body.removeChild(card);
+
+        // Check if Web Share API is available (mobile)
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const fileName = (currentRouteName || 'race').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const file = new File([blob], `${fileName}_crew_card.png`, { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({
+                    title: `Crew Schedule - ${routeName}`,
+                    text: `Here's my race schedule for ${routeName}! Meet me at these AID stations 🏃\n\nCreated with https://gpxray.run`,
+                    files: [file]
+                });
+            } catch (shareError) {
+                if (shareError.name !== 'AbortError') {
+                    downloadCrewCard(canvas, fileName);
+                }
+            }
+        } else {
+            downloadCrewCard(canvas, fileName);
+        }
+
+    } catch (error) {
+        console.error('Crew card generation error:', error);
+        alert('Failed to generate crew card. Please try again.');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+
+function downloadCrewCard(canvas, fileName) {
+    const link = document.createElement('a');
+    link.download = `${fileName}_crew_card.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+}
+
 // CSV Export functionality
 function setupExport() {
     document.getElementById('exportCsv').addEventListener('click', exportToCsv);
+    document.getElementById('exportShareCard').addEventListener('click', exportShareCard);
+    document.getElementById('exportCrewCard').addEventListener('click', exportCrewCard);
 }
 
 function exportToCsv() {
