@@ -855,21 +855,30 @@ header h1 {
     transform: translate(-50%, -50%) scale(1);
 }
 
+.early-access-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
 .early-access-icon {
     font-size: 3rem;
     margin-bottom: 15px;
+    text-align: center;
 }
 
 .early-access-modal h2 {
     color: #00d4ff;
     margin: 0 0 15px 0;
     font-size: 1.8rem;
+    text-align: center;
 }
 
 .early-access-modal p {
     color: #aaa;
     margin: 0 0 20px 0;
     line-height: 1.5;
+    text-align: center;
 }
 
 .early-access-form {
@@ -925,6 +934,7 @@ header h1 {
     font-size: 0.9rem !important;
     display: none;
     margin-bottom: 10px !important;
+    text-align: center;
 }
 
 .early-access-error.visible {
@@ -934,6 +944,7 @@ header h1 {
 .early-access-hint {
     color: #666 !important;
     font-size: 0.85rem !important;
+    text-align: center;
 }
 
 .early-access-close {
@@ -994,6 +1005,7 @@ header h1 {
     color: #aaa !important;
     margin: 0 0 10px 0 !important;
     font-size: 0.95rem !important;
+    text-align: center;
 }
 
 .waitlist-form {
@@ -1062,7 +1074,7 @@ header h1 {
     justify-content: center;
     gap: 8px;
     width: 100%;
-    padding: 14px 20px;
+    padding: 12px 20px;
     background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
     color: white !important;
     text-decoration: none;
