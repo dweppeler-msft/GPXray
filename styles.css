@@ -1022,12 +1022,12 @@ header h1 {
 }
 
 .waitlist-submit {
-    padding: 12px 20px;
-    border-radius: 10px;
+    padding: 10px 16px;
+    border-radius: 8px;
     border: none;
     background: linear-gradient(135deg, #ff6b35 0%, #f7931a 100%);
     color: white;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -3231,7 +3231,8 @@ h2 {
     
     .waitlist-submit {
         width: 100%;
-        padding: 14px;
+        padding: 12px;
+        font-size: 0.85rem;
     }
     
     .early-access-instagram {
