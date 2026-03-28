@@ -3609,69 +3609,98 @@ function updateHeroSection(totalTime) {
         }
     }
     
-    // Update Descent Load (gradient-weighted muscular load)
+    // Update Dynamic Descent Load (time-based muscular damage)
+    // DDL = Σ(descentTime × slopeWeight × surfaceWeight × fatigueWeight)
     const heroDescentLoad = document.getElementById('heroDescentLoad');
     const heroDescentDetail = document.getElementById('heroDescentDetail');
     const heroDescentInsight = document.getElementById('heroDescentInsight');
-    if (heroDescentLoad && segments.length > 0) {
-        let descentLoadTotal = 0;
+    if (heroDescentLoad && segments.length > 0 && lastCalculatedPaces) {
+        let ddlTotal = 0;
+        let cumulativeDDL = 0;
         let steepDescentStart = null;
         let heaviestDescentKm = null;
-        let maxDLInSegment = 0;
+        let maxDDLInKm = 0;
         
-        // Track DL accumulation per km for insight
-        const dlByKm = {};
+        // Track DDL accumulation per km for insight
+        const ddlByKm = {};
+        
+        // Base speed for speed weight calculation (5 min/km = 12 km/h)
+        const baselineSpeed = 12; // km/h
+        const downhillPace = lastCalculatedPaces.downhill; // min/km
+        const downhillSpeed = 60 / downhillPace; // km/h
+        
+        // Fatigue threshold - after this much DDL, fatigue compounds
+        const fatigueThreshold = 500;
         
         for (const segment of segments) {
             if (segment.terrainType === 'downhill' && segment.elevationChange < 0) {
-                const descentM = Math.abs(segment.elevationChange);
                 const gradePercent = Math.abs(segment.grade);
+                const distanceKm = segment.distance;
                 
-                // Gradient weight: steeper = exponentially harder on quads
-                const gradientWeight = 1 + Math.pow(gradePercent / 10, 1.5);
-                const segmentDL = descentM * gradientWeight;
-                descentLoadTotal += segmentDL;
+                // Time on descent (minutes) - KEY: this is exposure time, not elevation
+                const descentTime = distanceKm * downhillPace;
+                
+                // Slope weight: steeper = more braking force required
+                // 5% = 1.2x, 10% = 1.5x, 15% = 2.0x, 20% = 2.6x
+                const slopeWeight = 1 + Math.pow(gradePercent / 15, 1.3);
+                
+                // Surface weight: technical terrain = more instability cost
+                const surfaceMultiplier = SURFACE_TYPES[segment.surfaceType] 
+                    ? SURFACE_TYPES[segment.surfaceType].multiplier.downhill 
+                    : 1.0;
+                const surfaceWeight = surfaceMultiplier;
+                
+                // Speed weight: faster = more impact energy (quadratic)
+                const speedWeight = Math.pow(downhillSpeed / baselineSpeed, 1.5);
+                
+                // Fatigue weight: accumulated damage compounds
+                const fatigueWeight = 1 + (cumulativeDDL / fatigueThreshold) * 0.3;
+                
+                // Calculate segment DDL
+                const segmentDDL = descentTime * slopeWeight * surfaceWeight * speedWeight * fatigueWeight;
+                ddlTotal += segmentDDL;
+                cumulativeDDL += segmentDDL;
                 
                 // Track where steep descents are (grade > 12%)
                 if (gradePercent > 12 && !steepDescentStart) {
                     steepDescentStart = Math.floor(segment.startDistance);
                 }
                 
-                // Track heaviest DL per km
+                // Track heaviest DDL per km
                 const km = Math.floor(segment.startDistance);
-                dlByKm[km] = (dlByKm[km] || 0) + segmentDL;
-                if (dlByKm[km] > maxDLInSegment) {
-                    maxDLInSegment = dlByKm[km];
+                ddlByKm[km] = (ddlByKm[km] || 0) + segmentDDL;
+                if (ddlByKm[km] > maxDDLInKm) {
+                    maxDDLInKm = ddlByKm[km];
                     heaviestDescentKm = km;
                 }
             }
         }
         
-        // Show as "DL" units (descent load)
-        heroDescentLoad.textContent = `${Math.round(descentLoadTotal)} DL`;
+        // Show as "DDL" units (Dynamic Descent Load)
+        heroDescentLoad.textContent = `${Math.round(ddlTotal)} DDL`;
         
-        // Show DL per km rate
+        // Show DDL per km rate
         if (heroDescentDetail && gpxData) {
-            const dlPerKm = descentLoadTotal / gpxData.totalDistance;
-            heroDescentDetail.textContent = `${Math.round(dlPerKm)} DL/km`;
+            const ddlPerKm = ddlTotal / gpxData.totalDistance;
+            heroDescentDetail.textContent = `${Math.round(ddlPerKm)} DDL/km`;
         }
         
         // Generate auto-insight
         if (heroDescentInsight && gpxData) {
-            const dlPerKm = descentLoadTotal / gpxData.totalDistance;
+            const ddlPerKm = ddlTotal / gpxData.totalDistance;
             const totalDist = gpxData.totalDistance;
             
             // Check if steep descent in final third
             const isFinalThird = heaviestDescentKm && heaviestDescentKm > (totalDist * 0.66);
             
-            if (dlPerKm > 80 && steepDescentStart) {
+            if (ddlPerKm > 25 && steepDescentStart) {
                 heroDescentInsight.textContent = `⚠ High quad fatigue risk after KM${steepDescentStart}`;
                 heroDescentInsight.className = 'hero-metric-insight warning';
-            } else if (dlPerKm > 60 && isFinalThird) {
+            } else if (ddlPerKm > 15 && isFinalThird) {
                 heroDescentInsight.textContent = `Expect pace degradation on final descent`;
                 heroDescentInsight.className = 'hero-metric-insight';
-            } else if (dlPerKm > 60 && steepDescentStart) {
-                heroDescentInsight.textContent = `Steep sections start KM${steepDescentStart}`;
+            } else if (ddlPerKm > 15 && steepDescentStart) {
+                heroDescentInsight.textContent = `Steep braking from KM${steepDescentStart}`;
                 heroDescentInsight.className = 'hero-metric-insight';
             } else {
                 heroDescentInsight.textContent = '';
