@@ -1742,6 +1742,68 @@ h2 {
     margin-top: 2px;
 }
 
+/* Info Tooltip */
+.info-tooltip {
+    display: inline-block;
+    position: relative;
+    cursor: help;
+    font-size: 0.75rem;
+    color: #666;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+.info-tooltip:hover,
+.info-tooltip:focus {
+    color: #00d4ff;
+}
+
+.info-tooltip-content {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    padding: 12px 14px;
+    background: #1a1a2e;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: normal;
+    text-transform: none;
+    letter-spacing: normal;
+    color: #ccc;
+    line-height: 1.5;
+    text-align: left;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    margin-bottom: 8px;
+}
+
+.info-tooltip-content::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: rgba(0, 212, 255, 0.3);
+}
+
+.info-tooltip:hover .info-tooltip-content,
+.info-tooltip:focus .info-tooltip-content {
+    display: block;
+}
+
+.info-tooltip-content strong {
+    color: #00d4ff;
+}
+
+.info-tooltip-content em {
+    color: #aaa;
+}
+
 .hero-checkpoints {
     display: flex;
     justify-content: center;
@@ -3522,6 +3584,20 @@ h2 {
     
     .hero-metric-value {
         font-size: 1.1rem;
+    }
+    
+    .info-tooltip-content {
+        width: 180px;
+        font-size: 0.75rem;
+        left: auto;
+        right: -10px;
+        transform: none;
+    }
+    
+    .info-tooltip-content::after {
+        left: auto;
+        right: 20px;
+        transform: none;
     }
     
     .hero-checkpoints {
