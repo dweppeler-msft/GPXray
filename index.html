@@ -67,25 +67,29 @@
             <div class="header-content">
                 <div class="header-title">
                     <h1>GPXray <span class="beta-badge">BETA</span></h1>
-                    <p class="tagline">Know your race before it starts.</p>
+                    <p class="tagline" data-i18n="header.tagline">Know your race before it starts.</p>
                 </div>
                 <div class="header-buttons">
-                    <button type="button" class="header-btn feedback-btn" id="feedbackBtn" title="Send Feedback">💬 Feedback</button>
-                    <button type="button" class="header-btn history-btn" id="historyBtn" title="View History">📋 History</button>
+                    <select id="langSelect" class="lang-select" title="Language">
+                        <option value="en">EN</option>
+                        <option value="de">DE</option>
+                    </select>
+                    <button type="button" class="header-btn feedback-btn" id="feedbackBtn" title="Send Feedback">💬 <span data-i18n="header.feedback">Feedback</span></button>
+                    <button type="button" class="header-btn history-btn" id="historyBtn" title="View History">📋 <span data-i18n="header.history">History</span></button>
                 </div>
             </div>
         </header>
 
         <!-- Intro Section -->
         <section class="intro-section">
-            <p class="intro-text">Plan your trail race with precision. Upload a GPX file to analyze terrain, estimate pace, and create your race strategy.</p>
+            <p class="intro-text" data-i18n="intro.text">Plan your trail race with precision. Upload a GPX file to analyze terrain, estimate pace, and create your race strategy.</p>
             <div class="feature-pills">
-                <span class="feature-pill">📊 Smart Pace</span>
-                <span class="feature-pill">🗺️ Surface Analysis</span>
-                <span class="feature-pill">🚰 AID Stations</span>
-                <span class="feature-pill">🌅 Sun Times</span>
-                <span class="feature-pill">📱 Share Card</span>
-                <span class="feature-pill">📄 PDF Export</span>
+                <span class="feature-pill">📊 <span data-i18n="intro.smartPace">Smart Pace</span></span>
+                <span class="feature-pill">🗺️ <span data-i18n="intro.surfaceAnalysis">Surface Analysis</span></span>
+                <span class="feature-pill">🚰 <span data-i18n="intro.aidStations">AID Stations</span></span>
+                <span class="feature-pill">🌅 <span data-i18n="intro.sunTimes">Sun Times</span></span>
+                <span class="feature-pill">📱 <span data-i18n="intro.shareCard">Share Card</span></span>
+                <span class="feature-pill">📄 <span data-i18n="intro.pdfExport">PDF Export</span></span>
             </div>
         </section>
 
@@ -151,25 +155,25 @@
                 <input type="file" id="gpxInput" accept=".gpx" hidden>
                 <div class="upload-content">
                     <span class="upload-icon">📁</span>
-                    <p class="upload-text-desktop">Drag & drop a GPX file here or <button id="browseBtn">Browse locally</button></p>
-                    <p class="upload-text-mobile"><button id="browseBtnMobile">Select GPX File</button></p>
+                    <p class="upload-text-desktop"><span data-i18n="upload.dragDrop">Drag & drop a GPX file here or</span> <button id="browseBtn" data-i18n="upload.browse">Browse locally</button></p>
+                    <p class="upload-text-mobile"><button id="browseBtnMobile" data-i18n="upload.selectFile">Select GPX File</button></p>
                 </div>
             </div>
             <div class="demo-section">
-                <span class="demo-divider">or</span>
+                <span class="demo-divider" data-i18n="upload.or">or</span>
                 <div class="demo-buttons">
                     <button type="button" class="demo-btn" id="loadDemoBtn">
-                        🏔️ Try Demo: ZUT Garmisch-Partenkirchen Trail
+                        🏔️ <span data-i18n="upload.tryDemo">Try Demo: ZUT Garmisch-Partenkirchen Trail</span>
                     </button>
                     <button type="button" class="browse-races-btn" id="browseRacesBtn">
-                        🔍 Browse Popular Races
+                        🔍 <span data-i18n="upload.browseRaces">Browse Popular Races</span>
                     </button>
                 </div>
-                <p class="demo-hint">Load a sample trail or browse our curated race database</p>
+                <p class="demo-hint" data-i18n="upload.demoHint">Load a sample trail or browse our curated race database</p>
             </div>
             <div class="privacy-badge">
                 <span class="privacy-icon">🔒</span>
-                <span class="privacy-text">100% Local Processing – Your GPX data never leaves your device</span>
+                <span class="privacy-text" data-i18n="upload.privacy">100% Local Processing – Your GPX data never leaves your device</span>
             </div>
         </section>
 
@@ -208,7 +212,7 @@
                 <div class="hero-main">
                     <div class="hero-primary">
                         <div class="hero-time">
-                            <span class="hero-label">Estimated Finish Time</span>
+                            <span class="hero-label" data-i18n="hero.estimatedFinish">Estimated Finish Time</span>
                             <span class="hero-value" id="heroFinishTime">-</span>
                         </div>
                         <div class="hero-distance">
@@ -216,12 +220,12 @@
                         </div>
                     </div>
                     <div class="runner-level-selector">
-                        <label for="runnerLevel">Runner Level:</label>
+                        <label for="runnerLevel" data-i18n="hero.runnerLevel">Runner Level:</label>
                         <select id="runnerLevel">
-                            <option value="beginner">Beginner</option>
-                            <option value="intermediate" selected>Intermediate</option>
-                            <option value="advanced">Advanced</option>
-                            <option value="elite">Elite</option>
+                            <option value="beginner" data-i18n="hero.beginner">Beginner</option>
+                            <option value="intermediate" selected data-i18n="hero.intermediate">Intermediate</option>
+                            <option value="advanced" data-i18n="hero.advanced">Advanced</option>
+                            <option value="elite" data-i18n="hero.elite">Elite</option>
                         </select>
                     </div>
                 </div>
@@ -236,7 +240,7 @@
                     <div class="hero-metric">
                         <span class="hero-metric-icon">🏔️</span>
                         <div class="hero-metric-content">
-                            <span class="hero-metric-label">Main Climb</span>
+                            <span class="hero-metric-label" data-i18n="hero.mainClimb">Main Climb</span>
                             <span class="hero-metric-value" id="heroLongestClimb">-</span>
                             <span class="hero-metric-detail" id="heroLongestClimbGain"></span>
                         </div>
@@ -245,16 +249,16 @@
                         <span class="hero-metric-icon">⬇️</span>
                         <div class="hero-metric-content">
                             <span class="hero-metric-label">
-                                Downhill Load
+                                <span data-i18n="hero.downhillLoad">Downhill Load</span>
                                 <span class="info-tooltip" tabindex="0">
                                     ⓘ
                                     <span class="info-tooltip-content">
-                                        <strong>Descent Load (DDL/km)</strong><br>
-                                        Measures downhill stress (steepness + time + surface).<br><br>
-                                        We use cumulative DDL to estimate <strong>downhill pace loss</strong>.<br><br>
-                                        <em>Fatigue ratio = cumulative DDL ÷ DFT</em><br><br>
-                                        <strong>Pace loss on descents:</strong><br>
-                                        • &lt;0.8: none<br>
+                                        <strong data-i18n="ddl.title">Descent Load (DDL/km)</strong><br>
+                                        <span data-i18n="ddl.description">Measures downhill stress (steepness + time + surface).</span><br><br>
+                                        <span data-i18n="ddl.paceEstimate">We use cumulative DDL to estimate <strong>downhill pace loss</strong>.</span><br><br>
+                                        <em data-i18n="ddl.fatigueRatio">Fatigue ratio = cumulative DDL ÷ DFT</em><br><br>
+                                        <strong data-i18n="ddl.paceLoss">Pace loss on descents:</strong><br>
+                                        • &lt;0.8: <span data-i18n="ddl.none">none</span><br>
                                         • 0.8-1.0: +5-15 sec/km<br>
                                         • 1.0-1.2: +15-30 sec/km<br>
                                         • &gt;1.2: +30-60 sec/km
@@ -264,13 +268,13 @@
                             <span class="hero-metric-value" id="heroDescentLoad">-</span>
                             <span class="hero-metric-detail" id="heroDescentDetail"></span>
                             <span class="hero-metric-insight" id="heroDescentInsight"></span>
-                            <a href="#" class="ddl-learn-more" id="ddlLearnMore">How it works</a>
+                            <a href="#" class="ddl-learn-more" id="ddlLearnMore" data-i18n="ddl.howItWorks">How it works</a>
                         </div>
                     </div>
                     <div class="hero-metric">
                         <span class="hero-metric-icon">⛰️</span>
                         <div class="hero-metric-content">
-                            <span class="hero-metric-label">Elevation Gain</span>
+                            <span class="hero-metric-label" data-i18n="hero.elevationGain">Elevation Gain</span>
                             <span class="hero-metric-value" id="heroClimbLoad">-</span>
                         </div>
                     </div>
@@ -311,12 +315,12 @@
                     <!-- AID station times will appear here -->
                 </div>
                 
-                <p class="hero-hint">Based on default paces • <a href="#paceSection">Customize strategy ↓</a></p>
+                <p class="hero-hint"><span data-i18n="hero.hint">Based on default paces</span> • <a href="#paceSection" data-i18n="hero.customize">Customize strategy ↓</a></p>
             </div>
             
             <!-- Secondary stats (collapsed) -->
             <details class="stats-details">
-                <summary>📊 Course Details</summary>
+                <summary>📊 <span data-i18n="stats.courseDetails">Course Details</span></summary>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <span class="stat-label">Total Distance</span>
@@ -889,6 +893,7 @@
         </div>
     </div>
 
+    <script src="i18n.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

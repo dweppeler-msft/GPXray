@@ -93,6 +93,12 @@ const browseBtn = document.getElementById('browseBtn');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize internationalization first
+    if (typeof initI18n === 'function') {
+        initI18n();
+    }
+    setupLanguageSelector();
+    
     setupDragAndDrop();
     setupFileInput();
     setupPaceCalculation();
@@ -114,6 +120,21 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEarlyAccess();
     setupRunnerLevel();
 });
+
+// Language Selector
+function setupLanguageSelector() {
+    const langSelect = document.getElementById('langSelect');
+    if (!langSelect) return;
+    
+    // Set current language
+    langSelect.value = typeof getLang === 'function' ? getLang() : 'en';
+    
+    langSelect.addEventListener('change', () => {
+        if (typeof setLanguage === 'function') {
+            setLanguage(langSelect.value);
+        }
+    });
+}
 
 // Runner Level Selector
 function setupRunnerLevel() {
@@ -3715,22 +3736,34 @@ function updateHeroSection(totalTime) {
         // Show expected downhill pace loss as detail (with range)
         if (heroDescentDetail) {
             if (finalFatigueRatio >= 0.8 && paceLossSec >= 5) {
-                heroDescentDetail.textContent = `Downhill pace loss: +${paceLossMin}-${paceLossMax} sec/km`;
+                const text = typeof t === 'function' 
+                    ? t('ddl.downhillPaceLoss', { min: paceLossMin, max: paceLossMax })
+                    : `Downhill pace loss: +${paceLossMin}-${paceLossMax} sec/km`;
+                heroDescentDetail.textContent = text;
             } else {
-                heroDescentDetail.textContent = 'No pace loss expected';
+                heroDescentDetail.textContent = typeof t === 'function' ? t('ddl.noPaceLoss') : 'No pace loss expected';
             }
         }
         
         // Generate late-race insight (readable sentence format)
         if (heroDescentInsight) {
             if (paceLossSec >= 25 && fatigueOnsetKm !== null) {
-                heroDescentInsight.textContent = `⚠ Expect slower descents after KM${fatigueOnsetKm} (+${paceLossMin}-${paceLossMax} sec/km)`;
+                const text = typeof t === 'function'
+                    ? `⚠ ${t('ddl.expectSlower', { km: fatigueOnsetKm, min: paceLossMin, max: paceLossMax })}`
+                    : `⚠ Expect slower descents after KM${fatigueOnsetKm} (+${paceLossMin}-${paceLossMax} sec/km)`;
+                heroDescentInsight.textContent = text;
                 heroDescentInsight.className = 'hero-metric-insight warning';
             } else if (paceLossSec >= 10 && fatigueOnsetKm !== null) {
-                heroDescentInsight.textContent = `Expect slower descents after KM${fatigueOnsetKm} (+${paceLossMin}-${paceLossMax} sec/km)`;
+                const text = typeof t === 'function'
+                    ? t('ddl.expectSlower', { km: fatigueOnsetKm, min: paceLossMin, max: paceLossMax })
+                    : `Expect slower descents after KM${fatigueOnsetKm} (+${paceLossMin}-${paceLossMax} sec/km)`;
+                heroDescentInsight.textContent = text;
                 heroDescentInsight.className = 'hero-metric-insight';
             } else if (paceLossSec >= 5 && fatigueOnsetKm !== null) {
-                heroDescentInsight.textContent = `Mild downhill slowdown after KM${fatigueOnsetKm}`;
+                const text = typeof t === 'function'
+                    ? t('ddl.mildSlowdown', { km: fatigueOnsetKm })
+                    : `Mild downhill slowdown after KM${fatigueOnsetKm}`;
+                heroDescentInsight.textContent = text;
                 heroDescentInsight.className = 'hero-metric-insight';
             } else {
                 heroDescentInsight.textContent = '';
