@@ -3190,6 +3190,7 @@ function setupExport() {
     document.getElementById('exportCsv').addEventListener('click', exportToCsv);
     document.getElementById('exportPdf').addEventListener('click', exportToPdf);
     document.getElementById('exportShareCard').addEventListener('click', exportShareCard);
+    document.getElementById('exportCrewCard')?.addEventListener('click', exportCrewCard);
 }
 
 function exportToCsv() {
@@ -3907,4 +3908,207 @@ async function exportShareCard() {
         btn.textContent = originalText;
         btn.disabled = false;
     }
+}
+
+// Crew Card Export - Simple card for sharing AID station schedule with supporters
+async function exportCrewCard() {
+    if (!gpxData || segments.length === 0) {
+        alert('Please load a GPX file and calculate your race strategy first.');
+        return;
+    }
+
+    if (aidStations.length === 0) {
+        alert('Please add AID stations first. Your crew needs to know where to meet you!');
+        return;
+    }
+
+    const btn = document.getElementById('exportCrewCard');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ Creating...';
+    btn.disabled = true;
+
+    try {
+        // Get race info
+        const unitLabel = useMetric ? 'km' : 'mi';
+        const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
+        const totalTime = document.getElementById('totalTime')?.textContent || '-';
+        const dateInput = document.getElementById('raceStartDate');
+        const timeInput = document.getElementById('raceStartTime');
+        const raceDate = dateInput?.value || '';
+        const raceTime = timeInput?.value || '06:00';
+
+        // Format date nicely
+        let formattedDate = '';
+        if (raceDate) {
+            const d = new Date(raceDate);
+            formattedDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        // Get finish clock time
+        let finishClockTime = '';
+        const splitsTable = document.getElementById('splitsTable');
+        if (splitsTable) {
+            const allRows = splitsTable.querySelectorAll('tbody tr');
+            if (allRows.length > 0) {
+                const lastRow = allRows[allRows.length - 1];
+                const cells = lastRow.querySelectorAll('td');
+                finishClockTime = cells[9]?.textContent || '';
+            }
+        }
+
+        // Get AID station data from splits table
+        const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
+        const stationData = [];
+        
+        if (splitsTable) {
+            const rows = splitsTable.querySelectorAll('tbody tr.aid-station-row');
+            const aidKmSet = new Set(sortedStations.map(s => useMetric ? s.km.toFixed(1) : (s.km * KM_TO_MILES).toFixed(1)));
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const distCell = cells[0]?.textContent?.trim() || '';
+                const aidName = cells[4]?.textContent || '';
+                const clockTime = cells[9]?.textContent || '';
+                
+                if (aidName && aidName !== '-' && aidKmSet.has(distCell)) {
+                    // Find stop time from aidStations array
+                    const stationKm = useMetric ? parseFloat(distCell) : parseFloat(distCell) * MILES_TO_KM;
+                    const station = sortedStations.find(s => Math.abs(s.km - stationKm) < 0.5);
+                    const stopMin = station?.stopMin || 0;
+                    
+                    stationData.push({ 
+                        dist: distCell, 
+                        name: aidName, 
+                        clockTime,
+                        stopMin
+                    });
+                }
+            });
+        }
+
+        // Calculate card height based on number of stations
+        const baseHeight = 420; // Header + footer
+        const rowHeight = 70; // Each station row
+        const cardHeight = Math.max(600, baseHeight + (stationData.length + 1) * rowHeight);
+
+        // Create card container
+        const card = document.createElement('div');
+        card.id = 'crewCardContainer';
+        card.style.cssText = `
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 600px;
+            height: ${cardHeight}px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            padding: 30px;
+            box-sizing: border-box;
+        `;
+
+        let routeName = currentRouteName || 'Race';
+        if (routeName.length > 30) {
+            routeName = routeName.substring(0, 27) + '...';
+        }
+
+        // Build station rows HTML
+        let stationsHtml = stationData.map((station, index) => `
+            <div style="display: flex; align-items: center; padding: 15px 20px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 10px;">
+                <div style="font-size: 32px; margin-right: 15px;">📍</div>
+                <div style="flex: 1;">
+                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">${station.name}</div>
+                    <div style="font-size: 14px; opacity: 0.8;">${station.dist} ${unitLabel}${station.stopMin > 0 ? ' · ' + station.stopMin + ' min stop' : ''}</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 28px; font-weight: 800;">${station.clockTime}</div>
+                    <div style="font-size: 12px; opacity: 0.7;">ETA</div>
+                </div>
+            </div>
+        `).join('');
+
+        // Add finish row
+        stationsHtml += `
+            <div style="display: flex; align-items: center; padding: 15px 20px; background: rgba(76,175,80,0.4); border-radius: 10px; border: 2px solid rgba(76,175,80,0.8);">
+                <div style="font-size: 32px; margin-right: 15px;">🏁</div>
+                <div style="flex: 1;">
+                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">FINISH</div>
+                    <div style="font-size: 14px; opacity: 0.8;">${distance.toFixed(1)} ${unitLabel} · ${totalTime.split('(')[0].trim()}</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 28px; font-weight: 800;">${finishClockTime}</div>
+                    <div style="font-size: 12px; opacity: 0.7;">ETA</div>
+                </div>
+            </div>
+        `;
+
+        card.innerHTML = `
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 3px; opacity: 0.8; margin-bottom: 8px;">👥 CREW SCHEDULE</div>
+                <div style="font-size: 28px; font-weight: 800; margin-bottom: 10px;">${routeName}</div>
+                ${formattedDate ? `<div style="font-size: 16px; opacity: 0.9;">📅 ${formattedDate}</div>` : ''}
+                <div style="font-size: 16px; opacity: 0.9; margin-top: 5px;">🏃 Start: ${raceTime}</div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                ${stationsHtml}
+            </div>
+            
+            <div style="text-align: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 18px; font-weight: 700; color: #00d4ff;">GPXray</div>
+                <div style="font-size: 11px; opacity: 0.6; margin-top: 3px;">gpxray.run</div>
+            </div>
+        `;
+
+        document.body.appendChild(card);
+
+        // Capture with html2canvas
+        const canvas = await html2canvas(card, {
+            width: 600,
+            height: cardHeight,
+            scale: 2,
+            backgroundColor: null,
+            logging: false
+        });
+
+        document.body.removeChild(card);
+
+        // Check if Web Share API is available and can share files (mobile)
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const fileName = (currentRouteName || 'race').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const file = new File([blob], `${fileName}_crew_card.png`, { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            // Mobile - use native share
+            try {
+                await navigator.share({
+                    title: `Crew Schedule - ${routeName}`,
+                    text: `Here's my race schedule for ${routeName}! Meet me at these AID stations 🏃`,
+                    files: [file]
+                });
+            } catch (shareError) {
+                if (shareError.name !== 'AbortError') {
+                    // User cancelled, that's fine. Otherwise fall back to download
+                    downloadCrewCard(canvas, fileName);
+                }
+            }
+        } else {
+            // Desktop - download
+            downloadCrewCard(canvas, fileName);
+        }
+
+    } catch (error) {
+        console.error('Crew card generation error:', error);
+        alert('Failed to generate crew card. Please try again.');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+
+function downloadCrewCard(canvas, fileName) {
+    const link = document.createElement('a');
+    link.download = `${fileName}_crew_card.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
 }

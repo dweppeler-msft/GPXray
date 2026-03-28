@@ -2228,6 +2228,14 @@ h2 {
     box-shadow: 0 5px 20px rgba(155, 89, 182, 0.4);
 }
 
+.crew-btn {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+.crew-btn:hover {
+    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.4);
+}
+
 /* Leg Summary */
 .leg-summary {
     margin-bottom: 25px;
