@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupRaceBrowser();
     setupFooter();
     setupCookieConsent();
-    setupEarlyAccess();
+    // setupEarlyAccess(); // Disabled on main - early access only on beta
 });
 
 // Cookie Consent
@@ -164,7 +164,8 @@ function setupEarlyAccess() {
 }
 
 function isEarlyAccessUnlocked() {
-    return localStorage.getItem('gpxray-early-access') === 'unlocked';
+    return true; // Always unlocked on main branch
+    // return localStorage.getItem('gpxray-early-access') === 'unlocked';
 }
 
 function showEarlyAccessModal() {
@@ -188,11 +189,14 @@ function hideEarlyAccessModal() {
 }
 
 function checkEarlyAccess() {
+    return true; // Always allow on main branch
+    /*
     if (isEarlyAccessUnlocked()) {
         return true;
     }
     showEarlyAccessModal();
     return false;
+    */
 }
 
 function showNotification(message, type = 'info') {
