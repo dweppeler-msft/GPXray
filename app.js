@@ -3573,11 +3573,19 @@ function renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, star
 function updateHeroSection(totalTime) {
     const heroTime = document.getElementById('heroFinishTime');
     const heroCheckpoints = document.getElementById('heroCheckpoints');
+    const heroDistance = document.getElementById('heroDistance');
     
     if (!heroTime) return;
     
     // Update finish time
     heroTime.textContent = formatTime(totalTime);
+    
+    // Update distance
+    if (heroDistance && gpxData) {
+        const dist = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
+        const unit = useMetric ? 'km' : 'mi';
+        heroDistance.textContent = `${dist.toFixed(1)} ${unit}`;
+    }
     
     // Update Climb Load
     const heroClimbLoad = document.getElementById('heroClimbLoad');
