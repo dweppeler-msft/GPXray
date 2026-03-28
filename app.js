@@ -193,6 +193,10 @@ const raceDatabase = [
     { id: 'madeira', name: 'Madeira Island Ultra Trail', country: '🇵🇹', distance: 115, elevation: 7200, category: 'ultra', available: false },
     { id: 'penyagolosa', name: 'Penyagolosa Trails MiM', country: '🇪🇸', distance: 109, elevation: 5700, category: 'ultra', available: false },
     
+    // LOWA Ultratrail Fränkische Schweiz (Germany)
+    { id: 'lowa-speedtrail', name: 'LOWA Ultratrail Fränkische Schweiz - Speedtrail', country: '🇩🇪', distance: 33, elevation: 1100, category: 'short', gpxUrl: 'races/LOWA-Ultratrail-Fraenkische-Schweiz_SPEEDTRAIL-33km_032025.gpx', available: true },
+    { id: 'lowa-ultratrail', name: 'LOWA Ultratrail Fränkische Schweiz - Ultratrail', country: '🇩🇪', distance: 66, elevation: 2200, category: 'marathon', gpxUrl: 'races/LOWA-Ultratrail-Fraenkische-Schweiz_ULTRATRAIL-66km_032025.gpx', available: true },
+    
     // Marathon Trail (42-100km)
     { id: 'ccc', name: 'CCC - Courmayeur-Champex-Chamonix', country: '🇫🇷', distance: 101, elevation: 6100, category: 'marathon', available: false },
     { id: 'tds', name: 'TDS - Sur les Traces des Ducs de Savoie', country: '🇫🇷', distance: 145, elevation: 9100, category: 'ultra', available: false },
