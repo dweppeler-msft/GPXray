@@ -301,19 +301,25 @@ async function loadDemoGpx() {
 
 // Race Database
 const raceDatabase = [
-    // ===== COMING SOON (All races in teaser mode) =====
+    // ===== AVAILABLE FOR EARLY ACCESS USERS =====
     
     // ZUT - Zugspitz Ultratrail (Germany)
-    { id: 'zut-grainau', name: 'ZUT Grainau Trail', country: '🇩🇪', distance: 16, elevation: 800, category: 'short', gpxUrl: 'races/Grainau_Trail_ZUT_2025_01bfa09fb6.gpx', available: false },
-    { id: 'zut-mittenwald', name: 'ZUT Mittenwald Trail', country: '🇩🇪', distance: 43, elevation: 2100, category: 'marathon', gpxUrl: 'races/Mittenwald_Trail_ZUT_2025_fa6c0d4010.gpx', available: false },
-    { id: 'zut-leutasch', name: 'ZUT Leutasch Trail', country: '🇩🇪', distance: 68, elevation: 3500, category: 'marathon', gpxUrl: 'races/Leutasch_Trail_ZUT_2025_620e36ae36.gpx', available: false },
-    { id: 'zut-ehrwald', name: 'ZUT Ehrwald Trail', country: '🇩🇪', distance: 85, elevation: 4500, category: 'marathon', gpxUrl: 'races/Ehrwald_Trail_ZUT_2025_85a841b963.gpx', available: false },
-    { id: 'zut-ultratrail', name: 'ZUT Ultratrail', country: '🇩🇪', distance: 106, elevation: 5400, category: 'ultra', gpxUrl: 'races/Ultratrail_ZUT_2025_3b6cbaa510.gpx', available: false },
-    { id: 'zut-100', name: 'ZUT 100', country: '🇩🇪', distance: 164, elevation: 8500, category: 'ultra', gpxUrl: 'races/ZUT_100_2025_71c0e173fd.gpx', available: false },
+    { id: 'zut-grainau', name: 'ZUT Grainau Trail', country: '🇩🇪', distance: 16, elevation: 800, category: 'short', gpxUrl: 'races/Grainau_Trail_ZUT_2025_01bfa09fb6.gpx', available: true },
+    { id: 'zut-mittenwald', name: 'ZUT Mittenwald Trail', country: '🇩🇪', distance: 43, elevation: 2100, category: 'marathon', gpxUrl: 'races/Mittenwald_Trail_ZUT_2025_fa6c0d4010.gpx', available: true },
+    { id: 'zut-leutasch', name: 'ZUT Leutasch Trail', country: '🇩🇪', distance: 68, elevation: 3500, category: 'marathon', gpxUrl: 'races/Leutasch_Trail_ZUT_2025_620e36ae36.gpx', available: true },
+    { id: 'zut-ehrwald', name: 'ZUT Ehrwald Trail', country: '🇩🇪', distance: 85, elevation: 4500, category: 'marathon', gpxUrl: 'races/Ehrwald_Trail_ZUT_2025_85a841b963.gpx', available: true },
+    { id: 'zut-ultratrail', name: 'ZUT Ultratrail', country: '🇩🇪', distance: 106, elevation: 5400, category: 'ultra', gpxUrl: 'races/Ultratrail_ZUT_2025_3b6cbaa510.gpx', available: true },
+    { id: 'zut-100', name: 'ZUT 100', country: '🇩🇪', distance: 164, elevation: 8500, category: 'ultra', gpxUrl: 'races/ZUT_100_2025_71c0e173fd.gpx', available: true },
     
     // Rureifel Trail (Germany)
-    { id: 'ret-44', name: 'Rureifel Trail RET 44', country: '🇩🇪', distance: 46, elevation: 1200, category: 'marathon', gpxUrl: 'races/rureifel-trail-2026-ret44.gpx', available: false },
-    { id: 'ret-77', name: 'Rureifel Trail RET 77', country: '🇩🇪', distance: 76, elevation: 2000, category: 'marathon', gpxUrl: 'races/rureifel-trail-2026-ret77.gpx', available: false },
+    { id: 'ret-44', name: 'Rureifel Trail RET 44', country: '🇩🇪', distance: 46, elevation: 1200, category: 'marathon', gpxUrl: 'races/rureifel-trail-2026-ret44.gpx', available: true },
+    { id: 'ret-77', name: 'Rureifel Trail RET 77', country: '🇩🇪', distance: 76, elevation: 2000, category: 'marathon', gpxUrl: 'races/rureifel-trail-2026-ret77.gpx', available: true },
+    
+    // LOWA Ultratrail Fränkische Schweiz (Germany)
+    { id: 'lowa-speedtrail', name: 'LOWA Ultratrail Fränkische Schweiz - Speedtrail', country: '🇩🇪', distance: 33, elevation: 1100, category: 'short', gpxUrl: 'races/LOWA-Ultratrail-Fraenkische-Schweiz_SPEEDTRAIL-33km_032025.gpx', available: true },
+    { id: 'lowa-ultratrail', name: 'LOWA Ultratrail Fränkische Schweiz - Ultratrail', country: '🇩🇪', distance: 66, elevation: 2200, category: 'marathon', gpxUrl: 'races/LOWA-Ultratrail-Fraenkische-Schweiz_ULTRATRAIL-66km_032025.gpx', available: true },
+    
+    // ===== COMING SOON =====
     
     // Ultra Trail (100km+)
     { id: 'utmb', name: 'UTMB - Ultra-Trail du Mont-Blanc', country: '🇫🇷', distance: 171, elevation: 10000, category: 'ultra', available: false },
@@ -324,10 +330,6 @@ const raceDatabase = [
     { id: 'eiger', name: 'Eiger Ultra Trail E101', country: '🇨🇭', distance: 101, elevation: 6700, category: 'ultra', available: false },
     { id: 'madeira', name: 'Madeira Island Ultra Trail', country: '🇵🇹', distance: 115, elevation: 7200, category: 'ultra', available: false },
     { id: 'penyagolosa', name: 'Penyagolosa Trails MiM', country: '🇪🇸', distance: 109, elevation: 5700, category: 'ultra', available: false },
-    
-    // LOWA Ultratrail Fränkische Schweiz (Germany)
-    { id: 'lowa-speedtrail', name: 'LOWA Ultratrail Fränkische Schweiz - Speedtrail', country: '🇩🇪', distance: 33, elevation: 1100, category: 'short', gpxUrl: 'races/LOWA-Ultratrail-Fraenkische-Schweiz_SPEEDTRAIL-33km_032025.gpx', available: false },
-    { id: 'lowa-ultratrail', name: 'LOWA Ultratrail Fränkische Schweiz - Ultratrail', country: '🇩🇪', distance: 66, elevation: 2200, category: 'marathon', gpxUrl: 'races/LOWA-Ultratrail-Fraenkische-Schweiz_ULTRATRAIL-66km_032025.gpx', available: false },
     
     // Marathon Trail (42-100km)
     { id: 'ccc', name: 'CCC - Courmayeur-Champex-Chamonix', country: '🇫🇷', distance: 101, elevation: 6100, category: 'marathon', available: false },
@@ -416,7 +418,10 @@ function renderRaceList(filter, searchText) {
     }
     
     list.innerHTML = filtered.map(race => {
-        if (race.available) {
+        // Race is loadable only if available AND user has early access
+        const isLoadable = race.available && isEarlyAccessUnlocked();
+        
+        if (isLoadable) {
             return `
                 <div class="race-item" onclick="loadRace('${race.id}')">
                     <span class="race-item-flag">${race.country}</span>
