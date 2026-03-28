@@ -3636,7 +3636,6 @@ async function exportShareCard() {
         if (splitsTable && aidStations.length > 0) {
             // Sort AID stations by km and get their data
             const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
-            const aidKmSet = new Set(sortedStations.map(s => useMetric ? s.km.toFixed(1) : (s.km * KM_TO_MILES).toFixed(1)));
             
             // Collect matching rows with their data
             const stationData = [];
@@ -3648,8 +3647,15 @@ async function exportShareCard() {
                 const raceTime = cells[8]?.textContent || '';
                 const clockTime = cells[9]?.textContent || '';
                 
-                if (aidName && aidName !== '-' && aidKmSet.has(distCell)) {
-                    stationData.push({ dist: distCell, name: aidName, raceTime, clockTime });
+                if (aidName && aidName !== '-') {
+                    // Parse distance and find matching AID station (tolerance-based matching)
+                    const rowDist = parseFloat(distCell);
+                    const rowKm = useMetric ? rowDist : rowDist * MILES_TO_KM;
+                    const matchingStation = sortedStations.find(s => Math.abs(s.km - rowKm) < 0.5);
+                    
+                    if (matchingStation) {
+                        stationData.push({ dist: distCell, name: aidName, raceTime, clockTime });
+                    }
                 }
             });
             
@@ -3962,7 +3968,6 @@ async function exportCrewCard() {
         
         if (splitsTable) {
             const rows = splitsTable.querySelectorAll('tbody tr.aid-station-row');
-            const aidKmSet = new Set(sortedStations.map(s => useMetric ? s.km.toFixed(1) : (s.km * KM_TO_MILES).toFixed(1)));
             
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
@@ -3970,18 +3975,21 @@ async function exportCrewCard() {
                 const aidName = cells[4]?.textContent || '';
                 const clockTime = cells[9]?.textContent || '';
                 
-                if (aidName && aidName !== '-' && aidKmSet.has(distCell)) {
-                    // Find stop time from aidStations array
-                    const stationKm = useMetric ? parseFloat(distCell) : parseFloat(distCell) * MILES_TO_KM;
-                    const station = sortedStations.find(s => Math.abs(s.km - stationKm) < 0.5);
-                    const stopMin = station?.stopMin || 0;
+                if (aidName && aidName !== '-') {
+                    // Parse distance and find matching AID station (tolerance-based matching)
+                    const rowDist = parseFloat(distCell);
+                    const rowKm = useMetric ? rowDist : rowDist * MILES_TO_KM;
+                    const station = sortedStations.find(s => Math.abs(s.km - rowKm) < 0.5);
                     
-                    stationData.push({ 
-                        dist: distCell, 
-                        name: aidName, 
-                        clockTime,
-                        stopMin
-                    });
+                    if (station) {
+                        const stopMin = station.stopMin || 0;
+                        stationData.push({ 
+                            dist: distCell, 
+                            name: aidName, 
+                            clockTime,
+                            stopMin
+                        });
+                    }
                 }
             });
         }
