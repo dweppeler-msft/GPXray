@@ -196,6 +196,57 @@ const TRANSLATIONS = {
         'cookies.accept': 'Accept',
         'cookies.decline': 'Decline',
         
+        // Surface types
+        'surface.road': 'Road',
+        'surface.trail': 'Trail',
+        'surface.technical': 'Technical',
+        'surface.unknown': 'Unknown',
+        
+        // Terrain types
+        'terrain.flat': 'Flat',
+        'terrain.uphill': 'Uphill',
+        'terrain.downhill': 'Downhill',
+        
+        // Course shape insights
+        'shape.frontInsightDynamic': '{pct}% climb in first half → Save legs for fast descent after KM{km}',
+        'shape.backInsightDynamic': '{pct}% climb in second half → Conserve energy early, dig deep late',
+        'shape.balancedInsightDynamic': 'Even climb distribution → Steady effort throughout',
+        
+        // Sun times special cases
+        'sun.polarNight': 'Polar night',
+        'sun.midnightSun': 'Midnight sun',
+        
+        // Print
+        'print.title': 'Race Strategy',
+        
+        // Button states
+        'btn.loading': '⏳ Loading...',
+        'btn.demoLoaded': '✅ Demo Loaded!',
+        'btn.generating': '⏳ Generating...',
+        'btn.creating': '⏳ Creating...',
+        'btn.joining': 'Joining...',
+        'btn.joinWaitlist': 'Join Waitlist',
+        
+        // Race browser
+        'races.noResults': 'No races found matching your criteria.',
+        
+        // Splits table
+        'splits.surface': 'Surface',
+        'splits.aid': 'AID',
+        'splits.stop': 'Stop',
+        'splits.clock': 'Clock',
+        'splits.min': 'min',
+        
+        // Leg summary
+        'leg.title': 'Leg Summary',
+        'leg.leg': 'Leg',
+        'leg.dist': 'Dist',
+        'leg.gain': 'Gain',
+        'leg.loss': 'Loss',
+        'leg.time': 'Time',
+        'leg.arrival': 'Arrival',
+        'leg.toFinish': 'to Finish',
+        
         // General
         'general.loading': 'Loading...',
         'general.error': 'Error',
@@ -400,6 +451,57 @@ const TRANSLATIONS = {
         'cookies.accept': 'Akzeptieren',
         'cookies.decline': 'Ablehnen',
         
+        // Surface types
+        'surface.road': 'Straße',
+        'surface.trail': 'Trail',
+        'surface.technical': 'Technisch',
+        'surface.unknown': 'Unbekannt',
+        
+        // Terrain types
+        'terrain.flat': 'Flach',
+        'terrain.uphill': 'Bergauf',
+        'terrain.downhill': 'Bergab',
+        
+        // Course shape insights
+        'shape.frontInsightDynamic': '{pct}% Anstieg in erster Hälfte → Beine schonen für schnellen Abstieg nach KM{km}',
+        'shape.backInsightDynamic': '{pct}% Anstieg in zweiter Hälfte → Früh Energie sparen, spät alles geben',
+        'shape.balancedInsightDynamic': 'Gleichmäßige Anstiegsverteilung → Konstanter Einsatz durchgehend',
+        
+        // Sun times special cases
+        'sun.polarNight': 'Polarnacht',
+        'sun.midnightSun': 'Mitternachtssonne',
+        
+        // Print
+        'print.title': 'Rennstrategie',
+        
+        // Button states
+        'btn.loading': '⏳ Lädt...',
+        'btn.demoLoaded': '✅ Demo geladen!',
+        'btn.generating': '⏳ Generiere...',
+        'btn.creating': '⏳ Erstelle...',
+        'btn.joining': 'Beitritt...',
+        'btn.joinWaitlist': 'Warteliste beitreten',
+        
+        // Race browser
+        'races.noResults': 'Keine Rennen gefunden, die deinen Kriterien entsprechen.',
+        
+        // Splits table
+        'splits.surface': 'Untergrund',
+        'splits.aid': 'VP',
+        'splits.stop': 'Stopp',
+        'splits.clock': 'Uhrzeit',
+        'splits.min': 'min',
+        
+        // Leg summary
+        'leg.title': 'Etappen-Übersicht',
+        'leg.leg': 'Etappe',
+        'leg.dist': 'Dist',
+        'leg.gain': 'Aufstieg',
+        'leg.loss': 'Abstieg',
+        'leg.time': 'Zeit',
+        'leg.arrival': 'Ankunft',
+        'leg.toFinish': 'bis Ziel',
+        
         // General
         'general.loading': 'Lädt...',
         'general.error': 'Fehler',
@@ -475,8 +577,20 @@ function setLanguage(lang) {
     }
     
     // Re-render dynamic content if GPX is loaded
-    if (typeof updateHeroSection === 'function' && typeof gpxData !== 'undefined' && gpxData) {
-        updateHeroSection();
+    if (typeof gpxData !== 'undefined' && gpxData) {
+        if (typeof updateHeroSection === 'function') {
+            updateHeroSection();
+        }
+        if (typeof generateSplitsTable === 'function') {
+            generateSplitsTable();
+        }
+        if (typeof updateMapLegend === 'function') {
+            const surfaceToggle = document.getElementById('surfaceColors');
+            updateMapLegend(surfaceToggle ? surfaceToggle.checked : false);
+        }
+        if (typeof displaySurfaceStats === 'function') {
+            displaySurfaceStats();
+        }
     }
 }
 

@@ -64,6 +64,22 @@ const SURFACE_TYPES = {
     unknown: { name: 'Unknown', color: '#9E9E9E', multiplier: { flat: 1.0, uphill: 1.0, downhill: 1.0 } }
 };
 
+// Helper to get translated surface name
+function getSurfaceName(surfaceType) {
+    if (typeof t === 'function') {
+        return t('surface.' + surfaceType) || SURFACE_TYPES[surfaceType]?.name || surfaceType;
+    }
+    return SURFACE_TYPES[surfaceType]?.name || surfaceType;
+}
+
+// Helper to get translated terrain name
+function getTerrainName(terrain) {
+    if (typeof t === 'function') {
+        return t('terrain.' + terrain) || terrain;
+    }
+    return terrain.charAt(0).toUpperCase() + terrain.slice(1);
+}
+
 // OSM surface tag to category mapping
 const OSM_SURFACE_MAP = {
     // Road surfaces
@@ -285,7 +301,7 @@ function setupEarlyAccess() {
         // Disable form while submitting
         const submitBtn = waitlistForm.querySelector('.waitlist-submit');
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Joining...';
+        submitBtn.textContent = t('btn.joining');
         
         try {
             // Submit to Formspree
@@ -314,7 +330,7 @@ function setupEarlyAccess() {
         } catch (error) {
             console.error('Waitlist submission error:', error);
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Join Waitlist';
+            submitBtn.textContent = t('btn.joinWaitlist');
             showNotification('Something went wrong. Please try again.', 'error');
         }
     });
@@ -457,7 +473,7 @@ async function loadDemoGpx() {
     
     try {
         demoBtn.disabled = true;
-        demoBtn.textContent = '⏳ Loading...';
+        demoBtn.textContent = t('btn.loading');
         
         const response = await fetch('races/demo.gpx');
         if (!response.ok) {
@@ -477,7 +493,7 @@ async function loadDemoGpx() {
         ];
         renderAidStations();
         
-        demoBtn.textContent = '✅ Demo Loaded!';
+        demoBtn.textContent = t('btn.demoLoaded');
         setTimeout(() => {
             demoBtn.textContent = originalText;
             demoBtn.disabled = false;
@@ -605,7 +621,7 @@ function renderRaceList(filter, searchText) {
     });
     
     if (filtered.length === 0) {
-        list.innerHTML = '<div class="no-races-found">No races found matching your criteria.</div>';
+        list.innerHTML = '<div class="no-races-found">' + t('races.noResults') + '</div>';
         return;
     }
     
@@ -1360,7 +1376,7 @@ function countSurfaces() {
     for (const [type, dist] of Object.entries(counts)) {
         if (dist > 0) {
             const pct = Math.round((dist / totalDist) * 100);
-            parts.push(`${SURFACE_TYPES[type].name}: ${pct}%`);
+            parts.push(`${getSurfaceName(type)}: ${pct}%`);
         }
     }
     
@@ -1423,7 +1439,7 @@ function displaySurfaceStats() {
                 <span class="surface-stat-item">
                     <span class="surface-color ${type}"></span>
                     <span class="surface-pct">${pct}%</span>
-                    <span class="surface-name">${SURFACE_TYPES[type].name}</span>
+                    <span class="surface-name">${getSurfaceName(type)}</span>
                 </span>
             `;
         }
@@ -1525,8 +1541,8 @@ function displayMap() {
         
         // Create tooltip content
         const tooltipContent = `
-            ${segment.terrainType.charAt(0).toUpperCase() + segment.terrainType.slice(1)}
-            ${hasSurfaceData ? ' | ' + SURFACE_TYPES[segment.surfaceType].name : ''}
+            ${getTerrainName(segment.terrainType)}
+            ${hasSurfaceData ? ' | ' + getSurfaceName(segment.surfaceType) : ''}
             | ${segment.grade.toFixed(1)}% grade
         `;
         
@@ -1573,16 +1589,16 @@ function updateMapLegend(showSurfaceColors) {
     
     if (showSurfaceColors) {
         legendEl.innerHTML = `
-            <span class="legend-item"><span class="legend-color" style="background: #4CAF50;"></span> Road</span>
-            <span class="legend-item"><span class="legend-color" style="background: #FF9800;"></span> Trail</span>
-            <span class="legend-item"><span class="legend-color" style="background: #9C27B0;"></span> Technical</span>
-            <span class="legend-item"><span class="legend-color" style="background: #9E9E9E;"></span> Unknown</span>
+            <span class="legend-item"><span class="legend-color" style="background: #4CAF50;"></span> ${t('surface.road')}</span>
+            <span class="legend-item"><span class="legend-color" style="background: #FF9800;"></span> ${t('surface.trail')}</span>
+            <span class="legend-item"><span class="legend-color" style="background: #9C27B0;"></span> ${t('surface.technical')}</span>
+            <span class="legend-item"><span class="legend-color" style="background: #9E9E9E;"></span> ${t('surface.unknown')}</span>
         `;
     } else {
         legendEl.innerHTML = `
-            <span class="legend-item"><span class="legend-color flat"></span> Flat</span>
-            <span class="legend-item"><span class="legend-color uphill"></span> Uphill</span>
-            <span class="legend-item"><span class="legend-color downhill"></span> Downhill</span>
+            <span class="legend-item"><span class="legend-color flat"></span> ${t('terrain.flat')}</span>
+            <span class="legend-item"><span class="legend-color uphill"></span> ${t('terrain.uphill')}</span>
+            <span class="legend-item"><span class="legend-color downhill"></span> ${t('terrain.downhill')}</span>
         `;
     }
 }
@@ -2341,7 +2357,7 @@ function printRaceCard() {
     const distanceUnit = useMetric ? 'km' : 'mi';
     const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
     
-    document.getElementById('printTitle').textContent = 'Race Strategy';
+    document.getElementById('printTitle').textContent = t('print.title');
     document.getElementById('printDistance').textContent = `${distance.toFixed(2)} ${distanceUnit}`;
     document.getElementById('printElevation').textContent = `↑${gpxData.elevationGain.toFixed(0)}m ↓${gpxData.elevationLoss.toFixed(0)}m`;
     document.getElementById('printTime').textContent = document.getElementById('totalTime')?.textContent || '-';
@@ -3123,10 +3139,10 @@ function updateSunTimesDisplay() {
     const sunsetSpan = document.getElementById('sunsetTime');
     
     if (sunTimes.polarNight) {
-        sunriseSpan.textContent = 'Polar night';
+        sunriseSpan.textContent = t('sun.polarNight');
         sunsetSpan.textContent = '';
     } else if (sunTimes.midnightSun) {
-        sunriseSpan.textContent = 'Midnight sun';
+        sunriseSpan.textContent = t('sun.midnightSun');
         sunsetSpan.textContent = '';
     } else {
         sunriseSpan.textContent = formatSunTime(sunTimes.sunrise);
@@ -3520,13 +3536,13 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         }
         
         // Get surface display name and class
-        const surfaceDisplay = isSurfaceLoading ? 'Loading...' : (SURFACE_TYPES[dominantSurface] ? SURFACE_TYPES[dominantSurface].name : 'Unknown');
+        const surfaceDisplay = isSurfaceLoading ? t('general.loading') : getSurfaceName(dominantSurface);
         const surfaceClass = isSurfaceLoading ? 'surface-loading' : `surface-${dominantSurface}`;
         
         row.innerHTML = `
             <td>${unit}</td>
             <td>${elevationChange >= 0 ? '+' : ''}${elevationChange.toFixed(0)} m</td>
-            <td class="terrain-${terrain}">${terrain.charAt(0).toUpperCase() + terrain.slice(1)}</td>
+            <td class="terrain-${terrain}">${getTerrainName(terrain)}</td>
             <td class="${surfaceClass}">${surfaceDisplay}</td>
             <td class="${hasAidStation ? 'aid-station-cell' : ''}">${aidStationText}</td>
             <td class="stop-time">${stopTime > 0 ? '+' + stopTime + ' min' : '-'}</td>
@@ -3934,26 +3950,26 @@ function updateCourseShape() {
             }
         }
         
-        courseShapeBadge.textContent = '⛰️ Front-Loaded';
+        courseShapeBadge.textContent = '⛰️ ' + t('shape.frontLoaded');
         courseShapeBadge.className = 'course-shape-badge front-loaded';
-        insight = `${percentVal}% climb in first half → Save legs for fast descent after KM${Math.round(climbEndKm)}`;
+        insight = t('shape.frontInsightDynamic', { pct: percentVal, km: Math.round(climbEndKm) });
         
     } else if (firstHalfPercent <= 35) {
         // Back-loaded: most climbing late
         shapeType = 'back-loaded';
         const percentVal = Math.round(100 - firstHalfPercent);
         
-        courseShapeBadge.textContent = '📈 Back-Loaded';
+        courseShapeBadge.textContent = '📈 ' + t('shape.backLoaded');
         courseShapeBadge.className = 'course-shape-badge back-loaded';
-        insight = `${percentVal}% climb in second half → Conserve energy early, dig deep late`;
+        insight = t('shape.backInsightDynamic', { pct: percentVal });
         
     } else {
         // Balanced
         shapeType = 'balanced';
         
-        courseShapeBadge.textContent = '⚖️ Balanced';
+        courseShapeBadge.textContent = '⚖️ ' + t('shape.balanced');
         courseShapeBadge.className = 'course-shape-badge balanced';
-        insight = 'Even climb distribution → Steady effort throughout';
+        insight = t('shape.balancedInsightDynamic');
     }
     
     courseShapeInsight.textContent = insight;
@@ -4186,7 +4202,7 @@ async function exportToPdf() {
 
     const btn = document.getElementById('exportPdf');
     const originalText = btn.textContent;
-    btn.textContent = '⏳ Generating...';
+    btn.textContent = t('btn.generating');
     btn.disabled = true;
 
     try {
@@ -4425,7 +4441,7 @@ async function exportShareCard() {
 
     const btn = document.getElementById('exportShareCard');
     const originalText = btn.textContent;
-    btn.textContent = '⏳ Creating...';
+    btn.textContent = t('btn.creating');
     btn.disabled = true;
 
     try {
@@ -4768,7 +4784,7 @@ async function exportCrewCard() {
 
     const btn = document.getElementById('exportCrewCard');
     const originalText = btn.textContent;
-    btn.textContent = '⏳ Creating...';
+    btn.textContent = t('btn.creating');
     btn.disabled = true;
 
     try {
