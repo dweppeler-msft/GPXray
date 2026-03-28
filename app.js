@@ -3698,13 +3698,13 @@ function updateHeroSection(totalTime) {
             }
         }
         
-        // Show as "DDL" units (Dynamic Descent Load)
-        heroDescentLoad.textContent = `${Math.round(ddlTotal)} DDL`;
+        // Show total descent load score
+        heroDescentLoad.textContent = Math.round(ddlTotal).toLocaleString();
         
-        // Show DDL per km rate
+        // Show per-km rate
         if (heroDescentDetail && gpxData) {
             const ddlPerKm = ddlTotal / gpxData.totalDistance;
-            heroDescentDetail.textContent = `${Math.round(ddlPerKm)} DDL/km`;
+            heroDescentDetail.textContent = `${Math.round(ddlPerKm)}/km`;
         }
         
         // Generate auto-insight
