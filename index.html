@@ -724,11 +724,11 @@
             <div class="early-access-icon">🔐</div>
             <h2>Early Access</h2>
             <p>GPXray is currently in private beta. Enter your access code to unlock GPX upload.</p>
-            <div class="early-access-form">
-                <input type="text" id="accessCodeInput" placeholder="Enter access code" autocomplete="off">
-                <button id="accessCodeSubmit" class="early-access-submit">Unlock</button>
-            </div>
-            <p class="early-access-error" id="accessCodeError">Invalid code. Please try again.</p>
+            <form class="early-access-form" id="earlyAccessForm">
+                <input type="text" id="earlyAccessCode" placeholder="Enter access code" autocomplete="off">
+                <button type="submit" class="early-access-submit">Unlock</button>
+            </form>
+            <p class="early-access-error" id="earlyAccessError">Invalid code. Please try again.</p>
             <p class="early-access-hint">Don't have a code? Try the demo or browse popular races!</p>
             <button id="earlyAccessClose" class="early-access-close">✕</button>
         </div>
