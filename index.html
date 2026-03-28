@@ -37,6 +37,13 @@
             }
         }
         
+        // Set user property (persists across sessions)
+        function setUserProperty(name, value) {
+            if (localStorage.getItem('gpxray-cookies') === 'accepted') {
+                gtag('set', 'user_properties', { [name]: value });
+            }
+        }
+        
         initGA();
     </script>
 </head>
