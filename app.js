@@ -14,6 +14,7 @@ let currentRouteName = ''; // Name of current loaded route
 let sunTimes = null; // Sunrise/sunset times for race day
 let isDemoMode = false; // Whether demo is currently loaded
 let isSurfaceLoading = false; // Whether surface data is being fetched
+let lastCalculatedPaces = null; // Store last calculated paces for re-rendering
 
 // Constants
 const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
@@ -3092,6 +3093,21 @@ function calculateRacePlan() {
 
 // Generate kilometer splits table
 function generateSplitsTable(flatPace, uphillPace, downhillPace) {
+    // Use stored paces if not provided
+    if (flatPace === undefined || uphillPace === undefined || downhillPace === undefined) {
+        if (lastCalculatedPaces) {
+            flatPace = lastCalculatedPaces.flat;
+            uphillPace = lastCalculatedPaces.uphill;
+            downhillPace = lastCalculatedPaces.downhill;
+        } else {
+            // No paces available - don't render anything
+            return;
+        }
+    }
+    
+    // Store paces for future re-renders
+    lastCalculatedPaces = { flat: flatPace, uphill: uphillPace, downhill: downhillPace };
+    
     const splitsBody = document.getElementById('splitsBody');
     splitsBody.innerHTML = '';
     
