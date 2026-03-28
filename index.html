@@ -257,17 +257,17 @@
                                     ⓘ
                                     <span class="info-tooltip-content">
                                         <strong>Dynamic Descent Load</strong><br>
-                                        Measures <em>time spent braking</em>, not just elevation.<br><br>
+                                        Measures <em>steepness-weighted descent stress</em>.<br><br>
                                         <em>Factors:</em><br>
+                                        • Elevation dropped<br>
                                         • Gradient → braking force<br>
-                                        • Distance → exposure time<br>
                                         • Surface → instability<br>
                                         • Fatigue → compounds<br><br>
                                         <strong>DDL/km guide:</strong><br>
-                                        • &lt;10 = Easy<br>
-                                        • 10-20 = Moderate<br>
-                                        • 20-30 = Demanding<br>
-                                        • &gt;30 = High quad fatigue ⚠️
+                                        • &lt;25 = Easy<br>
+                                        • 25-50 = Moderate<br>
+                                        • 50-80 = Demanding<br>
+                                        • &gt;80 = Brutal quads ⚠️
                                     </span>
                                 </span>
                             </span>
@@ -287,21 +287,21 @@
                         <p class="ddl-tagline">Measures quad damage, not just elevation dropped.</p>
                         
                         <div class="ddl-comparison">
-                            <div class="ddl-example bad">
-                                <span class="ddl-example-label">-100m @ 5% grade</span>
-                                <span class="ddl-example-detail">= 2000m of braking</span>
-                                <span class="ddl-example-result">→ Long eccentric load ⚠️</span>
-                            </div>
                             <div class="ddl-example good">
-                                <span class="ddl-example-label">-100m @ 20% grade</span>
-                                <span class="ddl-example-detail">= 500m of braking</span>
-                                <span class="ddl-example-result">→ Short but intense</span>
+                                <span class="ddl-example-label">-500m @ 5%</span>
+                                <span class="ddl-example-detail">Gentle runnable grade</span>
+                                <span class="ddl-example-result">→ ~585 DDL</span>
+                            </div>
+                            <div class="ddl-example bad">
+                                <span class="ddl-example-label">-500m @ 20%</span>
+                                <span class="ddl-example-detail">Steep technical brake</span>
+                                <span class="ddl-example-result">→ ~1000 DDL ⚠️</span>
                             </div>
                         </div>
                         
-                        <p class="ddl-formula">DDL = time × slope × surface × speed × fatigue</p>
+                        <p class="ddl-formula">DDL = elevation × steepness × surface × fatigue</p>
                         
-                        <p class="ddl-takeaway">💡 <strong>Takeaway:</strong> Shallow descents can destroy your quads more than steep ones due to longer braking time.</p>
+                        <p class="ddl-takeaway">💡 <strong>Takeaway:</strong> Same elevation drop, but steeper = more braking force = more quad damage.</p>
                     </div>
                 </div>
                 
