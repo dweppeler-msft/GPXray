@@ -3061,4 +3061,42 @@ h2 {
     .splits-table-container {
         margin: 0 -10px;
     }
+    
+    /* Early Access Modal - Mobile */
+    .early-access-modal {
+        padding: 30px 20px;
+        width: 95%;
+        max-width: 350px;
+    }
+    
+    .early-access-icon {
+        font-size: 2.5rem;
+    }
+    
+    .early-access-modal h2 {
+        font-size: 1.5rem;
+    }
+    
+    .early-access-modal p {
+        font-size: 0.9rem;
+    }
+    
+    .early-access-form {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .early-access-form input {
+        width: 100%;
+        padding: 14px;
+    }
+    
+    .early-access-submit {
+        width: 100%;
+        padding: 14px 25px;
+    }
+    
+    .early-access-hint {
+        font-size: 0.8rem !important;
+    }
 }
