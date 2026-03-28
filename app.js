@@ -22,6 +22,35 @@ const HISTORY_KEY = 'gpxray_history'; // localStorage key for history
 const KM_TO_MILES = 0.621371;
 const MILES_TO_KM = 1.60934;
 
+// Runner level pace presets (min/km for flat terrain)
+// Uphill and downhill are calculated with multipliers
+const RUNNER_LEVELS = {
+    beginner: { 
+        name: 'Beginner',
+        flatPace: 8.0,      // 8:00/km flat
+        uphillRatio: 1.5,   // 12:00/km uphill
+        downhillRatio: 0.9  // 7:12/km downhill
+    },
+    intermediate: {
+        name: 'Intermediate', 
+        flatPace: 6.5,      // 6:30/km flat
+        uphillRatio: 1.4,   // 9:06/km uphill
+        downhillRatio: 0.85 // 5:31/km downhill
+    },
+    advanced: {
+        name: 'Advanced',
+        flatPace: 5.5,      // 5:30/km flat
+        uphillRatio: 1.3,   // 7:09/km uphill
+        downhillRatio: 0.82 // 4:31/km downhill
+    },
+    elite: {
+        name: 'Elite',
+        flatPace: 4.5,      // 4:30/km flat
+        uphillRatio: 1.25,  // 5:38/km uphill
+        downhillRatio: 0.8  // 3:36/km downhill
+    }
+};
+
 // Surface type categories and their pace multipliers
 // Multipliers are applied on top of terrain (flat/uphill/downhill) paces
 const SURFACE_TYPES = {
@@ -78,7 +107,22 @@ document.addEventListener('DOMContentLoaded', () => {
     setupFooter();
     setupCookieConsent();
     setupEarlyAccess();
+    setupRunnerLevel();
 });
+
+// Runner Level Selector
+function setupRunnerLevel() {
+    const levelSelect = document.getElementById('runnerLevel');
+    if (!levelSelect) return;
+    
+    levelSelect.addEventListener('change', () => {
+        if (!gpxData || segments.length === 0) return;
+        
+        // Apply new paces and recalculate
+        applyRunnerLevelPaces();
+        calculateRacePlan();
+    });
+}
 
 // Cookie Consent
 function setupCookieConsent() {
@@ -707,7 +751,8 @@ function parseGPX(gpxContent) {
     // Update sun times display based on route center
     updateSunTimesDisplay();
     
-    // Auto-calculate race plan with default paces for immediate value
+    // Auto-calculate race plan with runner level paces
+    applyRunnerLevelPaces();
     calculateRacePlan();
     
     // Track GPX load
@@ -2849,6 +2894,38 @@ function getPaceInMinutes(minInput, secInput) {
     return min + sec / 60;
 }
 
+// Apply runner level paces to manual inputs
+function applyRunnerLevelPaces() {
+    const levelSelect = document.getElementById('runnerLevel');
+    const level = levelSelect ? levelSelect.value : 'intermediate';
+    const preset = RUNNER_LEVELS[level] || RUNNER_LEVELS.intermediate;
+    
+    const flatPace = preset.flatPace;
+    const uphillPace = flatPace * preset.uphillRatio;
+    const downhillPace = flatPace * preset.downhillRatio;
+    
+    // Update manual pace inputs
+    const flatMin = document.getElementById('flatPaceMin');
+    const flatSec = document.getElementById('flatPaceSec');
+    const uphillMin = document.getElementById('uphillPaceMin');
+    const uphillSec = document.getElementById('uphillPaceSec');
+    const downhillMin = document.getElementById('downhillPaceMin');
+    const downhillSec = document.getElementById('downhillPaceSec');
+    
+    if (flatMin && flatSec) {
+        flatMin.value = Math.floor(flatPace);
+        flatSec.value = Math.round((flatPace % 1) * 60);
+    }
+    if (uphillMin && uphillSec) {
+        uphillMin.value = Math.floor(uphillPace);
+        uphillSec.value = Math.round((uphillPace % 1) * 60);
+    }
+    if (downhillMin && downhillSec) {
+        downhillMin.value = Math.floor(downhillPace);
+        downhillSec.value = Math.round((downhillPace % 1) * 60);
+    }
+}
+
 function formatTime(totalMinutes) {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = Math.floor(totalMinutes % 60);
@@ -3548,16 +3625,34 @@ function updateHeroSection(totalTime) {
         }
     }
     
-    // Update Descent Load
+    // Update Descent Load (gravity-weighted)
     const heroDescentLoad = document.getElementById('heroDescentLoad');
+    const heroDescentDetail = document.getElementById('heroDescentDetail');
     if (heroDescentLoad && segments.length > 0) {
-        let downhillDistance = 0;
+        let totalDescentMeters = 0;
+        let weightedDescentLoad = 0;
+        
         for (const segment of segments) {
-            if (segment.terrainType === 'downhill') {
-                downhillDistance += segment.distance;
+            if (segment.terrainType === 'downhill' && segment.elevationChange < 0) {
+                const descentM = Math.abs(segment.elevationChange);
+                totalDescentMeters += descentM;
+                
+                // Gravity-weighted: slope = |dz/dx|, weight descent by steepness
+                const slope = Math.abs(segment.grade) / 100; // Convert percentage to ratio
+                weightedDescentLoad += descentM * (1 + slope);
             }
         }
-        heroDescentLoad.textContent = `${downhillDistance.toFixed(1)}km`;
+        
+        // Show total descent meters as primary value
+        heroDescentLoad.textContent = `${Math.round(totalDescentMeters)}m`;
+        
+        // Show steepness indicator if there's significant steep descent
+        if (heroDescentDetail && weightedDescentLoad > totalDescentMeters * 1.1) {
+            const steepnessIndex = Math.round((weightedDescentLoad / totalDescentMeters - 1) * 100);
+            heroDescentDetail.textContent = `${steepnessIndex}% steep`;
+        } else if (heroDescentDetail) {
+            heroDescentDetail.textContent = '';
+        }
     }
     
     // Populate AID station checkpoints (only if stations configured)
