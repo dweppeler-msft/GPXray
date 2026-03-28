@@ -225,7 +225,7 @@ function setupFooter() {
     
     document.getElementById('impressumLink')?.addEventListener('click', (e) => {
         e.preventDefault();
-        alert('Impressum\n\nGPXray\ngpxray.run\n\nContact: feedback via the app\n\nBuilt by trail runners, for trail runners.');
+        alert('Impressum\n\nGPXray\ngpxray.run\n\nDaniel Weppeler\n📷 @daniel.runs.trails\n\nBuilt by trail runners, for trail runners.');
     });
 }
 
