@@ -12,6 +12,7 @@ let surfaceData = []; // Stores surface data from OSM
 let surfaceEnabled = true; // Whether to use surface multipliers
 let currentRouteName = ''; // Name of current loaded route
 let sunTimes = null; // Sunrise/sunset times for race day
+let isDemoMode = false; // Whether demo is currently loaded
 
 // Constants
 const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
@@ -275,6 +276,7 @@ async function loadDemoGpx() {
         
         const gpxContent = await response.text();
         currentRouteName = 'ZUT Garmisch-Partenkirchen Trail';
+        isDemoMode = true; // Mark as demo mode
         parseGPX(gpxContent);
         
         // Add sample AID stations for demo
@@ -472,6 +474,7 @@ async function loadRace(raceId) {
         
         const gpxContent = await response.text();
         currentRouteName = race.name;
+        isDemoMode = false; // Race browser load, not demo
         parseGPX(gpxContent);
         
         // Track race browser selection
@@ -560,6 +563,7 @@ function setupFileInput() {
 function processFile(file) {
     // Store filename (without extension) as default route name
     currentRouteName = file.name.replace(/\.gpx$/i, '');
+    isDemoMode = false; // Regular file upload, not demo
     
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -2477,6 +2481,12 @@ function setupAidStations() {
         e.preventDefault();
         e.stopPropagation();
         
+        // Disable adding AID stations in demo mode
+        if (isDemoMode) {
+            alert('Adding AID stations is disabled in demo mode. Upload your own GPX or use an access code to load races!');
+            return;
+        }
+        
         const km = parseFloat(kmInput.value);
         const name = nameInput.value.trim() || `AID ${aidStations.length + 1}`;
         const stopMin = parseInt(stopTimeInput.value) || 2; // Default 2 min stop
@@ -2504,7 +2514,14 @@ function setupAidStations() {
 
 function renderAidStations() {
     const list = document.getElementById('aidStationsList');
+    const addBtn = document.getElementById('addAidStation');
     if (!list) return;
+    
+    // Disable add button in demo mode
+    if (addBtn) {
+        addBtn.disabled = isDemoMode;
+        addBtn.title = isDemoMode ? 'Disabled in demo mode' : 'Add AID station';
+    }
     
     // Sort AID stations by km for proper leg calculation
     const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
@@ -2571,10 +2588,12 @@ function renderAidStations() {
                     <span class="aid-station-stop">(${station.stopMin || 0} min stop)</span>
                 </div>
                 ${legInfo}
+                ${isDemoMode ? '' : `
                 <div class="aid-station-actions">
                     <button type="button" class="edit-aid-btn" onclick="editAidStation(${index})" title="Edit">✏️</button>
                     <button type="button" class="remove-aid-btn" onclick="removeAidStation(${index})" title="Remove">×</button>
                 </div>
+                `}
             </div>
         `;
     }).join('');
@@ -2664,11 +2683,19 @@ function calculateElevationLossBetween(fromKm, toKm) {
 }
 
 function removeAidStation(index) {
+    if (isDemoMode) {
+        alert('Editing AID stations is disabled in demo mode.');
+        return;
+    }
     aidStations.splice(index, 1);
     renderAidStations();
 }
 
 function editAidStation(index) {
+    if (isDemoMode) {
+        alert('Editing AID stations is disabled in demo mode.');
+        return;
+    }
     const station = aidStations[index];
     if (!station) return;
     

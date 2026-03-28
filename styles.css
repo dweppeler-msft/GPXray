@@ -2434,6 +2434,16 @@ h2 {
     transform: scale(1.05);
 }
 
+.add-aid-btn:disabled {
+    background: linear-gradient(135deg, #666 0%, #555 100%);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.add-aid-btn:disabled:hover {
+    transform: none;
+}
+
 /* AID Station highlight in splits table */
 .aid-station-row {
     background: rgba(255, 165, 0, 0.1) !important;
