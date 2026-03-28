@@ -1542,6 +1542,137 @@ h2 {
     color: #fff;
 }
 
+/* Course Summary */
+.course-summary {
+    margin-top: 20px;
+    padding: 15px 20px;
+    background: rgba(0, 212, 255, 0.05);
+    border-radius: 10px;
+    border-left: 3px solid #00d4ff;
+}
+
+.course-summary h4 {
+    margin: 0 0 10px 0;
+    color: #00d4ff;
+    font-size: 1rem;
+}
+
+.course-summary ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #ccc;
+}
+
+.course-summary li {
+    margin: 6px 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* Hardest Segment Highlight */
+.hardest-segment {
+    margin-top: 20px;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(255, 142, 83, 0.15) 100%);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.hardest-segment-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.hardest-segment-content h4 {
+    margin: 0 0 5px 0;
+    color: #ff6b6b;
+    font-size: 1rem;
+}
+
+.hardest-segment-content p {
+    margin: 0;
+    color: #ccc;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Hero Result Section */
+.hero-result {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 255, 136, 0.1) 100%);
+    border: 2px solid rgba(0, 212, 255, 0.4);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.hero-time {
+    margin-bottom: 20px;
+}
+
+.hero-label {
+    display: block;
+    font-size: 1rem;
+    color: #888;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.hero-value {
+    display: block;
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #00d4ff;
+    text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+}
+
+.hero-checkpoints {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.hero-checkpoint {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-checkpoint-name {
+    display: block;
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 4px;
+}
+
+.hero-checkpoint-time {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.hero-hint {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.hero-hint a {
+    color: #00d4ff;
+    text-decoration: none;
+}
+
+.hero-hint a:hover {
+    text-decoration: underline;
+}
+
 /* Map Section */
 #map {
     height: 400px;
@@ -3198,6 +3329,36 @@ h2 {
     
     .splits-table-container {
         margin: 0 -10px;
+    }
+    
+    /* Hero Section - Mobile */
+    .hero-result {
+        padding: 20px;
+    }
+    
+    .hero-value {
+        font-size: 2.5rem;
+    }
+    
+    .hero-checkpoints {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .hero-checkpoint {
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Course Summary & Hardest Segment - Mobile */
+    .course-summary,
+    .hardest-segment {
+        padding: 12px 15px;
+    }
+    
+    .hardest-segment {
+        flex-direction: column;
+        text-align: center;
     }
     
     /* Early Access Modal - Mobile */
