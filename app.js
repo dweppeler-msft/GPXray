@@ -3589,32 +3589,8 @@ function updateHeroSection(totalTime) {
     
     // Update Climb Load
     const heroClimbLoad = document.getElementById('heroClimbLoad');
-    const heroClimbDistribution = document.getElementById('heroClimbDistribution');
     if (heroClimbLoad && gpxData) {
         heroClimbLoad.textContent = `${Math.round(gpxData.elevationGain)}m`;
-        
-        // Calculate where 80% of climbing occurs
-        if (heroClimbDistribution && segments.length > 0) {
-            const totalGain = gpxData.elevationGain;
-            let cumulativeGain = 0;
-            let eightyPercentKm = null;
-            
-            for (const segment of segments) {
-                if (segment.terrainType === 'uphill' && segment.elevationChange > 0) {
-                    cumulativeGain += segment.elevationChange;
-                }
-                if (cumulativeGain >= totalGain * 0.8 && !eightyPercentKm) {
-                    eightyPercentKm = segment.endDistance;
-                    break;
-                }
-            }
-            
-            if (eightyPercentKm && eightyPercentKm < gpxData.totalDistance * 0.7) {
-                heroClimbDistribution.textContent = `80% before KM ${Math.round(eightyPercentKm)}`;
-            } else {
-                heroClimbDistribution.textContent = '';
-            }
-        }
     }
     
     // Update Longest Climb
@@ -3633,35 +3609,41 @@ function updateHeroSection(totalTime) {
         }
     }
     
-    // Update Descent Load (gravity-weighted)
+    // Update Descent Load (gradient-weighted muscular load)
     const heroDescentLoad = document.getElementById('heroDescentLoad');
     const heroDescentDetail = document.getElementById('heroDescentDetail');
     if (heroDescentLoad && segments.length > 0) {
-        let totalDescentMeters = 0;
-        let weightedDescentLoad = 0;
+        let descentLoadTotal = 0;
         
         for (const segment of segments) {
             if (segment.terrainType === 'downhill' && segment.elevationChange < 0) {
                 const descentM = Math.abs(segment.elevationChange);
-                totalDescentMeters += descentM;
+                const gradePercent = Math.abs(segment.grade);
                 
-                // Gravity-weighted: slope = |dz/dx|, weight descent by steepness
-                const slope = Math.abs(segment.grade) / 100; // Convert percentage to ratio
-                weightedDescentLoad += descentM * (1 + slope);
+                // Gradient weight: steeper = exponentially harder on quads
+                // 5% grade = 1.35x, 10% = 2.2x, 15% = 3.4x, 20% = 4.9x
+                const gradientWeight = 1 + Math.pow(gradePercent / 10, 1.5);
+                descentLoadTotal += descentM * gradientWeight;
             }
         }
         
-        // Show total descent meters as primary value
-        heroDescentLoad.textContent = `${Math.round(totalDescentMeters)}m`;
+        // Show as "DL" units (descent load)
+        heroDescentLoad.textContent = `${Math.round(descentLoadTotal)} DL`;
         
-        // Show steepness indicator if there's significant steep descent
-        if (heroDescentDetail && weightedDescentLoad > totalDescentMeters * 1.1) {
-            const steepnessIndex = Math.round((weightedDescentLoad / totalDescentMeters - 1) * 100);
-            heroDescentDetail.textContent = `${steepnessIndex}% steep`;
-        } else if (heroDescentDetail) {
-            heroDescentDetail.textContent = '';
+        // Show DL per km rate
+        if (heroDescentDetail && gpxData) {
+            const dlPerKm = descentLoadTotal / gpxData.totalDistance;
+            heroDescentDetail.textContent = `${Math.round(dlPerKm)} DL/km`;
+            
+            // High quad fatigue warning
+            if (dlPerKm > 80) {
+                heroDescentDetail.textContent += ' ⚠️';
+            }
         }
     }
+    
+    // Update Course Shape
+    updateCourseShape();
     
     // Populate AID station checkpoints (only if stations configured)
     if (heroCheckpoints && aidStations.length > 0 && lastCalculatedPaces) {
@@ -3710,6 +3692,82 @@ function findLongestClimb() {
     }
     
     return longestClimb;
+}
+
+// Update Course Shape - Race Intelligence
+function updateCourseShape() {
+    const courseShapeSection = document.getElementById('heroCourseShape');
+    const courseShapeBadge = document.getElementById('courseShapeBadge');
+    const courseShapeInsight = document.getElementById('courseShapeInsight');
+    
+    if (!courseShapeSection || !courseShapeBadge || !gpxData || segments.length === 0) return;
+    
+    const totalDist = gpxData.totalDistance;
+    const totalGain = gpxData.elevationGain;
+    const halfwayPoint = totalDist / 2;
+    
+    // Calculate climb in first half vs second half
+    let firstHalfClimb = 0;
+    let secondHalfClimb = 0;
+    
+    for (const segment of segments) {
+        if (segment.terrainType === 'uphill' && segment.elevationChange > 0) {
+            const midpoint = (segment.startDistance + segment.endDistance) / 2;
+            if (midpoint <= halfwayPoint) {
+                firstHalfClimb += segment.elevationChange;
+            } else {
+                secondHalfClimb += segment.elevationChange;
+            }
+        }
+    }
+    
+    const firstHalfPercent = (firstHalfClimb / totalGain) * 100;
+    
+    // Determine course shape
+    let shapeType, insight;
+    
+    if (firstHalfPercent >= 65) {
+        // Front-loaded: most climbing early
+        shapeType = 'front-loaded';
+        const percentVal = Math.round(firstHalfPercent);
+        
+        // Find where the main climbing ends
+        let cumulativeGain = 0;
+        let climbEndKm = totalDist;
+        for (const segment of segments) {
+            if (segment.terrainType === 'uphill' && segment.elevationChange > 0) {
+                cumulativeGain += segment.elevationChange;
+            }
+            if (cumulativeGain >= totalGain * 0.8) {
+                climbEndKm = segment.endDistance;
+                break;
+            }
+        }
+        
+        courseShapeBadge.textContent = '⛰️ Front-Loaded';
+        courseShapeBadge.className = 'course-shape-badge front-loaded';
+        insight = `${percentVal}% climb in first half → Save legs for fast descent after KM${Math.round(climbEndKm)}`;
+        
+    } else if (firstHalfPercent <= 35) {
+        // Back-loaded: most climbing late
+        shapeType = 'back-loaded';
+        const percentVal = Math.round(100 - firstHalfPercent);
+        
+        courseShapeBadge.textContent = '📈 Back-Loaded';
+        courseShapeBadge.className = 'course-shape-badge back-loaded';
+        insight = `${percentVal}% climb in second half → Conserve energy early, dig deep late`;
+        
+    } else {
+        // Balanced
+        shapeType = 'balanced';
+        
+        courseShapeBadge.textContent = '⚖️ Balanced';
+        courseShapeBadge.className = 'course-shape-badge balanced';
+        insight = 'Even climb distribution → Steady effort throughout';
+    }
+    
+    courseShapeInsight.textContent = insight;
+    courseShapeSection.style.display = 'flex';
 }
 
 // Calculate arrival times at each checkpoint/AID station

@@ -1648,6 +1648,50 @@ h2 {
     color: #fff;
 }
 
+/* Course Shape Banner */
+.hero-course-shape {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.course-shape-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.course-shape-badge.front-loaded {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    color: #fff;
+}
+
+.course-shape-badge.back-loaded {
+    background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+    color: #fff;
+}
+
+.course-shape-badge.balanced {
+    background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+    color: #fff;
+}
+
+.course-shape-insight {
+    font-size: 0.9rem;
+    color: #ccc;
+    font-style: italic;
+}
+
 /* Hero Metrics Grid */
 .hero-metrics {
     display: grid;
@@ -3454,6 +3498,17 @@ h2 {
     .hero-distance-value {
         font-size: 1.5rem;
         padding: 8px 16px;
+    }
+    
+    .hero-course-shape {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+        padding: 10px 15px;
+    }
+    
+    .course-shape-insight {
+        font-size: 0.85rem;
     }
     
     .hero-metrics {
