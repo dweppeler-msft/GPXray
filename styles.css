@@ -885,6 +885,7 @@ header h1 {
     display: flex;
     gap: 10px;
     margin-bottom: 15px;
+    width: 100%;
 }
 
 .early-access-form input {
@@ -980,6 +981,7 @@ header h1 {
     align-items: center;
     margin: 20px 0;
     color: #666;
+    width: 100%;
 }
 
 .early-access-divider::before,
@@ -999,6 +1001,7 @@ header h1 {
 
 .early-access-waitlist {
     margin-bottom: 15px;
+    width: 100%;
 }
 
 .waitlist-title {
@@ -1012,6 +1015,7 @@ header h1 {
     display: flex;
     align-items: stretch;
     gap: 10px;
+    width: 100%;
 }
 
 .waitlist-form input {
