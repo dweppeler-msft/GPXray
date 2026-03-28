@@ -106,14 +106,29 @@ function setupCookieConsent() {
     });
 }
 
-// Early Access Gate
-const EARLY_ACCESS_CODES = [
-    'GPXRAYDANIEL',
-    'GPXRAYBENE',
-    'BETARUNNER',
-    'GPXFRIENDS',
-    'ULTRABETA'
+// Early Access Gate - codes are SHA-256 hashed for security
+const EARLY_ACCESS_HASHES = [
+    'ff8f3de662499065ac43246d1fef1091714708a150362cd26a5ca6d46c85e517',
+    '4aac120e578508cd3ce77a6e6f1f1a1538678128557bd2ba1918ba672422b313',
+    'eada00ca9817cb5d4440111fc69bf286e7a740433bdf06a27a83c546ced96115',
+    'c989bcd91f3af9df9ac78ae9eedf6d12a83a10f3b7e7ba8321ffa932a93eed53',
+    '2e3c04952e2f5de90ae722b737c4fec3286167296d6de65de864f112c75fd10e'
 ];
+
+// Hash a string using SHA-256
+async function hashCode(code) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(code);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Validate access code against hashed values
+async function validateAccessCode(code) {
+    const hash = await hashCode(code.trim().toUpperCase());
+    return EARLY_ACCESS_HASHES.includes(hash);
+}
 
 function setupEarlyAccess() {
     const overlay = document.getElementById('earlyAccessOverlay');
@@ -135,11 +150,12 @@ function setupEarlyAccess() {
     overlay?.addEventListener('click', hideEarlyAccessModal);
     
     // Form submission
-    form?.addEventListener('submit', (e) => {
+    form?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const code = input.value.trim().toUpperCase();
         
-        if (EARLY_ACCESS_CODES.includes(code)) {
+        const isValid = await validateAccessCode(code);
+        if (isValid) {
             // Valid code!
             localStorage.setItem('gpxray-early-access', 'unlocked');
             localStorage.setItem('gpxray-access-code', code);
