@@ -3515,8 +3515,8 @@ function updateHeroSection(totalTime) {
             let eightyPercentKm = null;
             
             for (const segment of segments) {
-                if (segment.terrainType === 'uphill') {
-                    cumulativeGain += segment.elevationGain || 0;
+                if (segment.terrainType === 'uphill' && segment.elevationChange > 0) {
+                    cumulativeGain += segment.elevationChange;
                 }
                 if (cumulativeGain >= totalGain * 0.8 && !eightyPercentKm) {
                     eightyPercentKm = segment.endDistance;
@@ -3580,15 +3580,16 @@ function findLongestClimb() {
     
     for (const segment of segments) {
         if (segment.terrainType === 'uphill') {
+            const gain = segment.elevationChange > 0 ? segment.elevationChange : 0;
             if (!currentClimb) {
                 currentClimb = {
                     start: segment.startDistance,
                     end: segment.endDistance,
-                    gain: segment.elevationGain || 0
+                    gain: gain
                 };
             } else {
                 currentClimb.end = segment.endDistance;
-                currentClimb.gain += segment.elevationGain || 0;
+                currentClimb.gain += gain;
             }
         } else {
             if (currentClimb) {
