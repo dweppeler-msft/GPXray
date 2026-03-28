@@ -3717,10 +3717,10 @@ function updateHeroSection(totalTime) {
         // Generate late-race insight (coaching relevant)
         if (heroDescentInsight) {
             if (lateRacePct >= 40) {
-                heroDescentInsight.textContent = `⚠ ${lateRacePct}% of descent load after KM${lateRaceKm} - expect pace drop`;
+                heroDescentInsight.textContent = `⚠ ${lateRacePct}% descent load after KM${lateRaceKm} → slower downhill splits`;
                 heroDescentInsight.className = 'hero-metric-insight warning';
             } else if (lateRacePct >= 30 && ddlPerKm > 100) {
-                heroDescentInsight.textContent = `${lateRacePct}% late race descent load`;
+                heroDescentInsight.textContent = `Late-race pace degradation likely`;
                 heroDescentInsight.className = 'hero-metric-insight';
             } else if (ddlPerKm > 140) {
                 heroDescentInsight.textContent = 'Train steep downhills';
