@@ -3715,14 +3715,17 @@ function updateHeroSection(totalTime) {
             // Check if steep descent in final third
             const isFinalThird = heaviestDescentKm && heaviestDescentKm > (totalDist * 0.66);
             
-            if (ddlPerKm > 80 && steepDescentStart) {
-                heroDescentInsight.textContent = `⚠ High quad fatigue risk after KM${steepDescentStart}`;
+            if (ddlPerKm > 200) {
+                heroDescentInsight.textContent = `⚠ Muscular damage zone - train downhills!`;
                 heroDescentInsight.className = 'hero-metric-insight warning';
-            } else if (ddlPerKm > 50 && isFinalThird) {
+            } else if (ddlPerKm > 140 && steepDescentStart) {
+                heroDescentInsight.textContent = `Quad fatigue risk after KM${steepDescentStart}`;
+                heroDescentInsight.className = 'hero-metric-insight warning';
+            } else if (ddlPerKm > 140 && isFinalThird) {
                 heroDescentInsight.textContent = `Expect pace degradation on final descent`;
                 heroDescentInsight.className = 'hero-metric-insight';
-            } else if (ddlPerKm > 50 && steepDescentStart) {
-                heroDescentInsight.textContent = `Steep braking from KM${steepDescentStart}`;
+            } else if (ddlPerKm > 80) {
+                heroDescentInsight.textContent = `Moderate braking load - poles recommended`;
                 heroDescentInsight.className = 'hero-metric-insight';
             } else {
                 heroDescentInsight.textContent = '';
