@@ -3986,10 +3986,47 @@ async function exportCrewCard() {
             });
         }
 
-        // Calculate card height based on number of stations
-        const baseHeight = 420; // Header + footer
-        const rowHeight = 70; // Each station row
-        const cardHeight = Math.max(600, baseHeight + (stationData.length + 1) * rowHeight);
+        // Dynamic sizing based on station count
+        const stationCount = stationData.length;
+        let rowPadding, iconSize, nameSize, detailSize, timeSize, etaSize, rowGap, headerPadding;
+        
+        if (stationCount <= 4) {
+            // Normal mode
+            rowPadding = '15px 20px';
+            iconSize = '28px';
+            nameSize = '17px';
+            detailSize = '13px';
+            timeSize = '26px';
+            etaSize = '11px';
+            rowGap = '10px';
+            headerPadding = '25px';
+        } else if (stationCount <= 7) {
+            // Medium compact
+            rowPadding = '12px 16px';
+            iconSize = '24px';
+            nameSize = '15px';
+            detailSize = '12px';
+            timeSize = '22px';
+            etaSize = '10px';
+            rowGap = '8px';
+            headerPadding = '20px';
+        } else {
+            // Compact mode (8+ stations)
+            rowPadding = '10px 14px';
+            iconSize = '20px';
+            nameSize = '14px';
+            detailSize = '11px';
+            timeSize = '20px';
+            etaSize = '9px';
+            rowGap = '6px';
+            headerPadding = '15px';
+        }
+
+        // Calculate card height based on number of stations and sizing mode
+        const rowHeightEstimate = stationCount <= 4 ? 70 : (stationCount <= 7 ? 58 : 50);
+        const headerHeight = stationCount <= 4 ? 140 : (stationCount <= 7 ? 120 : 100);
+        const footerHeight = 60;
+        const cardHeight = Math.min(1100, headerHeight + (stationData.length + 1) * rowHeightEstimate + footerHeight + 40);
 
         // Create card container
         const card = document.createElement('div');
@@ -4003,60 +4040,76 @@ async function exportCrewCard() {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: white;
-            padding: 30px;
+            padding: 25px;
             box-sizing: border-box;
         `;
 
+        // Handle title - allow 2 lines, adjust font size for long names
         let routeName = currentRouteName || 'Race';
-        if (routeName.length > 30) {
-            routeName = routeName.substring(0, 27) + '...';
+        let titleSize = '24px';
+        let titleLineHeight = '1.2';
+        
+        if (routeName.length > 40) {
+            titleSize = '20px';
+        } else if (routeName.length > 30) {
+            titleSize = '22px';
         }
 
         // Build station rows HTML
-        let stationsHtml = stationData.map((station, index) => `
-            <div style="display: flex; align-items: center; padding: 15px 20px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 10px;">
-                <div style="font-size: 32px; margin-right: 15px;">📍</div>
-                <div style="flex: 1;">
-                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">${station.name}</div>
-                    <div style="font-size: 14px; opacity: 0.8;">${station.dist} ${unitLabel}${station.stopMin > 0 ? ' · ' + station.stopMin + ' min stop' : ''}</div>
+        let stationsHtml = stationData.map((station, index) => {
+            // Truncate long station names
+            let stationName = station.name;
+            const maxNameLen = stationCount <= 4 ? 25 : (stationCount <= 7 ? 22 : 20);
+            if (stationName.length > maxNameLen) {
+                stationName = stationName.substring(0, maxNameLen - 2) + '...';
+            }
+            
+            return `
+                <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: ${rowGap};">
+                    <div style="font-size: ${iconSize}; margin-right: 12px;">📍</div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: ${nameSize}; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${stationName}</div>
+                        <div style="font-size: ${detailSize}; opacity: 0.8;">${station.dist} ${unitLabel}${station.stopMin > 0 ? ' · ' + station.stopMin + ' min stop' : ''}</div>
+                    </div>
+                    <div style="text-align: right; margin-left: 10px;">
+                        <div style="font-size: ${timeSize}; font-weight: 800;">${station.clockTime}</div>
+                        <div style="font-size: ${etaSize}; opacity: 0.7;">ETA</div>
+                    </div>
                 </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 28px; font-weight: 800;">${station.clockTime}</div>
-                    <div style="font-size: 12px; opacity: 0.7;">ETA</div>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
         // Add finish row
         stationsHtml += `
-            <div style="display: flex; align-items: center; padding: 15px 20px; background: rgba(76,175,80,0.4); border-radius: 10px; border: 2px solid rgba(76,175,80,0.8);">
-                <div style="font-size: 32px; margin-right: 15px;">🏁</div>
-                <div style="flex: 1;">
-                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">FINISH</div>
-                    <div style="font-size: 14px; opacity: 0.8;">${distance.toFixed(1)} ${unitLabel} · ${totalTime.split('(')[0].trim()}</div>
+            <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(76,175,80,0.4); border-radius: 10px; border: 2px solid rgba(76,175,80,0.8);">
+                <div style="font-size: ${iconSize}; margin-right: 12px;">🏁</div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: ${nameSize}; font-weight: 700; margin-bottom: 2px;">FINISH</div>
+                    <div style="font-size: ${detailSize}; opacity: 0.8;">${distance.toFixed(1)} ${unitLabel} · ${totalTime.split('(')[0].trim()}</div>
                 </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 28px; font-weight: 800;">${finishClockTime}</div>
-                    <div style="font-size: 12px; opacity: 0.7;">ETA</div>
+                <div style="text-align: right; margin-left: 10px;">
+                    <div style="font-size: ${timeSize}; font-weight: 800;">${finishClockTime}</div>
+                    <div style="font-size: ${etaSize}; opacity: 0.7;">ETA</div>
                 </div>
             </div>
         `;
 
         card.innerHTML = `
-            <div style="text-align: center; margin-bottom: 25px;">
-                <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 3px; opacity: 0.8; margin-bottom: 8px;">👥 CREW SCHEDULE</div>
-                <div style="font-size: 28px; font-weight: 800; margin-bottom: 10px;">${routeName}</div>
-                ${formattedDate ? `<div style="font-size: 16px; opacity: 0.9;">📅 ${formattedDate}</div>` : ''}
-                <div style="font-size: 16px; opacity: 0.9; margin-top: 5px;">🏃 Start: ${raceTime}</div>
+            <div style="text-align: center; margin-bottom: ${headerPadding};">
+                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 3px; opacity: 0.8; margin-bottom: 8px;">👥 CREW SCHEDULE</div>
+                <div style="font-size: ${titleSize}; font-weight: 800; margin-bottom: 8px; line-height: ${titleLineHeight}; padding: 0 10px;">${routeName}</div>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    ${formattedDate ? `📅 ${formattedDate} · ` : ''}🏃 Start: ${raceTime}
+                </div>
             </div>
             
-            <div style="margin-bottom: 20px;">
+            <div style="margin-bottom: 15px;">
                 ${stationsHtml}
             </div>
             
-            <div style="text-align: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
-                <div style="font-size: 18px; font-weight: 700; color: #00d4ff;">GPXray</div>
-                <div style="font-size: 11px; opacity: 0.6; margin-top: 3px;">gpxray.run</div>
+            <div style="text-align: center; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 16px; font-weight: 700; color: #00d4ff;">GPXray</div>
+                <div style="font-size: 10px; opacity: 0.6; margin-top: 2px;">gpxray.run</div>
             </div>
         `;
 
