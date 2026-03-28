@@ -112,7 +112,7 @@ function setupFooter() {
     
     document.getElementById('privacyLink')?.addEventListener('click', (e) => {
         e.preventDefault();
-        alert('Privacy Policy\n\n✅ 100% Local Processing\nYour GPX files are processed entirely in your browser. No data is uploaded to any server.\n\n✅ No Tracking\nWe don\'t use cookies or analytics to track you.\n\n✅ No Account Required\nUse GPXray without creating an account or providing any personal information.');
+        alert('Privacy Policy\n\n✅ 100% Local Processing\nYour GPX files are processed entirely in your browser. No data is uploaded to any server.\n\n✅ Analytics (with consent)\nIf you accept cookies, we use Google Analytics to understand which features are most useful.\n\n✅ No Account Required\nUse GPXray without creating an account or providing any personal information.');
     });
     
     document.getElementById('impressumLink')?.addEventListener('click', (e) => {
