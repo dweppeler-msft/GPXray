@@ -3712,25 +3712,25 @@ function updateHeroSection(totalTime) {
         const ddlPerKm = ddlTotal / gpxData.totalDistance;
         heroDescentLoad.textContent = `${Math.round(ddlPerKm)}/km`;
         
-        // Show expected pace loss as detail (with range)
+        // Show expected downhill pace loss as detail (with range)
         if (heroDescentDetail) {
             if (finalFatigueRatio >= 0.8 && paceLossSec >= 5) {
-                heroDescentDetail.textContent = `Est. pace loss: +${paceLossMin}-${paceLossMax} sec/km`;
+                heroDescentDetail.textContent = `Downhill pace loss: +${paceLossMin}-${paceLossMax} sec/km`;
             } else {
                 heroDescentDetail.textContent = 'No pace loss expected';
             }
         }
         
-        // Generate late-race insight (descents only, after KMxx)
+        // Generate late-race insight (readable sentence format)
         if (heroDescentInsight) {
             if (paceLossSec >= 25 && fatigueOnsetKm !== null) {
-                heroDescentInsight.textContent = `⚠ Descents +${paceLossMin}-${paceLossMax} sec/km after KM${fatigueOnsetKm}`;
+                heroDescentInsight.textContent = `⚠ Expect slower descents after KM${fatigueOnsetKm} (+${paceLossMin}-${paceLossMax} sec/km)`;
                 heroDescentInsight.className = 'hero-metric-insight warning';
             } else if (paceLossSec >= 10 && fatigueOnsetKm !== null) {
-                heroDescentInsight.textContent = `Descents +${paceLossMin}-${paceLossMax} sec/km after KM${fatigueOnsetKm}`;
+                heroDescentInsight.textContent = `Expect slower descents after KM${fatigueOnsetKm} (+${paceLossMin}-${paceLossMax} sec/km)`;
                 heroDescentInsight.className = 'hero-metric-insight';
             } else if (paceLossSec >= 5 && fatigueOnsetKm !== null) {
-                heroDescentInsight.textContent = `Mild slowdown on descents after KM${fatigueOnsetKm}`;
+                heroDescentInsight.textContent = `Mild downhill slowdown after KM${fatigueOnsetKm}`;
                 heroDescentInsight.className = 'hero-metric-insight';
             } else {
                 heroDescentInsight.textContent = '';
