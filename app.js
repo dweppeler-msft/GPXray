@@ -29,7 +29,26 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDemo();
     setupFeedback();
     setupRaceBrowser();
+    setupFooter();
 });
+
+// Footer links
+function setupFooter() {
+    document.getElementById('aboutLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('GPXray - Know your race before it starts.\n\nGPXray helps trail runners plan their race strategy by analyzing GPX files and calculating realistic split times based on terrain, elevation, and personal pace.\n\nBuilt with ❤️ for the trail running community.');
+    });
+    
+    document.getElementById('privacyLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('Privacy Policy\n\n✅ 100% Local Processing\nYour GPX files are processed entirely in your browser. No data is uploaded to any server.\n\n✅ No Tracking\nWe don\'t use cookies or analytics to track you.\n\n✅ No Account Required\nUse GPXray without creating an account or providing any personal information.');
+    });
+    
+    document.getElementById('impressumLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('Impressum\n\nGPXray\ngpxray.run\n\nContact: feedback via the app\n\nThis is a hobby project for the trail running community.');
+    });
+}
 
 // Demo GPX loading
 function setupDemo() {
