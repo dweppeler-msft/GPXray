@@ -4033,12 +4033,13 @@ async function exportCrewCard() {
         // Calculate card height based on number of stations and sizing mode
         // Use 9:16 aspect ratio (social media friendly) with width of 540px
         const cardWidth = 540;
+        const targetHeight = 960; // 540 * 16/9 = 960 for 9:16 ratio
         const rowHeightEstimate = stationCount <= 4 ? 70 : (stationCount <= 7 ? 58 : 50);
         const headerHeight = stationCount <= 4 ? 140 : (stationCount <= 7 ? 120 : 100);
         const footerHeight = 80;
         const contentHeight = headerHeight + (stationData.length + 1) * rowHeightEstimate + footerHeight + 60;
-        // 9:16 ratio height = 540 * 16/9 = 960
-        const cardHeight = Math.max(contentHeight, Math.min(960, contentHeight));
+        // Always use 9:16 ratio (960px), expand only if content requires more
+        const cardHeight = Math.max(targetHeight, contentHeight);
 
         // Create card container
         const card = document.createElement('div');
@@ -4054,6 +4055,8 @@ async function exportCrewCard() {
             color: white;
             padding: 30px;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
         `;
 
         // Handle title - allow 2 lines, adjust font size for long names
@@ -4115,11 +4118,11 @@ async function exportCrewCard() {
                 </div>
             </div>
             
-            <div style="margin-bottom: 15px;">
+            <div style="flex: 1;">
                 ${stationsHtml}
             </div>
             
-            <div style="text-align: center; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);">
+            <div style="text-align: center; padding-top: 15px; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.2);">
                 <div style="font-size: 16px; font-weight: 700; color: #00d4ff;">GPXray</div>
                 <div style="font-size: 10px; opacity: 0.6; margin-top: 2px;">© gpxray.run</div>
             </div>
