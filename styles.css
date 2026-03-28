@@ -1810,13 +1810,16 @@ h2 {
 
 /* DDL Explainer Modal */
 .ddl-learn-more {
+    display: block;
     color: #00d4ff;
     text-decoration: none;
     font-size: 0.75rem;
-    margin-left: 6px;
+    margin-top: 6px;
     opacity: 0.8;
     transition: opacity 0.2s ease;
     cursor: pointer;
+    position: relative;
+    z-index: 10;
 }
 
 .ddl-learn-more:hover {
