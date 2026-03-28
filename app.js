@@ -4148,7 +4148,7 @@ async function exportCrewCard() {
             try {
                 await navigator.share({
                     title: `Crew Schedule - ${routeName}`,
-                    text: `Here's my race schedule for ${routeName}! Meet me at these AID stations 🏃`,
+                    text: `Here's my race schedule for ${routeName}! Meet me at these AID stations 🏃\n\nCreated with https://gpxray.run`,
                     files: [file]
                 });
             } catch (shareError) {
