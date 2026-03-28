@@ -161,7 +161,13 @@ function setupEarlyAccess() {
             localStorage.setItem('gpxray-early-access', 'unlocked');
             localStorage.setItem('gpxray-access-code', code);
             hideEarlyAccessModal();
+            
+            // Track with code in multiple ways for visibility
             trackEvent('early_access', { action: 'unlocked', code: code });
+            trackEvent('unlock_' + code.toLowerCase(), {}); // Separate event per code
+            if (typeof setUserProperty === 'function') {
+                setUserProperty('access_code', code);
+            }
             
             // Show success feedback
             showNotification('🎉 Access granted! You can now upload GPX files.', 'success');
