@@ -106,11 +106,11 @@ function setupCookieConsent() {
 
 // Early Access Gate
 const EARLY_ACCESS_CODES = [
-    'TRAILRUNNER2025',
-    'GPXFRIENDS', 
-    'ULTRABETA',
-    'RUNYOURRACE',
-    'BETARUNNER'
+    'GPXRAYDANIEL',
+    'GPXRAYBENE',
+    'BETARUNNER',
+    'GPXFRIENDS',
+    'ULTRABETA'
 ];
 
 function setupEarlyAccess() {
