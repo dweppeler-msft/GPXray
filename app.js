@@ -3659,11 +3659,7 @@ function updateHeroSection(totalTime) {
         
         let ddlTotal = 0;
         let cumulativeDDL = 0;
-        
-        // Track cumulative DDL curve by km for pace loss prediction
-        const cumulativeDDLByKm = {};
-        let fatigueOnsetKm = null;  // Where fatigue ratio first exceeds 0.6
-        let severeOnsetKm = null;   // Where fatigue ratio exceeds 1.0
+        let fatigueOnsetKm = null;  // Where fatigue ratio first exceeds 0.8
         
         // Fatigue threshold - after this much DDL, fatigue compounds
         const fatigueThreshold = 3000;
@@ -3690,64 +3686,51 @@ function updateHeroSection(totalTime) {
                 ddlTotal += segmentDDL;
                 cumulativeDDL += segmentDDL;
                 
-                // Track cumulative DDL curve
+                // Check fatigue ratio threshold (onset at 0.8)
                 const km = Math.floor(segment.startDistance);
-                cumulativeDDLByKm[km] = cumulativeDDL;
-                
-                // Check fatigue ratio thresholds
                 const fatigueRatio = cumulativeDDL / runnerDFT;
-                if (fatigueRatio >= 0.6 && fatigueOnsetKm === null) {
+                if (fatigueRatio >= 0.8 && fatigueOnsetKm === null) {
                     fatigueOnsetKm = km;
-                }
-                if (fatigueRatio >= 1.0 && severeOnsetKm === null) {
-                    severeOnsetKm = km;
                 }
             }
         }
         
-        // Calculate pace loss based on final fatigue ratio
+        // Calculate pace loss using quadratic formula
+        // paceLossFactor = 1 + max(0, ratio - 0.8)²
         const finalFatigueRatio = ddlTotal / runnerDFT;
-        let paceLossSec = 0;
-        let paceLossLabel = '';
-        
-        if (finalFatigueRatio >= 1.2) {
-            paceLossSec = Math.round(20 + (finalFatigueRatio - 1.2) * 15);
-            paceLossLabel = 'severe fatigue';
-        } else if (finalFatigueRatio >= 0.9) {
-            paceLossSec = Math.round(10 + (finalFatigueRatio - 0.9) * 33);
-            paceLossLabel = 'braking fatigue';
-        } else if (finalFatigueRatio >= 0.6) {
-            paceLossSec = Math.round((finalFatigueRatio - 0.6) * 33);
-            paceLossLabel = 'mild control loss';
-        }
+        const basePaceSec = (RUNNER_LEVELS[level]?.flatPace || 6.5) * 
+                            (RUNNER_LEVELS[level]?.downhillRatio || 0.85) * 60; // seconds/km
+        const paceLossFactor = 1 + Math.pow(Math.max(0, finalFatigueRatio - 0.8), 2);
+        const adjustedPaceSec = basePaceSec * paceLossFactor;
+        const paceLossSec = Math.round(adjustedPaceSec - basePaceSec);
         
         // Show per-km rate as main value
         const ddlPerKm = ddlTotal / gpxData.totalDistance;
         heroDescentLoad.textContent = `${Math.round(ddlPerKm)}/km`;
         
-        // Show intensity label
+        // Show intensity label based on fatigue ratio
         if (heroDescentDetail) {
-            if (ddlPerKm > 200) {
-                heroDescentDetail.textContent = 'Muscular damage zone';
-            } else if (ddlPerKm > 140) {
-                heroDescentDetail.textContent = 'High braking exposure';
-            } else if (ddlPerKm > 80) {
-                heroDescentDetail.textContent = 'Moderate braking';
+            if (finalFatigueRatio >= 1.2) {
+                heroDescentDetail.textContent = `+${paceLossSec} sec/km late race`;
+            } else if (finalFatigueRatio >= 1.0) {
+                heroDescentDetail.textContent = `+${paceLossSec} sec/km late race`;
+            } else if (finalFatigueRatio >= 0.8) {
+                heroDescentDetail.textContent = `+${paceLossSec} sec/km late race`;
             } else {
-                heroDescentDetail.textContent = 'Runnable descents';
+                heroDescentDetail.textContent = 'No fatigue impact';
             }
         }
         
         // Generate pace loss prediction insight
         if (heroDescentInsight) {
-            if (paceLossSec >= 15 && fatigueOnsetKm !== null) {
-                heroDescentInsight.textContent = `⚠ Est. +${paceLossSec} sec/km slower after KM${fatigueOnsetKm}`;
+            if (paceLossSec >= 30 && fatigueOnsetKm !== null) {
+                heroDescentInsight.textContent = `⚠ Severe: +${paceLossSec} sec/km after KM${fatigueOnsetKm}`;
                 heroDescentInsight.className = 'hero-metric-insight warning';
-            } else if (paceLossSec >= 8 && fatigueOnsetKm !== null) {
-                heroDescentInsight.textContent = `Est. +${paceLossSec} sec/km slower downhills after KM${fatigueOnsetKm}`;
-                heroDescentInsight.className = 'hero-metric-insight';
-            } else if (paceLossSec > 0) {
-                heroDescentInsight.textContent = `Mild pace loss expected (+${paceLossSec} sec/km)`;
+            } else if (paceLossSec >= 15 && fatigueOnsetKm !== null) {
+                heroDescentInsight.textContent = `Est. +${paceLossSec} sec/km slower after KM${fatigueOnsetKm}`;
+                heroDescentInsight.className = 'hero-metric-insight warning';
+            } else if (paceLossSec >= 5 && fatigueOnsetKm !== null) {
+                heroDescentInsight.textContent = `Mild: +${paceLossSec} sec/km after KM${fatigueOnsetKm}`;
                 heroDescentInsight.className = 'hero-metric-insight';
             } else {
                 heroDescentInsight.textContent = '';

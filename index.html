@@ -250,18 +250,13 @@
                                     ⓘ
                                     <span class="info-tooltip-content">
                                         <strong>Dynamic Descent Load</strong><br>
-                                        Measures <em>steepness-weighted descent stress</em>.<br><br>
-                                        <em>Factors:</em><br>
-                                        • Elevation dropped<br>
-                                        • Gradient → braking force<br>
-                                        • Surface → instability<br>
-                                        • Fatigue → compounds<br><br>
-                                        <strong>Per-km guide:</strong><br>
-                                        • &lt;80 = Runnable<br>
-                                        • 80-140 = Moderate braking<br>
-                                        • 140-200 = Quad fatigue risk<br>
-                                        • 200-260 = Muscular damage<br>
-                                        • &gt;260 = Survival descent ⚠️
+                                        Predicts downhill pace loss from quad fatigue.<br><br>
+                                        <em>Fatigue ratio = load ÷ your DFT</em><br><br>
+                                        <strong>Pace impact:</strong><br>
+                                        • &lt;0.8 = No impact<br>
+                                        • 0.8-1.0 = +5-15 sec/km<br>
+                                        • 1.0-1.2 = +15-30 sec/km<br>
+                                        • &gt;1.2 = +30-60 sec/km ⚠️
                                     </span>
                                 </span>
                             </span>
@@ -285,24 +280,24 @@
                     <div class="ddl-explainer-content">
                         <button class="ddl-explainer-close" id="ddlExplainerClose">✕</button>
                         <h4>🧠 Dynamic Descent Load</h4>
-                        <p class="ddl-tagline">Predicts downhill pace loss based on accumulated quad stress.</p>
+                        <p class="ddl-tagline">Predicts how much slower your downhills get as quads fatigue.</p>
                         
                         <div class="ddl-comparison">
                             <div class="ddl-example good">
-                                <span class="ddl-example-label">30k Trail</span>
-                                <span class="ddl-example-detail">80-120/km</span>
-                                <span class="ddl-example-result">→ Runnable</span>
+                                <span class="ddl-example-label">Ratio &lt;0.8</span>
+                                <span class="ddl-example-detail">Fresh legs</span>
+                                <span class="ddl-example-result">→ No pace loss</span>
                             </div>
                             <div class="ddl-example bad">
-                                <span class="ddl-example-label">100k Alpine</span>
-                                <span class="ddl-example-detail">150-240/km</span>
-                                <span class="ddl-example-result">→ +15-25 sec/km late race</span>
+                                <span class="ddl-example-label">Ratio &gt;1.2</span>
+                                <span class="ddl-example-detail">Severe fatigue</span>
+                                <span class="ddl-example-result">→ +30-60 sec/km ⚠️</span>
                             </div>
                         </div>
                         
-                        <p class="ddl-formula">Fatigue = cumulative load ÷ your threshold (DFT)</p>
+                        <p class="ddl-formula">paceLoss = basePace × (1 + max(0, ratio–0.8)²) − basePace</p>
                         
-                        <p class="ddl-takeaway">💡 <strong>How it works:</strong> As DDL accumulates, your quads fatigue. We predict when you'll lose braking control and how much pace you'll lose.</p>
+                        <p class="ddl-takeaway">💡 <strong>DFT varies by level:</strong> Beginner=6k, Intermediate=9k, Advanced=12k, Elite=15k. Change your level to see personalized predictions.</p>
                     </div>
                 </div>
                 
