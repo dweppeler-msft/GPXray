@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPXray - Know your race before it starts</title>
+    <title>GPXray BETA - Know your race before it starts</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="styles.css">
     <!-- Google Analytics 4 - loads after consent -->
@@ -40,14 +41,31 @@
     </script>
 </head>
 <body>
-    <div class="container">
+    <!-- Beta Password Gate -->
+    <div class="beta-gate" id="betaGate">
+        <div class="beta-gate-content">
+            <h1>GPXray <span class="beta-badge">BETA</span></h1>
+            <p>This is a beta version with experimental features.</p>
+            <div class="beta-gate-form">
+                <input type="password" id="betaPassword" placeholder="Enter beta password" autocomplete="off">
+                <button type="button" id="betaSubmit">Enter</button>
+            </div>
+            <p class="beta-gate-error" id="betaError" style="display: none;">Incorrect password</p>
+            <p class="beta-gate-hint">Don't have a password? Visit the <a href="https://gpxray.run/">stable version</a></p>
+        </div>
+    </div>
+
+    <div class="container" id="mainContent" style="display: none;">
         <header>
             <div class="header-content">
                 <div class="header-title">
-                    <h1>GPXray</h1>
+                    <h1>GPXray <span class="beta-badge">BETA</span></h1>
                     <p class="tagline">Know your race before it starts.</p>
                 </div>
-                <button type="button" class="feedback-btn" id="feedbackBtn" title="Send Feedback">💬 Feedback</button>
+                <div class="header-buttons">
+                    <button type="button" class="header-btn feedback-btn" id="feedbackBtn" title="Send Feedback">💬 Feedback</button>
+                    <button type="button" class="header-btn history-btn" id="historyBtn" title="View History">📋 History</button>
+                </div>
             </div>
         </header>
 
@@ -56,19 +74,77 @@
             <p class="intro-text">Plan your trail race with precision. Upload a GPX file to analyze terrain, estimate pace, and create your race strategy.</p>
             <div class="feature-pills">
                 <span class="feature-pill">📊 Smart Pace</span>
-                <span class="feature-pill">🗺️ Route Map</span>
-                <span class="feature-pill">🚩 AID Stations</span>
-                <span class="feature-pill">⛰️ Elevation</span>
-                <span class="feature-pill">📄 CSV Export</span>
+                <span class="feature-pill">🗺️ Surface Analysis</span>
+                <span class="feature-pill">🚰 AID Stations</span>
+                <span class="feature-pill">🌅 Sun Times</span>
+                <span class="feature-pill">📱 Share Card</span>
+                <span class="feature-pill">📄 PDF Export</span>
             </div>
         </section>
+
+        <!-- Feedback Panel -->
+        <div class="feedback-overlay" id="feedbackOverlay"></div>
+        <aside class="feedback-panel" id="feedbackPanel">
+            <div class="feedback-header">
+                <h3>💬 Send Feedback</h3>
+                <button type="button" class="feedback-close" id="feedbackClose">✕</button>
+            </div>
+            <form class="feedback-form" id="feedbackForm">
+                <div class="feedback-field">
+                    <label for="feedbackLike">What do you like about GPXray?</label>
+                    <textarea id="feedbackLike" name="like" rows="2" placeholder="The features I find most useful..."></textarea>
+                </div>
+                <div class="feedback-field">
+                    <label for="feedbackMissing">What features are missing?</label>
+                    <textarea id="feedbackMissing" name="missing" rows="2" placeholder="I wish GPXray could..."></textarea>
+                </div>
+                <div class="feedback-field">
+                    <label for="feedbackBugs">Any bugs or issues?</label>
+                    <textarea id="feedbackBugs" name="bugs" rows="2" placeholder="I noticed that..."></textarea>
+                </div>
+                <div class="feedback-field">
+                    <label for="feedbackEmail">Email (optional, for follow-up)</label>
+                    <input type="email" id="feedbackEmail" name="email" placeholder="your@email.com">
+                </div>
+                <div class="feedback-actions">
+                    <button type="submit" class="feedback-submit">📨 Send Feedback</button>
+                    <a href="mailto:gpxrayrun@gmail.com?subject=GPXray%20Feedback" class="feedback-email-link">or email us directly</a>
+                </div>
+            </form>
+            <div class="feedback-success" id="feedbackSuccess" style="display: none;">
+                <div class="feedback-success-icon">✅</div>
+                <h4>Thank you!</h4>
+                <p>Your feedback helps us improve GPXray.</p>
+            </div>
+        </aside>
+
+        <!-- History Panel -->
+        <div class="history-overlay" id="historyOverlay"></div>
+        <aside class="history-panel" id="historyPanel">
+            <div class="history-header">
+                <h3>📋 Analysis History</h3>
+                <button type="button" class="history-close" id="historyClose">✕</button>
+            </div>
+            <div class="history-content">
+                <div class="history-empty" id="historyEmpty">
+                    <p>No saved analyses yet.</p>
+                    <p class="history-hint">Your analyses will appear here after you save them.</p>
+                </div>
+                <div class="history-list" id="historyList"></div>
+            </div>
+            <div class="history-footer">
+                <button type="button" class="history-export-btn" id="historyExportBtn">📥 Export All</button>
+                <button type="button" class="history-import-btn" id="historyImportBtn">📤 Import</button>
+                <input type="file" id="historyImportInput" accept=".json" hidden>
+            </div>
+        </aside>
 
         <section class="upload-section">
             <div class="upload-box" id="dropZone">
                 <input type="file" id="gpxInput" accept=".gpx" hidden>
                 <div class="upload-content">
                     <span class="upload-icon">📁</span>
-                    <p class="upload-text-desktop">Drag & drop a GPX file here or <button id="browseBtn">Browse</button></p>
+                    <p class="upload-text-desktop">Drag & drop a GPX file here or <button id="browseBtn">Browse locally</button></p>
                     <p class="upload-text-mobile"><button id="browseBtnMobile">Select GPX File</button></p>
                 </div>
             </div>
@@ -156,17 +232,86 @@
                 <span class="legend-item"><span class="legend-color uphill"></span> Uphill</span>
                 <span class="legend-item"><span class="legend-color downhill"></span> Downhill</span>
             </div>
+            <div class="surface-stats" id="surfaceStats" style="display: none;">
+                <div class="surface-stats-header">
+                    <span class="surface-stats-title">Surface Analysis</span>
+                </div>
+                <div class="surface-stats-content">
+                    <div class="surface-loading" id="surfaceLoading">
+                        <span class="loading-spinner"></span> Analyzing surface data...
+                    </div>
+                    <div class="surface-stats-row" id="surfaceStatsRow" style="display: none;">
+                        <!-- Surface percentages will be inserted here -->
+                    </div>
+                </div>
+                <label class="surface-toggle" id="surfaceToggleLabel" style="display: none;">
+                    <input type="checkbox" id="surfaceEnabled" checked>
+                    <span>Apply surface multipliers to pace</span>
+                </label>
+            </div>
         </section>
 
         <section class="elevation-section" id="elevationSection" style="display: none;">
-            <h2>Elevation Profile</h2>
-            <div class="chart-container">
+            <div class="chart-header">
+                <h2>Profile</h2>
+                <select id="chartSelector" class="chart-selector">
+                    <option value="elevation">Elevation Profile</option>
+                    <option value="gradient">Gradient Profile</option>
+                </select>
+            </div>
+            <div class="chart-container" id="elevationChartContainer">
                 <canvas id="elevationChart"></canvas>
+            </div>
+            <div class="chart-container" id="gradientChartContainer" style="display: none;">
+                <canvas id="gradientChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Surface section hidden - stats now shown under map -->
+        <section class="surface-section" id="surfaceSection" style="display: none !important;">
+            <h2>Surface Analysis</h2>
+            <p id="surfaceStatus" class="surface-status">Surface data will load automatically...</p>
+            <div class="surface-content">
+                <div class="surface-chart-container">
+                    <canvas id="surfaceChart"></canvas>
+                </div>
+                <div class="surface-legend">
+                    <div class="surface-legend-item">
+                        <span class="surface-color road"></span>
+                        <span>Road/Asphalt (1.0x pace)</span>
+                    </div>
+                    <div class="surface-legend-item">
+                        <span class="surface-color trail"></span>
+                        <span>Trail/Gravel (+5-10% pace)</span>
+                    </div>
+                    <div class="surface-legend-item">
+                        <span class="surface-color technical"></span>
+                        <span>Technical/Rocky (+15-25% pace)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="surface-settings">
+                <label class="surface-toggle">
+                    <input type="checkbox" id="surfaceEnabled" checked>
+                    <span>Apply surface multipliers to pace calculations</span>
+                </label>
             </div>
         </section>
 
         <section class="pace-section" id="paceSection" style="display: none;">
             <h2>Pace Planner</h2>
+            
+            <div class="settings-bar">
+                <div class="unit-toggle">
+                    <span>Units:</span>
+                    <button type="button" class="unit-btn active" id="kmBtn">KM</button>
+                    <button type="button" class="unit-btn" id="milesBtn">Miles</button>
+                </div>
+                <div class="plan-actions">
+                    <button type="button" class="action-btn" id="savePlanBtn">💾 Save Plan</button>
+                    <button type="button" class="action-btn" id="loadPlanBtn">📂 Load Plan</button>
+                </div>
+            </div>
             
             <div class="mode-selector">
                 <button type="button" class="mode-btn active" id="targetModeBtn">Target Time</button>
@@ -371,10 +516,15 @@
                 </div>
             </div>
             
-            <div class="start-time-input">
-                <label>🕐 Race Start Time (optional)</label>
-                <div class="start-time-wrapper">
-                    <input type="time" id="raceStartTime" value="09:00">
+            <div class="race-datetime-input">
+                <label>🕐 Race Start (optional)</label>
+                <div class="race-datetime-wrapper">
+                    <input type="date" id="raceStartDate" title="Race date">
+                    <input type="time" id="raceStartTime" value="06:00" title="Start time">
+                </div>
+                <div class="sun-times" id="sunTimes" style="display: none;">
+                    <span class="sun-rise">🌅 <span id="sunriseTime">--:--</span></span>
+                    <span class="sun-set">🌇 <span id="sunsetTime">--:--</span></span>
                 </div>
             </div>
             
@@ -386,6 +536,7 @@
                 <div class="add-aid-station">
                     <input type="number" id="aidStationKm" placeholder="KM" min="0" step="0.1" style="background-color: #1e1e32; color: #fff; border: 2px solid #4a4a6a;">
                     <input type="text" id="aidStationName" placeholder="Name (e.g., Water Stop 1)" style="background-color: #1e1e32; color: #fff; border: 2px solid #4a4a6a;">
+                    <input type="number" id="aidStationStopTime" placeholder="Stop (min)" min="0" max="60" step="1" value="2" style="background-color: #1e1e32; color: #fff; border: 2px solid #4a4a6a; width: 80px;">
                     <button type="button" id="addAidStation" class="add-aid-btn">+ Add</button>
                 </div>
             </div>
@@ -435,19 +586,44 @@
             <div class="section-header">
                 <h2>Strategy Details</h2>
                 <div class="splits-actions">
-                    <button id="exportShareCard" class="share-btn">📤 Share Card</button>
-                    <button id="exportCrewCard" class="crew-btn">👥 Crew Card</button>
-                    <button id="exportCsv" class="export-btn">📥 Export CSV</button>
+                    <button id="exportShareCard" class="export-btn share-btn">📱 Share Card</button>
+                    <button id="exportCrewCard" class="export-btn crew-btn">👥 Crew Card</button>
+                    <button id="exportPdf" class="export-btn pdf-btn">📄 PDF</button>
+                    <button id="printRaceCard" class="action-btn print-btn">🖨️ Print</button>
+                    <button id="exportCsv" class="export-btn">📥 CSV</button>
                 </div>
             </div>
+            
+            <!-- Leg Summary (between AID stations) -->
+            <div class="leg-summary" id="legSummary" style="display: none;">
+                <h3>🚰 Leg Summary</h3>
+                <div class="leg-summary-table-container">
+                    <table class="leg-summary-table">
+                        <thead>
+                            <tr>
+                                <th>Leg</th>
+                                <th>Distance</th>
+                                <th>Elevation</th>
+                                <th>Est. Time</th>
+                                <th>Arrival</th>
+                            </tr>
+                        </thead>
+                        <tbody id="legSummaryBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
             <div class="splits-table-container">
                 <table id="splitsTable">
                     <thead>
                         <tr>
-                            <th>KM</th>
+                            <th id="distanceHeader">KM</th>
                             <th>Elevation Change</th>
                             <th>Terrain</th>
+                            <th>Surface</th>
                             <th>AID Station</th>
+                            <th>Stop</th>
                             <th>Target Pace</th>
                             <th>Split Time</th>
                             <th>Race Time</th>
@@ -459,43 +635,70 @@
                 </table>
             </div>
         </section>
-
-        <!-- Feedback Panel -->
-        <div class="feedback-overlay" id="feedbackOverlay"></div>
-        <aside class="feedback-panel" id="feedbackPanel">
-            <div class="feedback-header">
-                <h3>💬 Send Feedback</h3>
-                <button type="button" class="feedback-close" id="feedbackClose">✕</button>
-            </div>
-            <form class="feedback-form" id="feedbackForm">
-                <div class="feedback-field">
-                    <label for="feedbackLike">What do you like about GPXray?</label>
-                    <textarea id="feedbackLike" name="like" rows="2" placeholder="The features I find most useful..."></textarea>
-                </div>
-                <div class="feedback-field">
-                    <label for="feedbackMissing">What features are missing?</label>
-                    <textarea id="feedbackMissing" name="missing" rows="2" placeholder="I wish GPXray could..."></textarea>
-                </div>
-                <div class="feedback-field">
-                    <label for="feedbackBugs">Any bugs or issues?</label>
-                    <textarea id="feedbackBugs" name="bugs" rows="2" placeholder="I noticed that..."></textarea>
-                </div>
-                <div class="feedback-field">
-                    <label for="feedbackEmail">Email (optional, for follow-up)</label>
-                    <input type="email" id="feedbackEmail" name="email" placeholder="your@email.com">
-                </div>
-                <div class="feedback-actions">
-                    <button type="submit" class="feedback-submit">📨 Send Feedback</button>
-                    <a href="mailto:gpxrayrun@gmail.com?subject=GPXray%20Feedback" class="feedback-email-link">or email us directly</a>
-                </div>
-            </form>
-            <div class="feedback-success" id="feedbackSuccess" style="display: none;">
-                <div class="feedback-success-icon">✅</div>
-                <h4>Thank you!</h4>
-                <p>Your feedback helps us improve GPXray.</p>
-            </div>
-        </aside>
     </div>
+
+    <!-- Print Race Card Template -->
+    <div id="raceCardPrint" class="race-card-print">
+        <div class="race-card-header">
+            <h1 id="printTitle">Race Strategy</h1>
+            <div class="race-card-info">
+                <span id="printDistance"></span> | 
+                <span id="printElevation"></span> | 
+                <span id="printTime"></span>
+            </div>
+        </div>
+        <table class="race-card-table" id="printSplitsTable">
+            <thead>
+                <tr>
+                    <th id="printDistanceHeader">KM</th>
+                    <th>AID</th>
+                    <th>Pace</th>
+                    <th>Race Time</th>
+                    <th>Clock</th>
+                </tr>
+            </thead>
+            <tbody id="printSplitsBody">
+            </tbody>
+        </table>
+        <div class="race-card-footer">
+            <p>Generated by GPXray</p>
+        </div>
+    </div>
+
+    <script>
+    // Beta password gate
+    (function() {
+        const BETA_PASSWORD = 'GPXray#2026!';
+        const STORAGE_KEY = 'gpxray_beta_access';
+        
+        // Check if already authenticated
+        if (sessionStorage.getItem(STORAGE_KEY) === 'granted') {
+            document.getElementById('betaGate').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            return;
+        }
+        
+        document.getElementById('betaSubmit').addEventListener('click', checkPassword);
+        document.getElementById('betaPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
+        });
+        
+        function checkPassword() {
+            const input = document.getElementById('betaPassword').value;
+            const error = document.getElementById('betaError');
+            
+            if (input === BETA_PASSWORD) {
+                sessionStorage.setItem(STORAGE_KEY, 'granted');
+                document.getElementById('betaGate').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+            } else {
+                error.style.display = 'block';
+                document.getElementById('betaPassword').value = '';
+                document.getElementById('betaPassword').focus();
+            }
+        }
+    })();
+    </script>
 
     <footer class="site-footer">
         <div class="footer-content">
@@ -513,6 +716,23 @@
             </div>
         </div>
     </footer>
+
+    <!-- Early Access Modal -->
+    <div class="early-access-overlay" id="earlyAccessOverlay"></div>
+    <div class="early-access-modal" id="earlyAccessModal">
+        <div class="early-access-content">
+            <div class="early-access-icon">🔐</div>
+            <h2>Early Access</h2>
+            <p>GPXray is currently in private beta. Enter your access code to unlock GPX upload.</p>
+            <form class="early-access-form" id="earlyAccessForm">
+                <input type="text" id="earlyAccessCode" placeholder="Enter access code" autocomplete="off">
+                <button type="submit" class="early-access-submit">Unlock</button>
+            </form>
+            <p class="early-access-error" id="earlyAccessError">Invalid code. Please try again.</p>
+            <p class="early-access-hint">Don't have a code? Try the demo or browse popular races!</p>
+            <button id="earlyAccessClose" class="early-access-close">✕</button>
+        </div>
+    </div>
 
     <!-- Cookie Consent Banner -->
     <div class="cookie-banner" id="cookieBanner">
