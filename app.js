@@ -184,6 +184,52 @@ function setupEarlyAccess() {
     input?.addEventListener('input', () => {
         errorMsg.classList.remove('visible');
     });
+    
+    // Waitlist form submission
+    const waitlistForm = document.getElementById('waitlistForm');
+    const waitlistSuccess = document.getElementById('waitlistSuccess');
+    
+    waitlistForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const emailInput = waitlistForm.querySelector('input[type="email"]');
+        const submitBtn = waitlistForm.querySelector('.waitlist-submit');
+        const email = emailInput.value.trim();
+        
+        if (!email) return;
+        
+        // Disable form while submitting
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Joining...';
+        
+        try {
+            const response = await fetch('https://formspree.io/f/mqegeeap', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    source: 'early_access_waitlist'
+                })
+            });
+            
+            if (response.ok) {
+                // Hide form, show success message
+                waitlistForm.style.display = 'none';
+                waitlistSuccess.classList.add('visible');
+                trackEvent('waitlist_signup', { source: 'early_access_modal' });
+            } else {
+                throw new Error('Submission failed');
+            }
+        } catch (error) {
+            console.error('Waitlist submission error:', error);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Join Waitlist';
+            showNotification('Failed to join waitlist. Please try again.', 'error');
+        }
+    });
 }
 
 function isEarlyAccessUnlocked() {

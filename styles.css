@@ -855,27 +855,37 @@ header h1 {
     transform: translate(-50%, -50%) scale(1);
 }
 
+.early-access-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
 .early-access-icon {
     font-size: 3rem;
     margin-bottom: 15px;
+    text-align: center;
 }
 
 .early-access-modal h2 {
     color: #00d4ff;
     margin: 0 0 15px 0;
     font-size: 1.8rem;
+    text-align: center;
 }
 
 .early-access-modal p {
     color: #aaa;
     margin: 0 0 20px 0;
     line-height: 1.5;
+    text-align: center;
 }
 
 .early-access-form {
     display: flex;
     gap: 10px;
     margin-bottom: 15px;
+    width: 100%;
 }
 
 .early-access-form input {
@@ -961,6 +971,138 @@ header h1 {
     0%, 100% { transform: translateX(0); }
     20%, 60% { transform: translateX(-5px); }
     40%, 80% { transform: translateX(5px); }
+}
+
+/* Early Access Divider */
+.early-access-divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: #666;
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+.early-access-divider::before,
+.early-access-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+}
+
+.early-access-divider::before {
+    margin-right: 15px;
+}
+
+.early-access-divider::after {
+    margin-left: 15px;
+}
+
+/* Early Access Waitlist */
+.early-access-waitlist {
+    width: 100%;
+}
+
+.waitlist-title {
+    color: #aaa;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.waitlist-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.waitlist-form input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.waitlist-form input:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+.waitlist-form input::placeholder {
+    color: #888;
+}
+
+.waitlist-submit {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.waitlist-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+}
+
+.waitlist-success {
+    display: none;
+    color: #00ff88;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.waitlist-success.visible {
+    display: block;
+}
+
+/* Early Access Instagram */
+.early-access-instagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #833AB4 0%, #C13584 50%, #E1306C 100%);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    margin-bottom: 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.early-access-instagram:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(225, 48, 108, 0.4);
+}
+
+.early-access-instagram svg {
+    width: 20px;
+    height: 20px;
+    fill: white;
 }
 
 /* Toast Notifications */
@@ -3098,5 +3240,25 @@ h2 {
     
     .early-access-hint {
         font-size: 0.8rem !important;
+    }
+    
+    .waitlist-form {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .waitlist-form input {
+        width: 100%;
+        padding: 14px;
+    }
+    
+    .waitlist-submit {
+        width: 100%;
+        padding: 14px 25px;
+    }
+    
+    .early-access-instagram {
+        padding: 14px 20px;
+        font-size: 0.95rem;
     }
 }
