@@ -29,25 +29,29 @@ const RUNNER_LEVELS = {
         name: 'Beginner',
         flatPace: 8.0,      // 8:00/km flat
         uphillRatio: 1.5,   // 12:00/km uphill
-        downhillRatio: 0.9  // 7:12/km downhill
+        downhillRatio: 0.9, // 7:12/km downhill
+        dft: 6000           // Downhill Fatigue Threshold
     },
     intermediate: {
         name: 'Intermediate', 
         flatPace: 6.5,      // 6:30/km flat
         uphillRatio: 1.4,   // 9:06/km uphill
-        downhillRatio: 0.85 // 5:31/km downhill
+        downhillRatio: 0.85, // 5:31/km downhill
+        dft: 9000           // Downhill Fatigue Threshold
     },
     advanced: {
         name: 'Advanced',
         flatPace: 5.5,      // 5:30/km flat
         uphillRatio: 1.3,   // 7:09/km uphill
-        downhillRatio: 0.82 // 4:31/km downhill
+        downhillRatio: 0.82, // 4:31/km downhill
+        dft: 12000          // Downhill Fatigue Threshold
     },
     elite: {
         name: 'Elite',
         flatPace: 4.5,      // 4:30/km flat
         uphillRatio: 1.25,  // 5:38/km uphill
-        downhillRatio: 0.8  // 3:36/km downhill
+        downhillRatio: 0.8, // 3:36/km downhill
+        dft: 15000          // Downhill Fatigue Threshold
     }
 };
 
@@ -3648,13 +3652,18 @@ function updateHeroSection(totalTime) {
     const heroDescentDetail = document.getElementById('heroDescentDetail');
     const heroDescentInsight = document.getElementById('heroDescentInsight');
     if (heroDescentLoad && segments.length > 0 && gpxData) {
+        // Get runner's DFT (Downhill Fatigue Threshold)
+        const levelSelect = document.getElementById('runnerLevel');
+        const level = levelSelect ? levelSelect.value : 'intermediate';
+        const runnerDFT = RUNNER_LEVELS[level]?.dft || 9000;
+        
         let ddlTotal = 0;
         let cumulativeDDL = 0;
-        let ddlAfter60Pct = 0;
-        const threshold60Pct = gpxData.totalDistance * 0.6;
         
-        // Track DDL accumulation per km for insight
-        const ddlByKm = {};
+        // Track cumulative DDL curve by km for pace loss prediction
+        const cumulativeDDLByKm = {};
+        let fatigueOnsetKm = null;  // Where fatigue ratio first exceeds 0.6
+        let severeOnsetKm = null;   // Where fatigue ratio exceeds 1.0
         
         // Fatigue threshold - after this much DDL, fatigue compounds
         const fatigueThreshold = 3000;
@@ -3662,10 +3671,9 @@ function updateHeroSection(totalTime) {
         for (const segment of segments) {
             if (segment.terrainType === 'downhill' && segment.elevationChange < 0) {
                 const gradePercent = Math.abs(segment.grade);
-                const elevationDrop = Math.abs(segment.elevationChange); // meters dropped
+                const elevationDrop = Math.abs(segment.elevationChange);
                 
                 // Slope weight: steeper = more braking force per meter
-                // 5% = 1.1x, 10% = 1.4x, 15% = 1.8x, 20% = 2.3x, 25% = 2.9x
                 const slopeWeight = 1 + Math.pow(gradePercent / 20, 1.4);
                 
                 // Surface weight: technical terrain = more instability cost
@@ -3677,28 +3685,44 @@ function updateHeroSection(totalTime) {
                 // Fatigue weight: accumulated damage compounds (subtle effect)
                 const fatigueWeight = 1 + (cumulativeDDL / fatigueThreshold) * 0.15;
                 
-                // Calculate segment DDL: elevation dropped × steepness × surface × fatigue
+                // Calculate segment DDL
                 const segmentDDL = elevationDrop * slopeWeight * surfaceWeight * fatigueWeight;
                 ddlTotal += segmentDDL;
                 cumulativeDDL += segmentDDL;
                 
-                // Track late race load (after 60% of distance)
-                if (segment.startDistance >= threshold60Pct) {
-                    ddlAfter60Pct += segmentDDL;
-                }
-                
-                // Track DDL per km
+                // Track cumulative DDL curve
                 const km = Math.floor(segment.startDistance);
-                ddlByKm[km] = (ddlByKm[km] || 0) + segmentDDL;
+                cumulativeDDLByKm[km] = cumulativeDDL;
+                
+                // Check fatigue ratio thresholds
+                const fatigueRatio = cumulativeDDL / runnerDFT;
+                if (fatigueRatio >= 0.6 && fatigueOnsetKm === null) {
+                    fatigueOnsetKm = km;
+                }
+                if (fatigueRatio >= 1.0 && severeOnsetKm === null) {
+                    severeOnsetKm = km;
+                }
             }
         }
         
-        // Calculate per-km rate and late race percentage
-        const ddlPerKm = ddlTotal / gpxData.totalDistance;
-        const lateRacePct = ddlTotal > 0 ? Math.round((ddlAfter60Pct / ddlTotal) * 100) : 0;
-        const lateRaceKm = Math.round(threshold60Pct);
+        // Calculate pace loss based on final fatigue ratio
+        const finalFatigueRatio = ddlTotal / runnerDFT;
+        let paceLossSec = 0;
+        let paceLossLabel = '';
+        
+        if (finalFatigueRatio >= 1.2) {
+            paceLossSec = Math.round(20 + (finalFatigueRatio - 1.2) * 15);
+            paceLossLabel = 'severe fatigue';
+        } else if (finalFatigueRatio >= 0.9) {
+            paceLossSec = Math.round(10 + (finalFatigueRatio - 0.9) * 33);
+            paceLossLabel = 'braking fatigue';
+        } else if (finalFatigueRatio >= 0.6) {
+            paceLossSec = Math.round((finalFatigueRatio - 0.6) * 33);
+            paceLossLabel = 'mild control loss';
+        }
         
         // Show per-km rate as main value
+        const ddlPerKm = ddlTotal / gpxData.totalDistance;
         heroDescentLoad.textContent = `${Math.round(ddlPerKm)}/km`;
         
         // Show intensity label
@@ -3714,16 +3738,16 @@ function updateHeroSection(totalTime) {
             }
         }
         
-        // Generate late-race insight (coaching relevant)
+        // Generate pace loss prediction insight
         if (heroDescentInsight) {
-            if (lateRacePct >= 40) {
-                heroDescentInsight.textContent = `⚠ ${lateRacePct}% descent load after KM${lateRaceKm} → slower downhill splits`;
+            if (paceLossSec >= 15 && fatigueOnsetKm !== null) {
+                heroDescentInsight.textContent = `⚠ Est. +${paceLossSec} sec/km slower after KM${fatigueOnsetKm}`;
                 heroDescentInsight.className = 'hero-metric-insight warning';
-            } else if (lateRacePct >= 30 && ddlPerKm > 100) {
-                heroDescentInsight.textContent = `Late-race pace degradation likely`;
+            } else if (paceLossSec >= 8 && fatigueOnsetKm !== null) {
+                heroDescentInsight.textContent = `Est. +${paceLossSec} sec/km slower downhills after KM${fatigueOnsetKm}`;
                 heroDescentInsight.className = 'hero-metric-insight';
-            } else if (ddlPerKm > 140) {
-                heroDescentInsight.textContent = 'Train steep downhills';
+            } else if (paceLossSec > 0) {
+                heroDescentInsight.textContent = `Mild pace loss expected (+${paceLossSec} sec/km)`;
                 heroDescentInsight.className = 'hero-metric-insight';
             } else {
                 heroDescentInsight.textContent = '';
