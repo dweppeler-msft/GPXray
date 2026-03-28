@@ -10,6 +10,8 @@ let currentRouteName = ''; // Name of current loaded route
 
 // Constants
 const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
+const KM_TO_MILES = 0.621371;
+const MILES_TO_KM = 1.60934;
 
 // DOM Elements
 const dropZone = document.getElementById('dropZone');
@@ -1516,9 +1518,9 @@ async function exportShareCard() {
             box-sizing: border-box;
         `;
 
-        // Build card content
-        const unitLabel = useMetric ? 'km' : 'mi';
-        const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
+        // Build card content (always km on main branch)
+        const unitLabel = 'km';
+        const distance = gpxData.totalDistance;
         const totalTime = document.getElementById('totalTime')?.textContent || '-';
         const dateInput = document.getElementById('raceStartDate');
         const timeInput = document.getElementById('raceStartTime');
@@ -1553,7 +1555,7 @@ async function exportShareCard() {
                 
                 if (aidName && aidName !== '-') {
                     const rowDist = parseFloat(distCell);
-                    const rowKm = useMetric ? rowDist : rowDist * MILES_TO_KM;
+                    const rowKm = rowDist; // Always km on main branch
                     const matchingStation = sortedStations.find(s => Math.abs(s.km - rowKm) < 0.5);
                     
                     if (matchingStation) {
@@ -1713,9 +1715,9 @@ async function exportCrewCard() {
     btn.disabled = true;
 
     try {
-        // Get race info
-        const unitLabel = useMetric ? 'km' : 'mi';
-        const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
+        // Get race info (always km on main branch)
+        const unitLabel = 'km';
+        const distance = gpxData.totalDistance;
         const totalTime = document.getElementById('totalTime')?.textContent || '-';
         const dateInput = document.getElementById('raceStartDate');
         const timeInput = document.getElementById('raceStartTime');
@@ -1756,7 +1758,7 @@ async function exportCrewCard() {
                 
                 if (aidName && aidName !== '-') {
                     const rowDist = parseFloat(distCell);
-                    const rowKm = useMetric ? rowDist : rowDist * MILES_TO_KM;
+                    const rowKm = rowDist; // Always km on main branch
                     const station = sortedStations.find(s => Math.abs(s.km - rowKm) < 0.5);
                     
                     if (station) {
