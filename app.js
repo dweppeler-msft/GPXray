@@ -3587,21 +3587,21 @@ function updateHeroSection(totalTime) {
         heroDistance.textContent = `${dist.toFixed(1)} ${unit}`;
     }
     
-    // Update Climb Load
+    // Update Elevation Gain
     const heroClimbLoad = document.getElementById('heroClimbLoad');
     if (heroClimbLoad && gpxData) {
-        heroClimbLoad.textContent = `${Math.round(gpxData.elevationGain)}m`;
+        heroClimbLoad.textContent = `+${Math.round(gpxData.elevationGain)}m`;
     }
     
-    // Update Longest Climb
+    // Update Main Climb (longest continuous ascent)
     const heroLongestClimb = document.getElementById('heroLongestClimb');
     const heroLongestClimbGain = document.getElementById('heroLongestClimbGain');
-    if (heroLongestClimb && segments.length > 0) {
-        const longestClimb = findLongestClimb();
-        if (longestClimb && longestClimb.gain > 200) {
-            heroLongestClimb.textContent = `KM ${Math.round(longestClimb.start)}-${Math.round(longestClimb.end)}`;
+    if (heroLongestClimb && gpxData) {
+        const mainClimb = findLongestClimb();
+        if (mainClimb && mainClimb.gain > 150) {
+            heroLongestClimb.textContent = `KM ${mainClimb.start.toFixed(1)}–${mainClimb.end.toFixed(1)}`;
             if (heroLongestClimbGain) {
-                heroLongestClimbGain.textContent = `+${Math.round(longestClimb.gain)}m`;
+                heroLongestClimbGain.textContent = `+${Math.round(mainClimb.gain)}m`;
             }
         } else {
             heroLongestClimb.textContent = '-';
@@ -3656,42 +3656,87 @@ function updateHeroSection(totalTime) {
     }
 }
 
-// Find the longest continuous climb
+// Find the main climb (longest continuous ascent window)
+// Uses monotonic ascent detection with tolerance for small dips
 function findLongestClimb() {
-    if (!segments || segments.length === 0) return null;
+    if (!gpxData || !gpxData.points || gpxData.points.length < 10) return null;
     
-    let longestClimb = null;
-    let currentClimb = null;
+    const points = gpxData.points;
+    const DIP_TOLERANCE = 30; // Allow up to 30m dips within a climb
     
-    for (const segment of segments) {
-        if (segment.terrainType === 'uphill') {
-            const gain = segment.elevationChange > 0 ? segment.elevationChange : 0;
-            if (!currentClimb) {
-                currentClimb = {
-                    start: segment.startDistance,
-                    end: segment.endDistance,
+    let mainClimb = null;
+    let windowStart = 0;
+    let windowMinElevation = points[0].elevation || 0;
+    let windowMaxElevation = windowMinElevation;
+    let windowMinDistance = 0;
+    
+    for (let i = 1; i < points.length; i++) {
+        const point = points[i];
+        const elevation = point.elevation || 0;
+        
+        // Update max if we're still climbing
+        if (elevation > windowMaxElevation) {
+            windowMaxElevation = elevation;
+        }
+        
+        // Check if we've descended too far from the max (end of climb)
+        const dropFromMax = windowMaxElevation - elevation;
+        
+        if (dropFromMax > DIP_TOLERANCE) {
+            // End current climb window
+            const gain = windowMaxElevation - windowMinElevation;
+            
+            if (gain > 100 && (!mainClimb || gain > mainClimb.gain)) {
+                // Find the point where max elevation was reached
+                let maxElevDistance = windowMinDistance;
+                for (let j = windowStart; j <= i; j++) {
+                    if ((points[j].elevation || 0) === windowMaxElevation) {
+                        maxElevDistance = points[j].distance;
+                        break;
+                    }
+                }
+                
+                mainClimb = {
+                    start: windowMinDistance,
+                    end: maxElevDistance,
                     gain: gain
                 };
-            } else {
-                currentClimb.end = segment.endDistance;
-                currentClimb.gain += gain;
             }
-        } else {
-            if (currentClimb) {
-                if (!longestClimb || currentClimb.gain > longestClimb.gain) {
-                    longestClimb = { ...currentClimb };
-                }
-                currentClimb = null;
-            }
+            
+            // Start new window from current point
+            windowStart = i;
+            windowMinElevation = elevation;
+            windowMaxElevation = elevation;
+            windowMinDistance = point.distance;
+        }
+        
+        // Update minimum if we found a new low (starting point of potential climb)
+        if (elevation < windowMinElevation) {
+            windowMinElevation = elevation;
+            windowMinDistance = point.distance;
+            windowStart = i;
+            windowMaxElevation = elevation;
         }
     }
     
-    // Check last segment
-    if (currentClimb && (!longestClimb || currentClimb.gain > longestClimb.gain)) {
-        longestClimb = { ...currentClimb };
+    // Check final window
+    const finalGain = windowMaxElevation - windowMinElevation;
+    if (finalGain > 100 && (!mainClimb || finalGain > mainClimb.gain)) {
+        let maxElevDistance = windowMinDistance;
+        for (let j = windowStart; j < points.length; j++) {
+            if ((points[j].elevation || 0) === windowMaxElevation) {
+                maxElevDistance = points[j].distance;
+                break;
+            }
+        }
+        mainClimb = {
+            start: windowMinDistance,
+            end: maxElevDistance,
+            gain: finalGain
+        };
     }
     
-    return longestClimb;
+    return mainClimb;
 }
 
 // Update Course Shape - Race Intelligence
