@@ -811,6 +811,186 @@ header h1 {
     font-size: 0.8rem;
 }
 
+/* Early Access Modal */
+.early-access-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 2000;
+}
+
+.early-access-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.early-access-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 2001;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.early-access-modal.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.early-access-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.early-access-modal h2 {
+    color: #00d4ff;
+    margin: 0 0 15px 0;
+    font-size: 1.8rem;
+}
+
+.early-access-modal p {
+    color: #aaa;
+    margin: 0 0 20px 0;
+    line-height: 1.5;
+}
+
+.early-access-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.early-access-form input {
+    flex: 1;
+    padding: 12px 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.early-access-form input::placeholder {
+    color: #666;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.early-access-form input:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+.early-access-submit {
+    padding: 12px 25px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.early-access-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+}
+
+.early-access-error {
+    color: #ff6b6b !important;
+    font-size: 0.9rem !important;
+    display: none;
+    margin-bottom: 10px !important;
+}
+
+.early-access-error.visible {
+    display: block;
+}
+
+.early-access-hint {
+    color: #666 !important;
+    font-size: 0.85rem !important;
+}
+
+.early-access-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.early-access-close:hover {
+    color: #fff;
+}
+
+.early-access-form input.shake {
+    animation: shake 0.5s ease;
+    border-color: #ff6b6b !important;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+
+/* Toast Notifications */
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 10px;
+    padding: 15px 25px;
+    color: white;
+    font-size: 1rem;
+    z-index: 3000;
+    opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.notification.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.notification-success {
+    border-color: rgba(0, 255, 136, 0.5);
+    background: linear-gradient(135deg, #0a2a1a 0%, #0d3d2e 100%);
+}
+
 /* Cookie Consent Banner */
 .cookie-banner {
     position: fixed;

@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupRaceBrowser();
     setupFooter();
     setupCookieConsent();
+    setupEarlyAccess();
 });
 
 // Cookie Consent
@@ -101,6 +102,111 @@ function setupCookieConsent() {
         localStorage.setItem('gpxray-cookies', 'declined');
         banner.classList.remove('visible');
     });
+}
+
+// Early Access Gate
+const EARLY_ACCESS_CODES = [
+    'TRAILRUNNER2025',
+    'GPXFRIENDS', 
+    'ULTRABETA',
+    'RUNYOURRACE',
+    'BETARUNNER'
+];
+
+function setupEarlyAccess() {
+    const overlay = document.getElementById('earlyAccessOverlay');
+    const modal = document.getElementById('earlyAccessModal');
+    const form = document.getElementById('earlyAccessForm');
+    const input = document.getElementById('earlyAccessCode');
+    const errorMsg = document.getElementById('earlyAccessError');
+    const closeBtn = document.getElementById('earlyAccessClose');
+    
+    if (!modal) return;
+    
+    // Check if already unlocked
+    if (isEarlyAccessUnlocked()) {
+        return;
+    }
+    
+    // Close modal handlers
+    closeBtn?.addEventListener('click', hideEarlyAccessModal);
+    overlay?.addEventListener('click', hideEarlyAccessModal);
+    
+    // Form submission
+    form?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const code = input.value.trim().toUpperCase();
+        
+        if (EARLY_ACCESS_CODES.includes(code)) {
+            // Valid code!
+            localStorage.setItem('gpxray-early-access', 'unlocked');
+            localStorage.setItem('gpxray-access-code', code);
+            hideEarlyAccessModal();
+            trackEvent('early_access', { action: 'unlocked', code: code });
+            
+            // Show success feedback
+            showNotification('🎉 Access granted! You can now upload GPX files.', 'success');
+        } else {
+            // Invalid code
+            errorMsg.classList.add('visible');
+            input.classList.add('shake');
+            setTimeout(() => input.classList.remove('shake'), 500);
+            trackEvent('early_access', { action: 'invalid_code' });
+        }
+    });
+    
+    // Clear error on input
+    input?.addEventListener('input', () => {
+        errorMsg.classList.remove('visible');
+    });
+}
+
+function isEarlyAccessUnlocked() {
+    return localStorage.getItem('gpxray-early-access') === 'unlocked';
+}
+
+function showEarlyAccessModal() {
+    const overlay = document.getElementById('earlyAccessOverlay');
+    const modal = document.getElementById('earlyAccessModal');
+    const input = document.getElementById('earlyAccessCode');
+    
+    overlay?.classList.add('visible');
+    modal?.classList.add('visible');
+    input?.focus();
+    
+    trackEvent('early_access', { action: 'modal_shown' });
+}
+
+function hideEarlyAccessModal() {
+    const overlay = document.getElementById('earlyAccessOverlay');
+    const modal = document.getElementById('earlyAccessModal');
+    
+    overlay?.classList.remove('visible');
+    modal?.classList.remove('visible');
+}
+
+function checkEarlyAccess() {
+    if (isEarlyAccessUnlocked()) {
+        return true;
+    }
+    showEarlyAccessModal();
+    return false;
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Trigger animation
+    setTimeout(() => notification.classList.add('visible'), 10);
+    
+    // Remove after delay
+    setTimeout(() => {
+        notification.classList.remove('visible');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
 // Footer links
@@ -407,6 +513,7 @@ function setupDragAndDrop() {
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('drag-over');
+        if (!checkEarlyAccess()) return;
         const file = e.dataTransfer.files[0];
         if (file && file.name.endsWith('.gpx')) {
             processFile(file);
@@ -419,6 +526,7 @@ function setupDragAndDrop() {
 function setupFileInput() {
     browseBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (!checkEarlyAccess()) return;
         gpxInput.click();
     });
 
@@ -427,11 +535,13 @@ function setupFileInput() {
     if (browseBtnMobile) {
         browseBtnMobile.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (!checkEarlyAccess()) return;
             gpxInput.click();
         });
     }
 
     dropZone.addEventListener('click', () => {
+        if (!checkEarlyAccess()) return;
         gpxInput.click();
     });
 
