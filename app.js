@@ -13,6 +13,7 @@ let surfaceEnabled = true; // Whether to use surface multipliers
 let currentRouteName = ''; // Name of current loaded route
 let sunTimes = null; // Sunrise/sunset times for race day
 let isDemoMode = false; // Whether demo is currently loaded
+let isSurfaceLoading = false; // Whether surface data is being fetched
 
 // Constants
 const GRADE_THRESHOLD = 2; // percentage grade to determine uphill/downhill
@@ -814,6 +815,9 @@ function calculateSegments() {
 async function fetchSurfaceData() {
     if (!gpxData || segments.length === 0) return;
     
+    // Set loading flag
+    isSurfaceLoading = true;
+    
     // Show loading indicator
     updateSurfaceStatus('Loading surface data from OpenStreetMap...');
     
@@ -915,6 +919,9 @@ async function fetchSurfaceData() {
         // Apply surface data to segments
         applySurfaceToSegments(surfaceResults);
         
+        // Clear loading flag
+        isSurfaceLoading = false;
+        
         // Update display with surface info
         displayMap(); // Redraw map with surface colors
         displaySurfaceStats();
@@ -927,6 +934,7 @@ async function fetchSurfaceData() {
         
     } catch (error) {
         console.error('Error fetching surface data:', error);
+        isSurfaceLoading = false;
         // Show stats with default/unknown surfaces
         displaySurfaceStats();
     }
@@ -3268,14 +3276,15 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             row.classList.add('night-section');
         }
         
-        // Get surface display name
-        const surfaceDisplay = SURFACE_TYPES[dominantSurface] ? SURFACE_TYPES[dominantSurface].name : 'Unknown';
+        // Get surface display name and class
+        const surfaceDisplay = isSurfaceLoading ? 'Loading...' : (SURFACE_TYPES[dominantSurface] ? SURFACE_TYPES[dominantSurface].name : 'Unknown');
+        const surfaceClass = isSurfaceLoading ? 'surface-loading' : `surface-${dominantSurface}`;
         
         row.innerHTML = `
             <td>${unit}</td>
             <td>${elevationChange >= 0 ? '+' : ''}${elevationChange.toFixed(0)} m</td>
             <td class="terrain-${terrain}">${terrain.charAt(0).toUpperCase() + terrain.slice(1)}</td>
-            <td class="surface-${dominantSurface}">${surfaceDisplay}</td>
+            <td class="${surfaceClass}">${surfaceDisplay}</td>
             <td class="${hasAidStation ? 'aid-station-cell' : ''}">${aidStationText}</td>
             <td class="stop-time">${stopTime > 0 ? '+' + stopTime + ' min' : '-'}</td>
             <td>${formatPace(targetPace)} /${unitLabel}</td>

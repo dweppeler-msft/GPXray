@@ -2715,6 +2715,17 @@ h2 {
     color: #9E9E9E;
 }
 
+.surface-loading {
+    color: #00d4ff;
+    font-style: italic;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
 /* Gradient Section */
 .gradient-section {
     background: rgba(255, 255, 255, 0.05);
