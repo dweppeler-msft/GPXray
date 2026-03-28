@@ -4109,7 +4109,7 @@ async function exportCrewCard() {
             
             <div style="text-align: center; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);">
                 <div style="font-size: 16px; font-weight: 700; color: #00d4ff;">GPXray</div>
-                <div style="font-size: 10px; opacity: 0.6; margin-top: 2px;">gpxray.run</div>
+                <div style="font-size: 10px; opacity: 0.6; margin-top: 2px;">© gpxray.run</div>
             </div>
         `;
 
