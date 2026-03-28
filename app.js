@@ -4031,10 +4031,14 @@ async function exportCrewCard() {
         }
 
         // Calculate card height based on number of stations and sizing mode
+        // Use 9:16 aspect ratio (social media friendly) with width of 540px
+        const cardWidth = 540;
         const rowHeightEstimate = stationCount <= 4 ? 70 : (stationCount <= 7 ? 58 : 50);
         const headerHeight = stationCount <= 4 ? 140 : (stationCount <= 7 ? 120 : 100);
-        const footerHeight = 60;
-        const cardHeight = Math.min(1100, headerHeight + (stationData.length + 1) * rowHeightEstimate + footerHeight + 40);
+        const footerHeight = 80;
+        const contentHeight = headerHeight + (stationData.length + 1) * rowHeightEstimate + footerHeight + 60;
+        // 9:16 ratio height = 540 * 16/9 = 960
+        const cardHeight = Math.max(contentHeight, Math.min(960, contentHeight));
 
         // Create card container
         const card = document.createElement('div');
@@ -4043,12 +4047,12 @@ async function exportCrewCard() {
             position: fixed;
             left: -9999px;
             top: 0;
-            width: 600px;
+            width: ${cardWidth}px;
             height: ${cardHeight}px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: white;
-            padding: 25px;
+            padding: 30px;
             box-sizing: border-box;
         `;
 
@@ -4125,7 +4129,7 @@ async function exportCrewCard() {
 
         // Capture with html2canvas
         const canvas = await html2canvas(card, {
-            width: 600,
+            width: cardWidth,
             height: cardHeight,
             scale: 2,
             backgroundColor: null,
