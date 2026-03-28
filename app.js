@@ -184,6 +184,54 @@ function setupEarlyAccess() {
     input?.addEventListener('input', () => {
         errorMsg.classList.remove('visible');
     });
+    
+    // Waitlist form submission
+    const waitlistForm = document.getElementById('waitlistForm');
+    const waitlistEmail = document.getElementById('waitlistEmail');
+    const waitlistSuccess = document.getElementById('waitlistSuccess');
+    
+    waitlistForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = waitlistEmail.value.trim();
+        
+        if (!email) return;
+        
+        // Disable form while submitting
+        const submitBtn = waitlistForm.querySelector('.waitlist-submit');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Joining...';
+        
+        try {
+            // Submit to Formspree
+            const response = await fetch('https://formspree.io/f/mqegeeap', {
+                method: 'POST',
+                body: JSON.stringify({
+                    email: email,
+                    type: 'waitlist',
+                    source: 'early_access_modal',
+                    timestamp: new Date().toISOString()
+                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                // Show success message
+                waitlistForm.style.display = 'none';
+                waitlistSuccess.classList.add('visible');
+                trackEvent('waitlist_signup', { source: 'early_access_modal' });
+            } else {
+                throw new Error('Submission failed');
+            }
+        } catch (error) {
+            console.error('Waitlist submission error:', error);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Join Waitlist';
+            showNotification('Something went wrong. Please try again.', 'error');
+        }
+    });
 }
 
 function isEarlyAccessUnlocked() {

@@ -736,7 +736,25 @@
                 <button type="submit" class="early-access-submit">Unlock</button>
             </form>
             <p class="early-access-error" id="earlyAccessError">Invalid code. Please try again.</p>
-            <p class="early-access-hint">Don't have a code? Try the demo or browse popular races!</p>
+            
+            <div class="early-access-divider">
+                <span>or</span>
+            </div>
+            
+            <div class="early-access-waitlist">
+                <p class="waitlist-title">Don't have a code?</p>
+                <form class="waitlist-form" id="waitlistForm">
+                    <input type="email" id="waitlistEmail" placeholder="your@email.com" required>
+                    <button type="submit" class="waitlist-submit">Join Waitlist</button>
+                </form>
+                <p class="waitlist-success" id="waitlistSuccess">🎉 You're on the list! We'll send your code soon.</p>
+            </div>
+            
+            <a href="https://instagram.com/daniel.runs.trails" target="_blank" class="early-access-instagram">
+                <span class="instagram-icon">📷</span> Follow @daniel.runs.trails for instant codes
+            </a>
+            
+            <p class="early-access-hint">Or try the demo and browse popular races below!</p>
             <button id="earlyAccessClose" class="early-access-close">✕</button>
         </div>
     </div>
