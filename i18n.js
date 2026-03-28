@@ -37,6 +37,13 @@ const TRANSLATIONS = {
         'beta.stableHint': "Don't have a password? Visit the",
         'beta.stableLink': 'stable version',
         
+        // Early access modal
+        'earlyAccess.title': 'Early Access',
+        'earlyAccess.description': 'Unlock full race strategy for your GPX file.',
+        'earlyAccess.placeholder': 'Enter access code',
+        'earlyAccess.unlock': 'Unlock',
+        'earlyAccess.error': 'Invalid code. Please try again.',
+        
         // Hero section
         'hero.estimatedFinish': 'Estimated Finish Time',
         'hero.runnerLevel': 'Runner Level:',
@@ -291,6 +298,13 @@ const TRANSLATIONS = {
         'beta.error': 'Falsches Passwort',
         'beta.stableHint': 'Kein Passwort? Besuche die',
         'beta.stableLink': 'stabile Version',
+        
+        // Early access modal
+        'earlyAccess.title': 'Early Access',
+        'earlyAccess.description': 'Schalte die volle Rennstrategie für deine GPX-Datei frei.',
+        'earlyAccess.placeholder': 'Zugangscode eingeben',
+        'earlyAccess.unlock': 'Freischalten',
+        'earlyAccess.error': 'Ungültiger Code. Bitte versuche es erneut.',
         
         // Hero section
         'hero.estimatedFinish': 'Geschätzte Zielzeit',

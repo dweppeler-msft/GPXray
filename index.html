@@ -848,13 +848,13 @@
     <div class="early-access-modal" id="earlyAccessModal">
         <div class="early-access-content">
             <div class="early-access-icon">🔐</div>
-            <h2>Early Access</h2>
-            <p>GPXray is currently in private beta. Enter your access code to unlock GPX upload.</p>
+            <h2 data-i18n="earlyAccess.title">Early Access</h2>
+            <p data-i18n="earlyAccess.description">Unlock full race strategy for your GPX file.</p>
             <form class="early-access-form" id="earlyAccessForm">
-                <input type="text" id="earlyAccessCode" placeholder="Enter access code" autocomplete="off">
-                <button type="submit" class="early-access-submit">Unlock</button>
+                <input type="text" id="earlyAccessCode" data-i18n-placeholder="earlyAccess.placeholder" placeholder="Enter access code" autocomplete="off">
+                <button type="submit" class="early-access-submit" data-i18n="earlyAccess.unlock">Unlock</button>
             </form>
-            <p class="early-access-error" id="earlyAccessError">Invalid code. Please try again.</p>
+            <p class="early-access-error" id="earlyAccessError" data-i18n="earlyAccess.error">Invalid code. Please try again.</p>
             
             <div class="early-access-divider">
                 <span>or</span>
