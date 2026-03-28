@@ -193,6 +193,10 @@ const raceDatabase = [
     { id: 'ret-44', name: 'Rureifel Trail RET 44', country: '🇩🇪', distance: 46, elevation: 1200, category: 'marathon', gpxUrl: 'races/rureifel-trail-2026-ret44.gpx', available: true },
     { id: 'ret-77', name: 'Rureifel Trail RET 77', country: '🇩🇪', distance: 76, elevation: 2000, category: 'marathon', gpxUrl: 'races/rureifel-trail-2026-ret77.gpx', available: true },
     
+    // LOWA Ultratrail Fränkische Schweiz (Germany)
+    { id: 'lowa-speedtrail', name: 'LOWA Ultratrail Fränkische Schweiz - Speedtrail', country: '🇩🇪', distance: 33, elevation: 1100, category: 'short', gpxUrl: 'races/LOWA-Ultratrail-Fraenkische-Schweiz_SPEEDTRAIL-33km_032025.gpx', available: true },
+    { id: 'lowa-ultratrail', name: 'LOWA Ultratrail Fränkische Schweiz - Ultratrail', country: '🇩🇪', distance: 66, elevation: 2200, category: 'marathon', gpxUrl: 'races/LOWA-Ultratrail-Fraenkische-Schweiz_ULTRATRAIL-66km_032025.gpx', available: true },
+    
     // ===== COMING SOON =====
     
     // Ultra Trail (100km+)
