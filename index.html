@@ -245,18 +245,19 @@
                         <span class="hero-metric-icon">⬇️</span>
                         <div class="hero-metric-content">
                             <span class="hero-metric-label">
-                                Descent Load
+                                Downhill Load
                                 <span class="info-tooltip" tabindex="0">
                                     ⓘ
                                     <span class="info-tooltip-content">
-                                        <strong>Dynamic Descent Load</strong><br>
-                                        Predicts downhill pace loss from quad fatigue.<br><br>
-                                        <em>Fatigue ratio = load ÷ your DFT</em><br><br>
-                                        <strong>Pace impact:</strong><br>
-                                        • &lt;0.8 = No impact<br>
-                                        • 0.8-1.0 = +5-15 sec/km<br>
-                                        • 1.0-1.2 = +15-30 sec/km<br>
-                                        • &gt;1.2 = +30-60 sec/km ⚠️
+                                        <strong>Descent Load (DDL/km)</strong><br>
+                                        Measures downhill stress (steepness + time + surface).<br><br>
+                                        We use cumulative DDL to estimate <strong>downhill pace loss</strong>.<br><br>
+                                        <em>Fatigue ratio = cumulative DDL ÷ DFT</em><br><br>
+                                        <strong>Pace loss on descents:</strong><br>
+                                        • &lt;0.8: none<br>
+                                        • 0.8-1.0: +5-15 sec/km<br>
+                                        • 1.0-1.2: +15-30 sec/km<br>
+                                        • &gt;1.2: +30-60 sec/km
                                     </span>
                                 </span>
                             </span>
@@ -279,8 +280,8 @@
                 <div class="ddl-explainer" id="ddlExplainer">
                     <div class="ddl-explainer-content">
                         <button class="ddl-explainer-close" id="ddlExplainerClose">✕</button>
-                        <h4>🧠 Dynamic Descent Load</h4>
-                        <p class="ddl-tagline">Predicts how much slower your downhills get as quads fatigue.</p>
+                        <h4>⬇️ Dynamic Descent Load → Pace Loss</h4>
+                        <p class="ddl-tagline">DDL builds up as you descend. When cumulative DDL approaches your DFT, quads fatigue → downhill pace drops.</p>
                         
                         <div class="ddl-comparison">
                             <div class="ddl-example good">
@@ -289,15 +290,20 @@
                                 <span class="ddl-example-result">→ No pace loss</span>
                             </div>
                             <div class="ddl-example bad">
-                                <span class="ddl-example-label">Ratio &gt;1.2</span>
-                                <span class="ddl-example-detail">Severe fatigue</span>
-                                <span class="ddl-example-result">→ +30-60 sec/km ⚠️</span>
+                                <span class="ddl-example-label">Ratio &gt;1.0</span>
+                                <span class="ddl-example-detail">Late race fatigue</span>
+                                <span class="ddl-example-result">→ +15-30 sec/km</span>
                             </div>
                         </div>
                         
-                        <p class="ddl-formula">paceLoss = basePace × (1 + max(0, ratio–0.8)²) − basePace</p>
+                        <p class="ddl-takeaway">💡 <strong>DFT = your downhill fatigue threshold</strong> (depends on runner level). Change level above to personalize.</p>
                         
-                        <p class="ddl-takeaway">💡 <strong>DFT varies by level:</strong> Beginner=6k, Intermediate=9k, Advanced=12k, Elite=15k. Change your level to see personalized predictions.</p>
+                        <details class="ddl-formula-details">
+                            <summary>Show formula</summary>
+                            <p class="ddl-formula">paceLoss = basePace × (1 + max(0, ratio–0.8)²) − basePace</p>
+                        </details>
+                        
+                        <p class="ddl-disclaimer"><em>This is a heuristic model, not medical advice.</em></p>
                     </div>
                 </div>
                 
