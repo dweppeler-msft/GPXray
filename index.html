@@ -479,13 +479,13 @@
             </div>
             
             <div class="mode-selector">
-                <button type="button" class="mode-btn active" id="targetModeBtn">Target Time</button>
+                <button type="button" class="mode-btn" id="targetModeBtn">Target Time</button>
                 <button type="button" class="mode-btn" id="itraModeBtn">ITRA Index</button>
-                <button type="button" class="mode-btn" id="manualModeBtn">Manual Pace</button>
+                <button type="button" class="mode-btn active" id="manualModeBtn">Manual Pace</button>
             </div>
             
             <!-- Manual Mode -->
-            <div id="manualMode" class="pace-mode" style="display: none;">
+            <div id="manualMode" class="pace-mode">
                 <p class="pace-description">Set your target pace for different terrain types. Pace is in minutes per kilometer (min/km).</p>
                 
                 <div class="pace-inputs">
@@ -531,7 +531,7 @@
             </div>
             
             <!-- Target Time Mode -->
-            <div id="targetMode" class="pace-mode">
+            <div id="targetMode" class="pace-mode" style="display: none;">
                 <p class="pace-description">Enter your target finish time and adjust the pace ratios for different terrain.</p>
                 
                 <div class="target-time-input">
