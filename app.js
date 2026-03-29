@@ -5181,6 +5181,97 @@ function downloadCrewCard(canvas, fileName) {
 
 let currentRaceConfig = null;
 
+// Show race code gate for protected race pages
+function showRaceCodeGate(raceId, raceConfig) {
+    const raceGate = document.getElementById('raceGate');
+    const mainContent = document.getElementById('mainContent');
+    const raceGateTitle = document.getElementById('raceGateTitle');
+    
+    if (!raceGate) return;
+    
+    // Hide main content
+    if (mainContent) mainContent.style.display = 'none';
+    
+    // Update title with race name
+    if (raceGateTitle) {
+        raceGateTitle.textContent = `Enter access code for ${raceConfig.name}`;
+    }
+    
+    // Show race gate
+    raceGate.style.display = 'flex';
+    
+    // Focus input
+    const codeInput = document.getElementById('raceCodeInput');
+    if (codeInput) {
+        codeInput.focus();
+        
+        // Handle enter key
+        codeInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                validateRaceCode(raceId, raceConfig);
+            }
+        });
+    }
+    
+    // Handle submit button
+    const submitBtn = document.getElementById('raceCodeSubmit');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', () => validateRaceCode(raceId, raceConfig));
+    }
+}
+
+// Validate race access code
+function validateRaceCode(raceId, raceConfig) {
+    const codeInput = document.getElementById('raceCodeInput');
+    const errorEl = document.getElementById('raceCodeError');
+    
+    if (!codeInput || !raceConfig.accessCode) return;
+    
+    const enteredCode = codeInput.value.trim().toUpperCase();
+    const validCode = raceConfig.accessCode.toUpperCase();
+    
+    if (enteredCode === validCode) {
+        // Store valid code
+        localStorage.setItem(`gpxray-race-${raceId}`, enteredCode);
+        
+        // Hide gate and reload to show race page
+        const raceGate = document.getElementById('raceGate');
+        if (raceGate) raceGate.style.display = 'none';
+        
+        // Continue with race mode initialization
+        currentRaceConfig = raceConfig;
+        initRaceModeContent(raceConfig);
+    } else {
+        // Show error
+        if (errorEl) {
+            errorEl.style.display = 'block';
+            codeInput.style.borderColor = '#ff6b6b';
+        }
+    }
+}
+
+// Initialize race mode content (called after code validation)
+function initRaceModeContent(raceConfig) {
+    const mainContent = document.getElementById('mainContent');
+    const raceLanding = document.getElementById('raceLanding');
+    const uploadSection = document.querySelector('.upload-section');
+    const introSection = document.querySelector('.intro-section');
+    
+    if (mainContent) mainContent.style.display = 'block';
+    if (raceLanding) raceLanding.style.display = 'block';
+    if (uploadSection) uploadSection.style.display = 'none';
+    if (introSection) introSection.style.display = 'none';
+    
+    // Update page title for SEO
+    document.title = `${raceConfig.name} - Race Strategy | GPXray`;
+    
+    // Populate race landing page
+    populateRaceLanding(raceConfig);
+    
+    // Track race page view
+    trackEvent('race_landing_view', { race_id: raceConfig.id, race_name: raceConfig.name });
+}
+
 function initRaceMode() {
     // Check if races-config.js is loaded
     if (typeof detectRaceMode !== 'function') return;
@@ -5194,25 +5285,33 @@ function initRaceMode() {
         return;
     }
     
+    // Check access code if required
+    if (raceConfig.accessCode) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlCode = urlParams.get('code');
+        const storedCode = localStorage.getItem(`gpxray-race-${raceId}`);
+        
+        // Validate code from URL or localStorage
+        const validCode = raceConfig.accessCode.toUpperCase();
+        const hasValidAccess = (urlCode && urlCode.toUpperCase() === validCode) || 
+                               (storedCode && storedCode.toUpperCase() === validCode);
+        
+        if (!hasValidAccess) {
+            // Show race code gate
+            showRaceCodeGate(raceId, raceConfig);
+            return;
+        }
+        
+        // Store valid code for future visits
+        if (urlCode && urlCode.toUpperCase() === validCode) {
+            localStorage.setItem(`gpxray-race-${raceId}`, urlCode.toUpperCase());
+        }
+    }
+    
     currentRaceConfig = raceConfig;
     
-    // Show race landing, hide upload section
-    const raceLanding = document.getElementById('raceLanding');
-    const uploadSection = document.querySelector('.upload-section');
-    const introSection = document.querySelector('.intro-section');
-    
-    if (raceLanding) raceLanding.style.display = 'block';
-    if (uploadSection) uploadSection.style.display = 'none';
-    if (introSection) introSection.style.display = 'none';
-    
-    // Update page title for SEO
-    document.title = `${raceConfig.name} - Race Strategy | GPXray`;
-    
-    // Populate race landing page
-    populateRaceLanding(raceConfig);
-    
-    // Track race page view
-    trackEvent('race_landing_view', { race_id: raceId, race_name: raceConfig.name });
+    // Initialize race mode content
+    initRaceModeContent(raceConfig);
 }
 
 function populateRaceLanding(config) {

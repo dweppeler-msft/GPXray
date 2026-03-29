@@ -48,6 +48,20 @@
     </script>
 </head>
 <body>
+    <!-- Race Access Code Gate -->
+    <div class="beta-gate race-gate" id="raceGate" style="display: none;">
+        <div class="beta-gate-content">
+            <h1>GPXray</h1>
+            <p id="raceGateTitle">Enter access code for race page</p>
+            <div class="beta-gate-form">
+                <input type="text" id="raceCodeInput" placeholder="Enter access code" autocomplete="off" style="text-transform: uppercase;">
+                <button type="button" id="raceCodeSubmit">Enter</button>
+            </div>
+            <p class="beta-gate-error" id="raceCodeError" style="display: none;">Invalid access code</p>
+            <p class="beta-gate-hint">Contact the race organizer for access, or <a href="/">use GPXray with your own GPX</a></p>
+        </div>
+    </div>
+
     <div class="container" id="mainContent">
         <header>
             <div class="header-content">
