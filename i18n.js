@@ -44,6 +44,7 @@ const TRANSLATIONS = {
         'earlyAccess.placeholder': 'Enter access code',
         'earlyAccess.unlock': 'Unlock',
         'earlyAccess.error': 'Invalid code. Please try again.',
+        'earlyAccess.hint': 'Or run the simulation below to see how it works!',
         
         // Hero section
         'hero.estimatedFinish': 'Estimated Finish Time',
@@ -307,6 +308,7 @@ const TRANSLATIONS = {
         'earlyAccess.placeholder': 'Zugangscode eingeben',
         'earlyAccess.unlock': 'Freischalten',
         'earlyAccess.error': 'Ungültiger Code. Bitte versuche es erneut.',
+        'earlyAccess.hint': 'Oder starte die Simulation unten, um zu sehen wie es funktioniert!',
         
         // Hero section
         'hero.estimatedFinish': 'Geschätzte Zielzeit',
