@@ -178,16 +178,8 @@ function setupFeaturePillTooltips() {
             tooltip.dataset.forPill = pill.dataset.tooltip;
             tooltip.textContent = t(pill.dataset.tooltip);
             
-            // Position below the pill
-            pill.style.position = 'relative';
+            // Append to pill (CSS handles positioning)
             pill.appendChild(tooltip);
-            
-            // Position tooltip centered below pill
-            const pillRect = pill.getBoundingClientRect();
-            tooltip.style.left = '50%';
-            tooltip.style.transform = 'translateX(-50%)';
-            tooltip.style.top = '100%';
-            tooltip.style.marginTop = '8px';
         });
     });
     
