@@ -5097,12 +5097,41 @@ async function exportCrewCard() {
                         // Use exact station km for display
                         const displayDist = useMetric ? station.km : station.km * KM_TO_MILES;
                         
+                        // Calculate leg insights for crew
+                        const stationIndex = sortedStations.indexOf(station);
+                        const prevKm = stationIndex === 0 ? 0 : sortedStations[stationIndex - 1].km;
+                        const legGain = calculateElevationGainBetween(prevKm, station.km);
+                        const legLoss = calculateElevationLossBetween(prevKm, station.km);
+                        const legDist = station.km - prevKm;
+                        
+                        // Parse clock time to check for night
+                        let isNight = false;
+                        if (clockTime) {
+                            const hour = parseInt(clockTime.split(':')[0]);
+                            isNight = hour < 6 || hour >= 20;
+                        }
+                        
+                        // Generate crew insight
+                        let crewInsight = '';
+                        if (legGain > 400) {
+                            crewInsight = `⛰️ After ${Math.round(legGain)}m climb`;
+                        } else if (legLoss > 400) {
+                            crewInsight = `🦵 After ${Math.round(legLoss)}m descent`;
+                        } else if (legDist > 15) {
+                            crewInsight = `🏃 Long ${legDist.toFixed(0)}km leg`;
+                        }
+                        
+                        if (isNight) {
+                            crewInsight = crewInsight ? `${crewInsight} • 🌙 Night` : '🌙 Night arrival';
+                        }
+                        
                         stationData.push({ 
                             dist: displayDist.toFixed(1), 
                             name: aidName, 
                             clockTime,
                             departureTime,
-                            stopMin
+                            stopMin,
+                            crewInsight
                         });
                         addedStations.add(aidName);
                     }
@@ -5208,6 +5237,7 @@ async function exportCrewCard() {
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-size: ${nameSize}; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${stationName}</div>
                         <div style="font-size: ${detailSize}; opacity: 0.8;">${station.dist} ${unitLabel}${station.stopMin > 0 ? ' · ' + station.stopMin + ' min stop' : ''}</div>
+                        ${station.crewInsight ? `<div style="font-size: ${detailSize}; opacity: 0.7; margin-top: 2px; color: #ffd700;">${station.crewInsight}</div>` : ''}
                     </div>
                     <div style="text-align: right; margin-left: 10px;">
                         <div style="font-size: ${timeFontSize}; font-weight: 800;">${timeDisplay}</div>
