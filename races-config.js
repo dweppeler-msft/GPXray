@@ -35,6 +35,20 @@ const RACE_CONFIGS = {
                 description: 'Perfect introduction to trail running'
             },
             {
+                id: 'garmisch',
+                name: 'Garmisch-Partenkirchen Trail',
+                distance: 26,
+                elevation: 1200,
+                gpxUrl: 'races/ZUT_Garmisch_Partenkirchen_Trail.gpx',
+                aidStations: [
+                    { km: 5.2, name: 'VP1 Hammersbach', stopMin: 3 },
+                    { km: 12.8, name: 'VP2 Kreuzeck', stopMin: 5 },
+                    { km: 18.5, name: 'VP3 Hausberg', stopMin: 3 }
+                ],
+                cutoffs: [],
+                description: 'Classic trail through Garmisch-Partenkirchen'
+            },
+            {
                 id: 'mittenwald',
                 name: 'Mittenwald Trail',
                 distance: 43,
