@@ -1799,6 +1799,46 @@ h2 {
     margin-top: 2px;
 }
 
+/* Top Climbs List */
+.hero-metric-climbs {
+    min-width: 180px;
+}
+
+.top-climbs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.top-climb-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+
+.climb-rank {
+    color: #888;
+    font-weight: 500;
+    min-width: 20px;
+}
+
+.top-climb-item:first-child .climb-rank {
+    color: #ffd700;
+}
+
+.climb-location {
+    color: #fff;
+    font-weight: 500;
+}
+
+.climb-gain {
+    color: #00d4ff;
+    font-weight: 600;
+    margin-left: auto;
+}
+
 .hero-metric-insight {
     display: block;
     font-size: 0.75rem;
