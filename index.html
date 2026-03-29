@@ -80,6 +80,25 @@
             </div>
         </section>
 
+        <!-- Race Landing Page (B2B feature - hidden by default) -->
+        <section class="race-landing" id="raceLanding" style="display: none;">
+            <div class="race-landing-header">
+                <div class="race-logo" id="raceLogo"></div>
+                <div class="race-info">
+                    <h2 class="race-name" id="raceName">Race Name</h2>
+                    <p class="race-tagline" id="raceTagline">Race tagline</p>
+                    <p class="race-details" id="raceDetails">
+                        <span class="race-date" id="raceDate"></span>
+                        <span class="race-location" id="raceLocation"></span>
+                    </p>
+                </div>
+            </div>
+            <div class="race-distances" id="raceDistances">
+                <!-- Distance buttons will be populated here -->
+            </div>
+            <p class="race-instruction">Select your distance to create your race strategy</p>
+        </section>
+
         <!-- Feedback Panel -->
         <div class="feedback-overlay" id="feedbackOverlay"></div>
         <aside class="feedback-panel" id="feedbackPanel">
@@ -848,6 +867,7 @@
         </div>
     </div>
 
+    <script src="races-config.js"></script>
     <script src="i18n.js"></script>
     <script src="app.js"></script>
 </body>
