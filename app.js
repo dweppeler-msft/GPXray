@@ -5285,6 +5285,12 @@ function initRaceMode() {
         return;
     }
     
+    // Check if race is hidden (disabled)
+    if (raceConfig.hidden) {
+        console.warn(`Race page disabled: ${raceId}`);
+        return;
+    }
+    
     // Check access code if required
     if (raceConfig.accessCode) {
         const urlParams = new URLSearchParams(window.location.search);
