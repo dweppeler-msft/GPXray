@@ -5111,7 +5111,7 @@ async function exportCrewCard() {
                             isNight = hour < 6 || hour >= 20;
                         }
                         
-                        // Generate crew insight
+                        // Generate crew insight for previous leg
                         let crewInsight = '';
                         if (legGain > 400) {
                             crewInsight = `⛰️ After ${Math.round(legGain)}m climb`;
@@ -5125,18 +5125,85 @@ async function exportCrewCard() {
                             crewInsight = crewInsight ? `${crewInsight} • 🌙 Night` : '🌙 Night arrival';
                         }
                         
+                        // NEW: Calculate additional crew info
+                        // 1. % Complete
+                        const percentComplete = Math.round((station.km / gpxData.totalDistance) * 100);
+                        
+                        // 2. Elevation at station
+                        const stationElevation = Math.round(getElevationAtDistance(station.km));
+                        
+                        // 3. Cumulative D+
+                        const cumulativeGain = Math.round(calculateElevationGainBetween(0, station.km));
+                        
+                        // Store station km for next leg calculation
+                        const stationKm = station.km;
+                        
                         stationData.push({ 
                             dist: displayDist.toFixed(1), 
                             name: aidName, 
                             clockTime,
                             departureTime,
                             stopMin,
-                            crewInsight
+                            crewInsight,
+                            percentComplete,
+                            stationElevation,
+                            cumulativeGain,
+                            stationKm
                         });
                         addedStations.add(aidName);
                     }
                 }
             });
+        }
+        
+        // Calculate time to next station and next leg info for each station
+        for (let i = 0; i < stationData.length; i++) {
+            const station = stationData[i];
+            const nextStation = stationData[i + 1];
+            
+            if (nextStation) {
+                // 4. Time to next station
+                const depTime = station.departureTime || station.clockTime;
+                const arrTime = nextStation.clockTime;
+                if (depTime && arrTime) {
+                    const [depH, depM] = depTime.split(':').map(Number);
+                    const [arrH, arrM] = arrTime.split(':').map(Number);
+                    let diffMins = (arrH * 60 + arrM) - (depH * 60 + depM);
+                    if (diffMins < 0) diffMins += 24 * 60; // Handle day rollover
+                    const hours = Math.floor(diffMins / 60);
+                    const mins = diffMins % 60;
+                    station.timeToNext = hours > 0 ? `${hours}h${mins > 0 ? mins + 'm' : ''}` : `${mins}m`;
+                }
+                
+                // 5. Next leg description
+                const nextGain = calculateElevationGainBetween(station.stationKm, nextStation.stationKm);
+                const nextLoss = calculateElevationLossBetween(station.stationKm, nextStation.stationKm);
+                const nextDist = nextStation.stationKm - station.stationKm;
+                
+                if (nextGain > 400 && nextGain > nextLoss) {
+                    station.nextLeg = `↗️ ${Math.round(nextGain)}m climb ahead`;
+                } else if (nextLoss > 400 && nextLoss > nextGain) {
+                    station.nextLeg = `↘️ ${Math.round(nextLoss)}m descent ahead`;
+                } else if (nextDist > 15) {
+                    station.nextLeg = `➡️ ${nextDist.toFixed(0)}km to next`;
+                } else {
+                    station.nextLeg = `➡️ ${nextDist.toFixed(1)}km to next`;
+                }
+            } else {
+                // Last station before finish
+                const finishKm = gpxData.totalDistance;
+                const toFinish = finishKm - station.stationKm;
+                const finishGain = calculateElevationGainBetween(station.stationKm, finishKm);
+                const finishLoss = calculateElevationLossBetween(station.stationKm, finishKm);
+                
+                if (finishGain > 300 && finishGain > finishLoss) {
+                    station.nextLeg = `🏁 ${toFinish.toFixed(1)}km + ${Math.round(finishGain)}m to finish`;
+                } else if (finishLoss > 300 && finishLoss > finishGain) {
+                    station.nextLeg = `🏁 ${toFinish.toFixed(1)}km ↘️ to finish`;
+                } else {
+                    station.nextLeg = `🏁 ${toFinish.toFixed(1)}km to finish`;
+                }
+            }
         }
 
         // Dynamic sizing based on station count
@@ -5179,7 +5246,8 @@ async function exportCrewCard() {
         // Use 9:16 aspect ratio (social media friendly) with width of 540px
         const cardWidth = 540;
         const targetHeight = 960; // 540 * 16/9 = 960 for 9:16 ratio
-        const rowHeightEstimate = stationCount <= 4 ? 70 : (stationCount <= 7 ? 58 : 50);
+        // Increased row heights to accommodate new info lines (elevation, next leg, etc.)
+        const rowHeightEstimate = stationCount <= 4 ? 110 : (stationCount <= 7 ? 95 : 85);
         const headerHeight = stationCount <= 4 ? 140 : (stationCount <= 7 ? 120 : 100);
         const footerHeight = 80;
         const contentHeight = headerHeight + (stationData.length + 1) * rowHeightEstimate + footerHeight + 60;
@@ -5231,13 +5299,20 @@ async function exportCrewCard() {
             const timeDisplay = hasStop ? `${arrivalTime} - ${departureTime}` : arrivalTime;
             const timeFontSize = hasStop ? (stationCount <= 4 ? '20px' : (stationCount <= 7 ? '17px' : '15px')) : timeSize;
             
+            // Build detail lines with new info
+            const detailLine1 = `${station.dist} ${unitLabel} · ${station.percentComplete}%${station.stopMin > 0 ? ' · ' + station.stopMin + ' min' : ''}`;
+            const detailLine2 = `📍 ${station.stationElevation}m · D+ ${station.cumulativeGain}m`;
+            const nextLegLine = station.nextLeg + (station.timeToNext ? ` · ~${station.timeToNext}` : '');
+            
             return `
                 <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: ${rowGap};">
                     <div style="font-size: ${iconSize}; margin-right: 12px;">📍</div>
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-size: ${nameSize}; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${stationName}</div>
-                        <div style="font-size: ${detailSize}; opacity: 0.8;">${station.dist} ${unitLabel}${station.stopMin > 0 ? ' · ' + station.stopMin + ' min stop' : ''}</div>
-                        ${station.crewInsight ? `<div style="font-size: ${nameSize}; font-weight: 600; margin-top: 4px; color: #ffd700; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${station.crewInsight}</div>` : ''}
+                        <div style="font-size: ${detailSize}; opacity: 0.8;">${detailLine1}</div>
+                        <div style="font-size: ${detailSize}; opacity: 0.7;">${detailLine2}</div>
+                        ${station.crewInsight ? `<div style="font-size: ${detailSize}; font-weight: 600; margin-top: 2px; color: #ffd700;">${station.crewInsight}</div>` : ''}
+                        <div style="font-size: ${detailSize}; opacity: 0.8; margin-top: 2px; color: #90EE90;">${nextLegLine}</div>
                     </div>
                     <div style="text-align: right; margin-left: 10px;">
                         <div style="font-size: ${timeFontSize}; font-weight: 800;">${timeDisplay}</div>
@@ -5249,12 +5324,14 @@ async function exportCrewCard() {
 
         // Add finish row
         const finishTimeDisplay = finishClockTime ? finishClockTime.substring(0, 5) : finishClockTime;
+        const totalElevGain = Math.round(calculateElevationGainBetween(0, gpxData.totalDistance));
         stationsHtml += `
             <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(76,175,80,0.4); border-radius: 10px; border: 2px solid rgba(76,175,80,0.8);">
                 <div style="font-size: ${iconSize}; margin-right: 12px;">🏁</div>
                 <div style="flex: 1; min-width: 0;">
                     <div style="font-size: ${nameSize}; font-weight: 700; margin-bottom: 2px;">FINISH</div>
-                    <div style="font-size: ${detailSize}; opacity: 0.8;">${distance.toFixed(1)} ${unitLabel} · ${totalTime.split('(')[0].trim()}</div>
+                    <div style="font-size: ${detailSize}; opacity: 0.8;">${distance.toFixed(1)} ${unitLabel} · 100%</div>
+                    <div style="font-size: ${detailSize}; opacity: 0.7;">Total D+ ${totalElevGain}m · ${totalTime.split('(')[0].trim()}</div>
                 </div>
                 <div style="text-align: right; margin-left: 10px;">
                     <div style="font-size: ${timeSize}; font-weight: 800;">${finishTimeDisplay}</div>
