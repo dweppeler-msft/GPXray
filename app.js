@@ -149,10 +149,56 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEarlyAccess();
     updateEarlyAccessUI();
     setupRunnerLevel();
+    setupFeaturePillTooltips();
     
     // Check for race landing page mode
     initRaceMode();
 });
+
+// Feature Pill Tooltips
+function setupFeaturePillTooltips() {
+    // Add click handlers to all feature pills with data-tooltip
+    document.querySelectorAll('.feature-pill[data-tooltip]').forEach(pill => {
+        pill.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            // Remove any existing tooltip
+            const existing = document.querySelector('.feature-pill-tooltip');
+            if (existing) {
+                existing.remove();
+                // If clicking the same pill, just close
+                if (existing.dataset.forPill === pill.dataset.tooltip) {
+                    return;
+                }
+            }
+            
+            // Create tooltip element
+            const tooltip = document.createElement('div');
+            tooltip.className = 'feature-pill-tooltip';
+            tooltip.dataset.forPill = pill.dataset.tooltip;
+            tooltip.textContent = t(pill.dataset.tooltip);
+            
+            // Position below the pill
+            pill.style.position = 'relative';
+            pill.appendChild(tooltip);
+            
+            // Position tooltip centered below pill
+            const pillRect = pill.getBoundingClientRect();
+            tooltip.style.left = '50%';
+            tooltip.style.transform = 'translateX(-50%)';
+            tooltip.style.top = '100%';
+            tooltip.style.marginTop = '8px';
+        });
+    });
+    
+    // Close tooltip when clicking elsewhere
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.feature-pill')) {
+            const tooltip = document.querySelector('.feature-pill-tooltip');
+            if (tooltip) tooltip.remove();
+        }
+    });
+}
 
 // Language Selector (Toggle Buttons)
 function setupLanguageSelector() {
