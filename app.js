@@ -5237,7 +5237,7 @@ async function exportCrewCard() {
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-size: ${nameSize}; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${stationName}</div>
                         <div style="font-size: ${detailSize}; opacity: 0.8;">${station.dist} ${unitLabel}${station.stopMin > 0 ? ' · ' + station.stopMin + ' min stop' : ''}</div>
-                        ${station.crewInsight ? `<div style="font-size: ${detailSize}; opacity: 0.7; margin-top: 2px; color: #ffd700;">${station.crewInsight}</div>` : ''}
+                        ${station.crewInsight ? `<div style="font-size: ${nameSize}; font-weight: 600; margin-top: 4px; color: #ffd700; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${station.crewInsight}</div>` : ''}
                     </div>
                     <div style="text-align: right; margin-left: 10px;">
                         <div style="font-size: ${timeFontSize}; font-weight: 800;">${timeDisplay}</div>
