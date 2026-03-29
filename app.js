@@ -552,7 +552,11 @@ async function loadDemoGpx() {
         demoBtn.disabled = true;
         demoBtn.textContent = t('btn.loading');
         
-        const response = await fetch('races/demo.gpx');
+        // Construct absolute URL from current origin
+        const demoUrl = new URL('races/demo.gpx', window.location.href).href;
+        console.log('Fetching demo from:', demoUrl);
+        
+        const response = await fetch(demoUrl);
         console.log('Demo fetch response:', response.status, response.statusText);
         if (!response.ok) {
             throw new Error(`Failed to load demo file: ${response.status} ${response.statusText}`);
