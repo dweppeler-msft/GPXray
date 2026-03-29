@@ -553,11 +553,13 @@ async function loadDemoGpx() {
         demoBtn.textContent = t('btn.loading');
         
         const response = await fetch('races/demo.gpx');
+        console.log('Demo fetch response:', response.status, response.statusText);
         if (!response.ok) {
-            throw new Error('Failed to load demo file');
+            throw new Error(`Failed to load demo file: ${response.status} ${response.statusText}`);
         }
         
         const gpxContent = await response.text();
+        console.log('GPX content length:', gpxContent.length);
         currentRouteName = 'ZUT Garmisch-Partenkirchen Trail';
         isDemoMode = true; // Mark as demo mode
         parseGPX(gpxContent);
@@ -578,6 +580,7 @@ async function loadDemoGpx() {
         
     } catch (error) {
         console.error('Error loading demo:', error);
+        console.error('Error stack:', error.stack);
         alert('Failed to load demo GPX file.');
         demoBtn.textContent = originalText;
         demoBtn.disabled = false;
