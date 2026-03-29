@@ -6,8 +6,8 @@ const RACE_CONFIGS = {
         id: 'zut',
         name: 'Zugspitz Ultratrail',
         shortName: 'ZUT',
-        year: 2025,
-        date: '2025-06-20',
+        year: 2026,
+        date: '2026-06-19',
         location: 'Garmisch-Partenkirchen, Germany',
         website: 'https://www.zugspitz-ultratrail.com',
         logo: null, // Optional: 'races/zut-logo.png'
