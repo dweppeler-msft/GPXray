@@ -4270,6 +4270,7 @@ function setupExport() {
     document.getElementById('exportPdf').addEventListener('click', exportToPdf);
     document.getElementById('exportShareCard').addEventListener('click', exportShareCard);
     document.getElementById('exportCrewCard')?.addEventListener('click', exportCrewCard);
+    document.getElementById('exportCrewPdf')?.addEventListener('click', exportCrewPdf);
 }
 
 function exportToCsv() {
@@ -5428,6 +5429,354 @@ function downloadCrewCard(canvas, fileName) {
     
     // Track export
     trackEvent('export_crew_card', { race_name: currentRouteName || 'unknown' });
+}
+
+// Crew PDF Export - A4 printable schedule for crew/family
+async function exportCrewPdf() {
+    if (!gpxData || segments.length === 0) {
+        alert('Please load a GPX file and calculate your race strategy first.');
+        return;
+    }
+
+    if (aidStations.length === 0) {
+        alert('Please add AID stations first. Your crew needs to know where to meet you!');
+        return;
+    }
+
+    const btn = document.getElementById('exportCrewPdf');
+    const originalText = btn.textContent;
+    btn.textContent = t('btn.generating');
+    btn.disabled = true;
+
+    try {
+        // Get race info
+        const unitLabel = useMetric ? 'km' : 'mi';
+        const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
+        const totalTime = document.getElementById('totalTime')?.textContent || '-';
+        const dateInput = document.getElementById('raceStartDate');
+        const timeInput = document.getElementById('raceStartTime');
+        const raceDate = dateInput?.value || '';
+        const raceTime = timeInput?.value || '06:00';
+
+        // Format date nicely
+        let formattedDate = '';
+        if (raceDate) {
+            const d = new Date(raceDate);
+            formattedDate = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        }
+
+        // Get finish clock time
+        let finishClockTime = '';
+        const splitsTable = document.getElementById('splitsTable');
+        if (splitsTable) {
+            const rows = splitsTable.querySelectorAll('tbody tr');
+            for (const row of rows) {
+                const cells = row.cells;
+                if (cells[0] && cells[0].textContent.includes('Finish')) {
+                    finishClockTime = cells[5]?.textContent?.trim() || '';
+                    break;
+                }
+            }
+        }
+
+        // Build station data (same logic as exportCrewCard)
+        let stationData = [];
+        const addedStations = new Set();
+        
+        if (splitsTable) {
+            const rows = splitsTable.querySelectorAll('tbody tr');
+            const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
+            
+            sortedStations.forEach(station => {
+                const aidName = station.name;
+                if (addedStations.has(aidName)) return;
+                
+                for (const row of rows) {
+                    const cells = row.cells;
+                    if (!cells[0]) continue;
+                    
+                    const segmentText = cells[0]?.textContent?.trim() || '';
+                    if (segmentText.includes(aidName) || segmentText.endsWith(aidName)) {
+                        const clockTime = cells[5]?.textContent?.trim() || '';
+                        let stopMin = 0;
+                        let departureTime = '';
+                        
+                        const stopCell = cells[1]?.textContent?.trim() || '';
+                        const stopMatch = stopCell.match(/(\d+)\s*min/i);
+                        if (stopMatch) {
+                            stopMin = parseInt(stopMatch[1]);
+                            if (clockTime && stopMin > 0) {
+                                const [h, m] = clockTime.split(':').map(Number);
+                                let mins = m + stopMin;
+                                let hours = h;
+                                hours += Math.floor(mins / 60);
+                                mins = mins % 60;
+                                hours = hours % 24;
+                                departureTime = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+                            }
+                        }
+                        
+                        const displayDist = useMetric ? station.km : station.km * KM_TO_MILES;
+                        
+                        // Calculate leg insights
+                        const stationIndex = sortedStations.indexOf(station);
+                        const prevKm = stationIndex === 0 ? 0 : sortedStations[stationIndex - 1].km;
+                        const legGain = calculateElevationGainBetween(prevKm, station.km);
+                        const legLoss = calculateElevationLossBetween(prevKm, station.km);
+                        const legDist = station.km - prevKm;
+                        
+                        let isNight = false;
+                        if (clockTime) {
+                            const hour = parseInt(clockTime.split(':')[0]);
+                            isNight = hour < 6 || hour >= 20;
+                        }
+                        
+                        let crewInsight = '';
+                        if (legGain > 400) {
+                            crewInsight = `After ${Math.round(legGain)}m climb`;
+                        } else if (legLoss > 400) {
+                            crewInsight = `After ${Math.round(legLoss)}m descent`;
+                        } else if (legDist > 15) {
+                            crewInsight = `Long ${legDist.toFixed(0)}km leg`;
+                        }
+                        if (isNight) {
+                            crewInsight = crewInsight ? `${crewInsight}, Night arrival` : 'Night arrival';
+                        }
+                        
+                        const percentComplete = Math.round((station.km / gpxData.totalDistance) * 100);
+                        const stationElevation = Math.round(getElevationAtDistance(station.km));
+                        const cumulativeGain = Math.round(calculateElevationGainBetween(0, station.km));
+                        
+                        stationData.push({ 
+                            dist: displayDist.toFixed(1), 
+                            name: aidName, 
+                            clockTime,
+                            departureTime,
+                            stopMin,
+                            crewInsight,
+                            percentComplete,
+                            stationElevation,
+                            cumulativeGain,
+                            stationKm: station.km
+                        });
+                        addedStations.add(aidName);
+                    }
+                }
+            });
+        }
+        
+        // Calculate time to next and next leg info
+        for (let i = 0; i < stationData.length; i++) {
+            const station = stationData[i];
+            const nextStation = stationData[i + 1];
+            
+            if (nextStation) {
+                const depTime = station.departureTime || station.clockTime;
+                const arrTime = nextStation.clockTime;
+                if (depTime && arrTime) {
+                    const [depH, depM] = depTime.split(':').map(Number);
+                    const [arrH, arrM] = arrTime.split(':').map(Number);
+                    let diffMins = (arrH * 60 + arrM) - (depH * 60 + depM);
+                    if (diffMins < 0) diffMins += 24 * 60;
+                    const hours = Math.floor(diffMins / 60);
+                    const mins = diffMins % 60;
+                    station.timeToNext = hours > 0 ? `${hours}h${mins > 0 ? mins + 'm' : ''}` : `${mins}m`;
+                }
+                
+                const nextGain = calculateElevationGainBetween(station.stationKm, nextStation.stationKm);
+                const nextLoss = calculateElevationLossBetween(station.stationKm, nextStation.stationKm);
+                const nextDist = nextStation.stationKm - station.stationKm;
+                
+                if (nextGain > 400 && nextGain > nextLoss) {
+                    station.nextLeg = `${Math.round(nextGain)}m climb ahead`;
+                } else if (nextLoss > 400 && nextLoss > nextGain) {
+                    station.nextLeg = `${Math.round(nextLoss)}m descent ahead`;
+                } else {
+                    station.nextLeg = `${nextDist.toFixed(1)}km to next`;
+                }
+            } else {
+                const finishKm = gpxData.totalDistance;
+                const toFinish = finishKm - station.stationKm;
+                station.nextLeg = `${toFinish.toFixed(1)}km to finish`;
+            }
+        }
+
+        // Generate PDF using jsPDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 15;
+        let y = margin;
+
+        // Header background
+        doc.setFillColor(102, 126, 234);
+        doc.rect(0, 0, pageWidth, 35, 'F');
+        
+        // Title
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.setTextColor(255, 255, 255);
+        const routeName = currentRouteName || 'Race';
+        doc.text('CREW SCHEDULE', pageWidth / 2, 15, { align: 'center' });
+        
+        doc.setFontSize(14);
+        doc.text(routeName, pageWidth / 2, 24, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        const headerInfo = formattedDate ? `${formattedDate} • Start: ${raceTime}` : `Start: ${raceTime}`;
+        doc.text(headerInfo, pageWidth / 2, 31, { align: 'center' });
+        
+        y = 45;
+
+        // Race summary
+        doc.setTextColor(60, 60, 60);
+        doc.setFontSize(11);
+        const totalElevGain = Math.round(calculateElevationGainBetween(0, gpxData.totalDistance));
+        doc.text(`Distance: ${distance.toFixed(1)} ${unitLabel} • Elevation: +${totalElevGain}m • Est. Time: ${totalTime.split('(')[0].trim()}`, pageWidth / 2, y, { align: 'center' });
+        
+        y += 12;
+
+        // Table header
+        doc.setFillColor(240, 240, 240);
+        doc.rect(margin, y, pageWidth - 2 * margin, 10, 'F');
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(60, 60, 60);
+        
+        const colX = {
+            station: margin + 3,
+            dist: margin + 55,
+            elev: margin + 75,
+            arrival: margin + 100,
+            departure: margin + 125,
+            notes: margin + 150
+        };
+        
+        doc.text('AID STATION', colX.station, y + 7);
+        doc.text('DIST', colX.dist, y + 7);
+        doc.text('ELEV', colX.elev, y + 7);
+        doc.text('ARRIVAL', colX.arrival, y + 7);
+        doc.text('DEPART', colX.departure, y + 7);
+        doc.text('NOTES', colX.notes, y + 7);
+        
+        y += 12;
+
+        // Station rows
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        
+        stationData.forEach((station, index) => {
+            // Check if we need a new page
+            if (y > pageHeight - 30) {
+                doc.addPage();
+                y = margin;
+            }
+            
+            // Alternating row background
+            if (index % 2 === 0) {
+                doc.setFillColor(250, 250, 255);
+                doc.rect(margin, y - 4, pageWidth - 2 * margin, 14, 'F');
+            }
+            
+            doc.setTextColor(40, 40, 40);
+            
+            // Station name (bold)
+            doc.setFont('helvetica', 'bold');
+            let stationName = station.name;
+            if (stationName.length > 20) {
+                stationName = stationName.substring(0, 18) + '...';
+            }
+            doc.text(stationName, colX.station, y);
+            
+            doc.setFont('helvetica', 'normal');
+            
+            // Distance and %
+            doc.text(`${station.dist} ${unitLabel} (${station.percentComplete}%)`, colX.dist, y);
+            
+            // Elevation
+            doc.text(`${station.stationElevation}m`, colX.elev, y);
+            
+            // Arrival time
+            doc.setFont('helvetica', 'bold');
+            doc.text(station.clockTime.substring(0, 5), colX.arrival, y);
+            doc.setFont('helvetica', 'normal');
+            
+            // Departure time
+            if (station.stopMin > 0 && station.departureTime) {
+                doc.text(station.departureTime.substring(0, 5), colX.departure, y);
+            } else {
+                doc.text('-', colX.departure, y);
+            }
+            
+            // Notes column - combine insights
+            let notes = [];
+            if (station.stopMin > 0) notes.push(`${station.stopMin}min stop`);
+            if (station.crewInsight) notes.push(station.crewInsight);
+            if (station.timeToNext) notes.push(`~${station.timeToNext} to next`);
+            
+            const notesText = notes.slice(0, 2).join(', ');
+            doc.setFontSize(8);
+            doc.text(notesText || '-', colX.notes, y);
+            doc.setFontSize(10);
+            
+            y += 14;
+        });
+        
+        // Finish row
+        if (y > pageHeight - 30) {
+            doc.addPage();
+            y = margin;
+        }
+        
+        doc.setFillColor(200, 230, 200);
+        doc.rect(margin, y - 4, pageWidth - 2 * margin, 14, 'F');
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(40, 40, 40);
+        doc.text('FINISH', colX.station, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${distance.toFixed(1)} ${unitLabel} (100%)`, colX.dist, y);
+        doc.text('-', colX.elev, y);
+        doc.setFont('helvetica', 'bold');
+        doc.text(finishClockTime.substring(0, 5), colX.arrival, y);
+        
+        y += 20;
+
+        // Footer
+        if (y > pageHeight - 25) {
+            doc.addPage();
+            y = pageHeight - 20;
+        } else {
+            y = pageHeight - 20;
+        }
+        
+        doc.setFontSize(9);
+        doc.setTextColor(120, 120, 120);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Generated with GPXray • gpxray.run', pageWidth / 2, y, { align: 'center' });
+
+        // Save PDF
+        const fileName = (currentRouteName || 'race').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        doc.save(`${fileName}_crew_schedule.pdf`);
+        
+        // Track export
+        trackEvent('export_crew_pdf', { race_name: currentRouteName || 'unknown' });
+
+    } catch (error) {
+        console.error('Crew PDF generation error:', error);
+        alert('Failed to generate crew PDF. Please try again.');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
 }
 
 // ========================================
