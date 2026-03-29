@@ -167,8 +167,8 @@ const RACE_CONFIGS = {
                 elevation: 913,
                 gpxUrl: 'races/rureifel-trail-2026-ret22.gpx',
                 aidStations: [
-                    { km: 8.4, name: 'VP1', stopMin: 3 },
-                    { km: 15.0, name: 'VP2', stopMin: 3 }
+                    { km: 8.4, name: 'VP1', stopMin: 2 },
+                    { km: 15.0, name: 'VP2', stopMin: 2 }
                 ],
                 cutoffs: [],
                 description: 'Challenging half with steep single trails'
@@ -180,10 +180,10 @@ const RACE_CONFIGS = {
                 elevation: 1853,
                 gpxUrl: 'races/rureifel-trail-2026-ret44.gpx',
                 aidStations: [
-                    { km: 16.3, name: 'VP1', stopMin: 5 },
-                    { km: 26.4, name: 'VP2', stopMin: 5 },
-                    { km: 35.5, name: 'VP3', stopMin: 5 },
-                    { km: 40.9, name: 'VP4', stopMin: 5 }
+                    { km: 16.3, name: 'VP1', stopMin: 3 },
+                    { km: 26.4, name: 'VP2', stopMin: 3 },
+                    { km: 35.5, name: 'VP3', stopMin: 3 },
+                    { km: 40.9, name: 'VP4', stopMin: 3 }
                 ],
                 cutoffs: [],
                 description: 'Your first ultra through the Rureifel'
@@ -195,12 +195,12 @@ const RACE_CONFIGS = {
                 elevation: 2899,
                 gpxUrl: 'races/rureifel-trail-2026-ret77.gpx',
                 aidStations: [
-                    { km: 18.4, name: 'VP1', stopMin: 5 },
-                    { km: 31.6, name: 'VP2', stopMin: 8 },
-                    { km: 47.2, name: 'VP3', stopMin: 8 },
-                    { km: 57.3, name: 'VP4', stopMin: 8 },
-                    { km: 66.4, name: 'VP5', stopMin: 8 },
-                    { km: 71.8, name: 'VP6', stopMin: 5 }
+                    { km: 18.4, name: 'VP1', stopMin: 3 },
+                    { km: 31.6, name: 'VP2', stopMin: 4 },
+                    { km: 47.2, name: 'VP3', stopMin: 4 },
+                    { km: 57.3, name: 'VP4', stopMin: 4 },
+                    { km: 66.4, name: 'VP5', stopMin: 3 },
+                    { km: 71.8, name: 'VP6', stopMin: 3 }
                 ],
                 cutoffs: [],
                 description: 'The ultimate Rureifel adventure with Rursee views'
