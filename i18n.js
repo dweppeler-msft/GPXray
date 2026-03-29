@@ -244,7 +244,7 @@ const TRANSLATIONS = {
         // Button states
         'btn.loading': '⏳ Loading...',
         'btn.demoLoaded': '✅ Preview Loaded!',
-        'btn.generating': '⏳ Generating...'
+        'btn.generating': '⏳ Generating...',
         'btn.creating': '⏳ Creating...',
         'btn.joining': 'Joining...',
         'btn.joinWaitlist': 'Join Waitlist',
@@ -521,7 +521,7 @@ const TRANSLATIONS = {
         // Button states
         'btn.loading': '⏳ Lädt...',
         'btn.demoLoaded': '✅ Vorschau geladen!',
-        'btn.generating': '⏳ Generiere...'
+        'btn.generating': '⏳ Generiere...',
         'btn.creating': '⏳ Erstelle...',
         'btn.joining': 'Beitritt...',
         'btn.joinWaitlist': 'Warteliste beitreten',
