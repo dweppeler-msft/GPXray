@@ -124,11 +124,79 @@ const RACE_CONFIGS = {
                 description: 'The ultimate 100-mile challenge'
             }
         ]
-    }
+    },
     
-    // Add more races here:
-    // 'utmb': { ... },
-    // 'eiger': { ... }
+    'ret': {
+        id: 'ret',
+        name: 'Rureifel Trail',
+        shortName: 'RET',
+        year: 2026,
+        date: '2026-04-18',
+        location: 'Nideggen, Germany',
+        website: 'https://www.rureifel-trail.com',
+        logo: null,
+        tagline: 'Go Nature, Go Rureifel Trail',
+        
+        // Branding colors
+        branding: {
+            primary: '#2d5a27',    // Forest green
+            accent: '#e85d04',     // Orange
+            background: '#1a2e1a'  // Dark green background
+        },
+        
+        // Available distances (sorted by distance)
+        distances: [
+            {
+                id: 'ret11',
+                name: 'RET11',
+                distance: 12,
+                elevation: 444,
+                gpxUrl: 'races/rureifel-trail-2026-ret11.gpx',
+                aidStations: [],
+                cutoffs: [],
+                description: 'Perfect trail running introduction'
+            },
+            {
+                id: 'ret22',
+                name: 'RET22',
+                distance: 22.5,
+                elevation: 807,
+                gpxUrl: 'races/rureifel-trail-2026-ret22.gpx',
+                aidStations: [
+                    { km: 11.0, name: 'VP Obermaubach', stopMin: 3 }
+                ],
+                cutoffs: [],
+                description: 'Challenging half with steep single trails'
+            },
+            {
+                id: 'ret44',
+                name: 'RET44+',
+                distance: 46,
+                elevation: 1828,
+                gpxUrl: 'races/rureifel-trail-2026-ret44.gpx',
+                aidStations: [
+                    { km: 15.0, name: 'VP1 Abenden', stopMin: 5 },
+                    { km: 30.0, name: 'VP2 Obermaubach', stopMin: 8 }
+                ],
+                cutoffs: [],
+                description: 'Your first ultra through the Rureifel'
+            },
+            {
+                id: 'ret77',
+                name: 'RET77',
+                distance: 77,
+                elevation: 2863,
+                gpxUrl: 'races/rureifel-trail-2026-ret77.gpx',
+                aidStations: [
+                    { km: 20.0, name: 'VP1 Heimbach', stopMin: 8 },
+                    { km: 40.0, name: 'VP2 Schmidt', stopMin: 10 },
+                    { km: 55.0, name: 'VP3 Obermaubach', stopMin: 8 }
+                ],
+                cutoffs: [],
+                description: 'The ultimate Rureifel adventure with Rursee views'
+            }
+        ]
+    }
 };
 
 // Get race config by ID
