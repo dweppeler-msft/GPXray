@@ -5219,7 +5219,7 @@ async function exportCrewCard() {
             etaSize = '11px';
             rowGap = '10px';
             headerPadding = '25px';
-        } else if (stationCount <= 7) {
+        } else if (stationCount <= 6) {
             // Medium compact
             rowPadding = '12px 16px';
             iconSize = '24px';
@@ -5229,8 +5229,8 @@ async function exportCrewCard() {
             etaSize = '10px';
             rowGap = '8px';
             headerPadding = '20px';
-        } else {
-            // Compact mode (8+ stations)
+        } else if (stationCount <= 8) {
+            // Compact mode (7-8 stations)
             rowPadding = '10px 14px';
             iconSize = '20px';
             nameSize = '14px';
@@ -5239,6 +5239,16 @@ async function exportCrewCard() {
             etaSize = '9px';
             rowGap = '6px';
             headerPadding = '15px';
+        } else {
+            // Ultra-compact mode (9-10+ stations)
+            rowPadding = '8px 12px';
+            iconSize = '18px';
+            nameSize = '13px';
+            detailSize = '10px';
+            timeSize = '18px';
+            etaSize = '8px';
+            rowGap = '5px';
+            headerPadding = '12px';
         }
 
         // Calculate card height based on number of stations and sizing mode
@@ -5246,8 +5256,8 @@ async function exportCrewCard() {
         const cardWidth = 540;
         const targetHeight = 960; // 540 * 16/9 = 960 for 9:16 ratio
         // Increased row heights to accommodate new info lines (elevation, next leg, etc.)
-        const rowHeightEstimate = stationCount <= 4 ? 110 : (stationCount <= 7 ? 95 : 85);
-        const headerHeight = stationCount <= 4 ? 140 : (stationCount <= 7 ? 120 : 100);
+        const rowHeightEstimate = stationCount <= 4 ? 110 : (stationCount <= 6 ? 95 : (stationCount <= 8 ? 85 : 75));
+        const headerHeight = stationCount <= 4 ? 140 : (stationCount <= 6 ? 120 : (stationCount <= 8 ? 100 : 85));
         const footerHeight = 80;
         const contentHeight = headerHeight + (stationData.length + 1) * rowHeightEstimate + footerHeight + 60;
         // Always use 9:16 ratio (960px), expand only if content requires more
@@ -5286,7 +5296,7 @@ async function exportCrewCard() {
         let stationsHtml = stationData.map((station, index) => {
             // Truncate long station names
             let stationName = station.name;
-            const maxNameLen = stationCount <= 4 ? 25 : (stationCount <= 7 ? 22 : 20);
+            const maxNameLen = stationCount <= 4 ? 25 : (stationCount <= 6 ? 22 : (stationCount <= 8 ? 20 : 18));
             if (stationName.length > maxNameLen) {
                 stationName = stationName.substring(0, maxNameLen - 2) + '...';
             }
@@ -5296,16 +5306,20 @@ async function exportCrewCard() {
             const departureTime = station.departureTime ? station.departureTime.substring(0, 5) : arrivalTime;
             const hasStop = station.stopMin > 0 && arrivalTime !== departureTime;
             const timeDisplay = hasStop ? `${arrivalTime} - ${departureTime}` : arrivalTime;
-            const timeFontSize = hasStop ? (stationCount <= 4 ? '20px' : (stationCount <= 7 ? '17px' : '15px')) : timeSize;
+            const timeFontSize = hasStop ? (stationCount <= 4 ? '20px' : (stationCount <= 6 ? '17px' : (stationCount <= 8 ? '15px' : '14px'))) : timeSize;
             
             // Build detail lines with new info
-            const detailLine1 = `${station.dist} ${unitLabel} · ${station.percentComplete}%${station.stopMin > 0 ? ' · ' + station.stopMin + ' min' : ''}`;
+            const breakText = station.stopMin > 0 ? ` · ${station.stopMin}min break` : '';
+            const detailLine1 = `${station.dist} ${unitLabel} · ${station.percentComplete}%${breakText}`;
             const detailLine2 = `📍 ${station.stationElevation}m · D+ ${station.cumulativeGain}m`;
-            const nextLegLine = station.nextLeg + (station.timeToNext ? ` · ~${station.timeToNext}` : '');
+            const timeToNextText = station.timeToNext ? ` · ~${station.timeToNext} to next` : '';
+            const nextLegLine = station.nextLeg + timeToNextText;
+            
+            const iconMargin = stationCount <= 6 ? '12px' : (stationCount <= 8 ? '10px' : '8px');
             
             return `
                 <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: ${rowGap};">
-                    <div style="font-size: ${iconSize}; margin-right: 12px;">📍</div>
+                    <div style="font-size: ${iconSize}; margin-right: ${iconMargin};">📍</div>
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-size: ${nameSize}; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${stationName}</div>
                         <div style="font-size: ${detailSize}; opacity: 0.8;">${detailLine1}</div>
@@ -5324,9 +5338,10 @@ async function exportCrewCard() {
         // Add finish row
         const finishTimeDisplay = finishClockTime ? finishClockTime.substring(0, 5) : finishClockTime;
         const totalElevGain = Math.round(calculateElevationGainBetween(0, gpxData.totalDistance));
+        const finishIconMargin = stationCount <= 6 ? '12px' : (stationCount <= 8 ? '10px' : '8px');
         stationsHtml += `
             <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(76,175,80,0.4); border-radius: 10px; border: 2px solid rgba(76,175,80,0.8);">
-                <div style="font-size: ${iconSize}; margin-right: 12px;">🏁</div>
+                <div style="font-size: ${iconSize}; margin-right: ${finishIconMargin};">🏁</div>
                 <div style="flex: 1; min-width: 0;">
                     <div style="font-size: ${nameSize}; font-weight: 700; margin-bottom: 2px;">FINISH</div>
                     <div style="font-size: ${detailSize}; opacity: 0.8;">${distance.toFixed(1)} ${unitLabel} · 100%</div>
