@@ -55,6 +55,19 @@ const RUNNER_LEVELS = {
     }
 };
 
+// Ultra-distance fatigue multiplier
+// Longer races require progressively slower pacing due to cumulative fatigue
+function getFatigueMultiplier(distanceKm) {
+    if (distanceKm <= 21) return 1.0;       // Half marathon and below - no fatigue factor
+    if (distanceKm <= 42) return 1.05;      // Marathon distance - slight fatigue
+    if (distanceKm <= 50) return 1.12;      // 50K
+    if (distanceKm <= 65) return 1.18;      // 50-65K
+    if (distanceKm <= 80) return 1.25;      // 80K range
+    if (distanceKm <= 100) return 1.32;     // 100K
+    if (distanceKm <= 130) return 1.40;     // 100+ km
+    return 1.50;                            // 100 miles+
+}
+
 // Surface type categories and their pace multipliers
 // Multipliers are applied on top of terrain (flat/uphill/downhill) paces
 const SURFACE_TYPES = {
@@ -3317,7 +3330,13 @@ function calculateRacePlan() {
     // Calculate total stop time from AID stations
     const totalStopTime = aidStations.reduce((sum, station) => sum + (station.stopMin || 0), 0);
     
-    const totalTime = flatTime + uphillTime + downhillTime + totalStopTime;
+    // Apply ultra-distance fatigue multiplier to running time
+    const runningTime = flatTime + uphillTime + downhillTime;
+    const totalDistanceKm = flatDistance + uphillDistance + downhillDistance;
+    const fatigueMultiplier = getFatigueMultiplier(totalDistanceKm);
+    const adjustedRunningTime = runningTime * fatigueMultiplier;
+    
+    const totalTime = adjustedRunningTime + totalStopTime;
     
     // Display results
     document.getElementById('paceResults').style.display = 'block';
@@ -3370,6 +3389,9 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
     const totalDistanceKm = gpxData.totalDistance;
     const unitLabel = useMetric ? 'km' : 'mi';
     const totalUnits = useMetric ? Math.ceil(totalDistanceKm) : Math.ceil(totalDistanceKm * KM_TO_MILES);
+    
+    // Get fatigue multiplier for ultra-distance adjustment
+    const fatigueMultiplier = getFatigueMultiplier(totalDistanceKm);
     
     // Pace conversion: input paces are in min/km, convert to min/mi if needed
     const paceMultiplier = useMetric ? 1 : MILES_TO_KM;
@@ -3483,9 +3505,9 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         // Add AID station rows for fractional positions
         for (const station of aidStationsInUnit) {
             const stationKm = station.km;
-            // Calculate time to station based on km distance
+            // Calculate time to station based on km distance (with fatigue)
             const fractionOfUnit = (stationKm - unitStartKm) / distanceKm;
-            const timeToStation = cumulativeTime + (unitTime * fractionOfUnit);
+            const timeToStation = cumulativeTime + (unitTime * fatigueMultiplier * fractionOfUnit);
             const stopTime = station.stopMin || 0;
             const clockTimeMinutes = startTimeInMinutes + timeToStation;
             const clockTime = formatClockTime(clockTimeMinutes);
@@ -3521,7 +3543,10 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
                 processedStopTimes.add(station.km);
             }
         }
-        cumulativeTime += unitTime;
+        
+        // Apply fatigue multiplier to running time
+        const adjustedUnitTime = unitTime * fatigueMultiplier;
+        cumulativeTime += adjustedUnitTime;
         
         // Get target pace for dominant terrain (display pace for selected unit)
         let targetPace;
@@ -3550,8 +3575,8 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         const clockTimeMinutes = startTimeInMinutes + cumulativeTime;
         const clockTime = formatClockTime(clockTimeMinutes);
         
-        // Split time is the time for this unit (not including stop)
-        const splitTime = unitTime;
+        // Split time is the time for this unit (with fatigue, not including stop)
+        const splitTime = adjustedUnitTime;
         
         const row = document.createElement('tr');
         if (hasAidStation) {
@@ -3581,14 +3606,14 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
     }
     
     // Generate leg summary if AID stations exist
-    renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, startTimeInMinutes);
+    renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, startTimeInMinutes, fatigueMultiplier);
     
     // Show splits section
     document.getElementById('splitsSection').style.display = 'block';
 }
 
 // Render leg summary table
-function renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, startTimeInMinutes) {
+function renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, startTimeInMinutes, fatigueMultiplier = 1.0) {
     const legSummary = document.getElementById('legSummary');
     const legSummaryBody = document.getElementById('legSummaryBody');
     
@@ -3665,9 +3690,12 @@ function renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, star
             }
         }
         
+        // Apply fatigue multiplier to leg running time
+        const adjustedLegTime = legTime * fatigueMultiplier;
+        
         // Add previous stop time to cumulative
         cumulativeTime += leg.stopMin;
-        cumulativeTime += legTime;
+        cumulativeTime += adjustedLegTime;
         
         const arrivalTime = formatClockTime(startTimeInMinutes + cumulativeTime);
         
@@ -3676,7 +3704,7 @@ function renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, star
                 <td class="leg-name">${leg.name}</td>
                 <td>${distance.toFixed(1)} km</td>
                 <td>⬆️${elevGain.toFixed(0)}m ⬇️${elevLoss.toFixed(0)}m</td>
-                <td>${formatTime(legTime)}</td>
+                <td>${formatTime(adjustedLegTime)}</td>
                 <td>${arrivalTime}</td>
             </tr>
         `;
