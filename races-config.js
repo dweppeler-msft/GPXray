@@ -12,6 +12,7 @@ const RACE_CONFIGS = {
         website: 'https://www.zugspitz-ultratrail.com',
         logo: null, // Optional: 'races/zut-logo.png'
         tagline: 'Run where the mountains touch the sky',
+        accessCode: 'ZUGSPITZ26', // Access code for race page
         
         // Branding colors
         branding: {
@@ -136,6 +137,7 @@ const RACE_CONFIGS = {
         website: 'https://www.rureifel-trail.com',
         logo: null,
         tagline: 'Go Nature, Go Rureifel Trail',
+        accessCode: 'RUREIFEL26', // Access code for race page
         
         // Branding colors
         branding: {
