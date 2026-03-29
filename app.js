@@ -5370,50 +5370,67 @@ function initRaceMode() {
 }
 
 function populateRaceLanding(config) {
-    // Set race info
-    const raceName = document.getElementById('raceName');
-    const raceTagline = document.getElementById('raceTagline');
-    const raceDate = document.getElementById('raceDate');
-    const raceLocation = document.getElementById('raceLocation');
-    const raceLogo = document.getElementById('raceLogo');
-    
-    if (raceName) raceName.textContent = config.name + (config.year ? ` ${config.year}` : '');
-    if (raceTagline) raceTagline.textContent = config.tagline || '';
-    if (raceDate && config.date) {
-        const dateObj = new Date(config.date);
-        raceDate.textContent = dateObj.toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'en-US', { 
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-        });
-    }
-    if (raceLocation) raceLocation.textContent = config.location || '';
-    
-    // Set logo if available
-    if (raceLogo && config.logo) {
-        raceLogo.innerHTML = `<img src="${config.logo}" alt="${config.name} logo">`;
-    }
-    
-    // Populate distance buttons
-    const distancesContainer = document.getElementById('raceDistances');
-    if (!distancesContainer) return;
-    
-    distancesContainer.innerHTML = '';
-    
-    config.distances.forEach(dist => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'race-distance-btn';
-        btn.dataset.distanceId = dist.id;
-        btn.innerHTML = `
-            <span class="race-distance-name">${dist.name}</span>
-            <span class="race-distance-stats">
-                <span class="race-distance-km">${dist.distance} km</span>
-                <span class="race-distance-elev"> · ↑${dist.elevation}m</span>
-            </span>
-        `;
+    try {
+        // Set race info
+        const raceName = document.getElementById('raceName');
+        const raceTagline = document.getElementById('raceTagline');
+        const raceDate = document.getElementById('raceDate');
+        const raceLocation = document.getElementById('raceLocation');
+        const raceLogo = document.getElementById('raceLogo');
         
-        btn.addEventListener('click', () => selectRaceDistance(dist, btn));
-        distancesContainer.appendChild(btn);
-    });
+        if (raceName) raceName.textContent = config.name + (config.year ? ` ${config.year}` : '');
+        if (raceTagline) raceTagline.textContent = config.tagline || '';
+        if (raceDate && config.date) {
+            const dateObj = new Date(config.date);
+            const lang = typeof getLang === 'function' ? getLang() : 'en';
+            raceDate.textContent = dateObj.toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+        }
+        if (raceLocation) raceLocation.textContent = config.location || '';
+        
+        // Set logo if available
+        if (raceLogo && config.logo) {
+            raceLogo.innerHTML = `<img src="${config.logo}" alt="${config.name} logo">`;
+        }
+        
+        // Populate distance buttons
+        const distancesContainer = document.getElementById('raceDistances');
+        if (!distancesContainer) {
+            console.error('raceDistances container not found');
+            return;
+        }
+        
+        distancesContainer.innerHTML = '';
+        
+        if (!config.distances || !Array.isArray(config.distances)) {
+            console.error('No distances array in config:', config);
+            return;
+        }
+        
+        console.log('Populating', config.distances.length, 'distances for', config.name);
+        
+        config.distances.forEach(dist => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'race-distance-btn';
+            btn.dataset.distanceId = dist.id;
+            btn.innerHTML = `
+                <span class="race-distance-name">${dist.name}</span>
+                <span class="race-distance-stats">
+                    <span class="race-distance-km">${dist.distance} km</span>
+                    <span class="race-distance-elev"> · ↑${dist.elevation}m</span>
+                </span>
+            `;
+            
+            btn.addEventListener('click', () => selectRaceDistance(dist, btn));
+            distancesContainer.appendChild(btn);
+        });
+        
+        console.log('Race landing populated successfully');
+    } catch (error) {
+        console.error('Error in populateRaceLanding:', error);
+    }
 }
 
 async function selectRaceDistance(distanceConfig, buttonEl) {
