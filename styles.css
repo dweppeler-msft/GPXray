@@ -638,6 +638,29 @@ header h1 {
     transform: translateY(-2px);
 }
 
+.feature-pill.coming-soon {
+    opacity: 0.7;
+    border-style: dashed;
+}
+
+.feature-pill.coming-soon:hover {
+    transform: none;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #ddd;
+}
+
+.coming-soon-badge {
+    font-size: 0.65rem;
+    background: rgba(255, 165, 0, 0.2);
+    color: #ffa500;
+    padding: 2px 6px;
+    border-radius: 8px;
+    margin-left: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 /* Upload Section */
 .upload-section {
     margin-bottom: 30px;
