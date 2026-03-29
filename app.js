@@ -2844,7 +2844,7 @@ function renderAidStations() {
                     <span class="aid-station-stop">(${station.stopMin || 0} min stop)</span>
                 </div>
                 ${legInfo}
-                ${isDemoMode ? '' : `
+                ${(isDemoMode || currentRaceConfig) ? '' : `
                 <div class="aid-station-actions">
                     <button type="button" class="edit-aid-btn" onclick="editAidStation(${index})" title="Edit">✏️</button>
                     <button type="button" class="remove-aid-btn" onclick="removeAidStation(${index})" title="Remove">×</button>
