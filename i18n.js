@@ -19,6 +19,17 @@ const TRANSLATIONS = {
         'intro.nutritionPlanner': 'Nutrition Planner',
         'intro.comingSoon': 'coming soon',
         
+        // Feature pill tooltips
+        'pill.smartPace.info': 'Calculates realistic pace per km based on terrain and elevation changes',
+        'pill.surfaceAnalysis.info': 'Detects road, trail and technical sections from OpenStreetMap data',
+        'pill.aidStations.info': 'Plan your stops and see distance/elevation between stations',
+        'pill.sunTimes.info': 'Shows sunrise and sunset times at your race location',
+        'pill.shareCard.info': 'Generate a visual card to share your race plan on social media',
+        'pill.pdfExport.info': 'Download a printable race strategy document with splits',
+        'pill.nutritionPlanner.info': 'Plan your calories and hydration per segment (coming soon)',
+        'pill.downhillLoad.info': 'Estimates quad fatigue from cumulative descent stress',
+        'pill.crewCard.info': 'Generate a card with AID station times for your crew',
+        
         // Upload section
         'upload.dragDrop': 'Drag & drop a GPX file here or',
         'upload.browse': 'Browse locally',
@@ -284,6 +295,17 @@ const TRANSLATIONS = {
         'intro.pdfExport': 'PDF Export',
         'intro.nutritionPlanner': 'Ernährungsplaner',
         'intro.comingSoon': 'bald verfügbar',
+        
+        // Feature pill tooltips
+        'pill.smartPace.info': 'Berechnet realistische Pace pro km basierend auf Terrain und Höhenunterschieden',
+        'pill.surfaceAnalysis.info': 'Analysiert Trail-Oberflächen und passt dein erwartetes Tempo an: Asphalt, Schotter, Erde, technisch',
+        'pill.aidStations.info': 'Zeigt alle Verpflegungspunkte mit Distanz, geschätzten Ankunftszeiten und Pausendauer',
+        'pill.sunTimes.info': 'Zeigt Sonnenauf- und -untergang entlang deiner Route für die Kopflampen-Planung',
+        'pill.shareCard.info': 'Erstelle eine Renn-Vorschaukarte um deine Strategie in sozialen Medien zu teilen',
+        'pill.pdfExport.info': 'Exportiere deinen kompletten Rennplan als PDF mit Aid-Station-Details',
+        'pill.nutritionPlanner.info': 'Plane Kalorien, Flüssigkeit und Elektrolyte pro Streckenabschnitt – Coming Soon!',
+        'pill.downhillLoad.info': 'Berechnet kumulative Abstiegsbelastung zur Einschätzung von Oberschenkel-Ermüdung',
+        'pill.crewCard.info': 'Generiere Crew-Anweisungen mit Aid-Station-Zeiten und Standorten',
         
         // Upload section
         'upload.dragDrop': 'GPX-Datei hierher ziehen oder',
