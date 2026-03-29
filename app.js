@@ -5,7 +5,7 @@ let routeLayers = [];
 let elevationChart = null;
 let gradientChart = null;
 let segments = []; // Stores segment data with terrain type
-let currentMode = 'manual'; // 'manual', 'target', or 'itra'
+let currentMode = 'target'; // 'manual', 'target', or 'itra'
 let aidStations = []; // Stores AID station data
 let useMetric = true; // true = km, false = miles
 let surfaceData = []; // Stores surface data from OSM
