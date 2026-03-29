@@ -157,63 +157,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Feature Pill Tooltips
 function setupFeaturePillTooltips() {
-    let activeTooltipKey = null;
+    // Create a single tooltip container in the body
+    let tooltipEl = document.createElement('div');
+    tooltipEl.id = 'pillTooltipContainer';
+    tooltipEl.className = 'feature-pill-tooltip';
+    tooltipEl.style.display = 'none';
+    document.body.appendChild(tooltipEl);
     
-    function closeAllTooltips() {
-        document.querySelectorAll('.feature-pill-tooltip').forEach(t => t.remove());
-        activeTooltipKey = null;
+    let activePill = null;
+    
+    function hideTooltip() {
+        tooltipEl.style.display = 'none';
+        activePill = null;
     }
     
     function showTooltip(pill) {
         const tooltipKey = pill.dataset.tooltip;
         
-        // If same pill, close tooltip
-        if (activeTooltipKey === tooltipKey) {
-            closeAllTooltips();
+        // If same pill, toggle off
+        if (activePill === pill) {
+            hideTooltip();
             return;
         }
         
-        // Close any existing tooltips first
-        closeAllTooltips();
+        // Get translation text
+        const text = t(tooltipKey);
         
-        // Create tooltip element
-        const tooltip = document.createElement('div');
-        tooltip.className = 'feature-pill-tooltip';
-        tooltip.textContent = t(tooltipKey);
+        // Set content and show
+        tooltipEl.textContent = text;
+        tooltipEl.style.display = 'block';
         
-        // Append to pill (CSS handles positioning)
-        pill.appendChild(tooltip);
-        activeTooltipKey = tooltipKey;
+        // Position below the pill
+        const rect = pill.getBoundingClientRect();
+        const tooltipRect = tooltipEl.getBoundingClientRect();
+        
+        let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+        let top = rect.bottom + 10 + window.scrollY;
+        
+        // Keep within viewport
+        if (left < 10) left = 10;
+        if (left + tooltipRect.width > window.innerWidth - 10) {
+            left = window.innerWidth - tooltipRect.width - 10;
+        }
+        
+        tooltipEl.style.position = 'absolute';
+        tooltipEl.style.left = left + 'px';
+        tooltipEl.style.top = top + 'px';
+        tooltipEl.style.transform = 'none';
+        
+        activePill = pill;
     }
     
-    // Add click/touch handlers to all feature pills with data-tooltip
+    // Add click handlers to all feature pills with data-tooltip
     document.querySelectorAll('.feature-pill[data-tooltip]').forEach(pill => {
-        // Use touchend for mobile to prevent double-firing
-        pill.addEventListener('touchend', (e) => {
+        pill.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            showTooltip(pill);
-        }, { passive: false });
-        
-        // Click for desktop
-        pill.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // Skip if touch event already handled
-            if (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
             showTooltip(pill);
         });
     });
     
-    // Close tooltip when clicking/touching elsewhere
+    // Close tooltip when clicking elsewhere
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.feature-pill')) {
-            closeAllTooltips();
-        }
-    });
-    
-    document.addEventListener('touchend', (e) => {
-        if (!e.target.closest('.feature-pill')) {
-            closeAllTooltips();
+        if (!e.target.closest('.feature-pill') && !e.target.closest('#pillTooltipContainer')) {
+            hideTooltip();
         }
     });
 }
