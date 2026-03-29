@@ -5,7 +5,7 @@ let routeLayers = [];
 let elevationChart = null;
 let gradientChart = null;
 let segments = []; // Stores segment data with terrain type
-let currentMode = 'target'; // 'manual', 'target', or 'itra'
+let currentMode = 'manual'; // 'manual', 'target', or 'itra'
 let aidStations = []; // Stores AID station data
 let useMetric = true; // true = km, false = miles
 let surfaceData = []; // Stores surface data from OSM
@@ -22,6 +22,39 @@ const HISTORY_KEY = 'gpxray_history'; // localStorage key for history
 const KM_TO_MILES = 0.621371;
 const MILES_TO_KM = 1.60934;
 
+// Runner level pace presets (min/km for flat terrain)
+// Uphill and downhill are calculated with multipliers
+const RUNNER_LEVELS = {
+    beginner: { 
+        name: 'Beginner',
+        flatPace: 8.0,      // 8:00/km flat
+        uphillRatio: 1.5,   // 12:00/km uphill
+        downhillRatio: 0.9, // 7:12/km downhill
+        dft: 6000           // Downhill Fatigue Threshold
+    },
+    intermediate: {
+        name: 'Intermediate', 
+        flatPace: 6.5,      // 6:30/km flat
+        uphillRatio: 1.4,   // 9:06/km uphill
+        downhillRatio: 0.85, // 5:31/km downhill
+        dft: 9000           // Downhill Fatigue Threshold
+    },
+    advanced: {
+        name: 'Advanced',
+        flatPace: 5.5,      // 5:30/km flat
+        uphillRatio: 1.3,   // 7:09/km uphill
+        downhillRatio: 0.82, // 4:31/km downhill
+        dft: 12000          // Downhill Fatigue Threshold
+    },
+    elite: {
+        name: 'Elite',
+        flatPace: 4.5,      // 4:30/km flat
+        uphillRatio: 1.25,  // 5:38/km uphill
+        downhillRatio: 0.8, // 3:36/km downhill
+        dft: 15000          // Downhill Fatigue Threshold
+    }
+};
+
 // Surface type categories and their pace multipliers
 // Multipliers are applied on top of terrain (flat/uphill/downhill) paces
 const SURFACE_TYPES = {
@@ -30,6 +63,22 @@ const SURFACE_TYPES = {
     technical: { name: 'Technical', color: '#9C27B0', multiplier: { flat: 1.15, uphill: 1.20, downhill: 1.25 } },
     unknown: { name: 'Unknown', color: '#9E9E9E', multiplier: { flat: 1.0, uphill: 1.0, downhill: 1.0 } }
 };
+
+// Helper to get translated surface name
+function getSurfaceName(surfaceType) {
+    if (typeof t === 'function') {
+        return t('surface.' + surfaceType) || SURFACE_TYPES[surfaceType]?.name || surfaceType;
+    }
+    return SURFACE_TYPES[surfaceType]?.name || surfaceType;
+}
+
+// Helper to get translated terrain name
+function getTerrainName(terrain) {
+    if (typeof t === 'function') {
+        return t('terrain.' + terrain) || terrain;
+    }
+    return terrain.charAt(0).toUpperCase() + terrain.slice(1);
+}
 
 // OSM surface tag to category mapping
 const OSM_SURFACE_MAP = {
@@ -60,6 +109,12 @@ const browseBtn = document.getElementById('browseBtn');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize internationalization first
+    if (typeof initI18n === 'function') {
+        initI18n();
+    }
+    setupLanguageSelector();
+    
     setupDragAndDrop();
     setupFileInput();
     setupPaceCalculation();
@@ -76,9 +131,57 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSunTimes();
     setupRaceBrowser();
     setupFooter();
+    setupDDLExplainer();
     setupCookieConsent();
     setupEarlyAccess();
+    updateEarlyAccessUI();
+    setupRunnerLevel();
 });
+
+// Language Selector (Toggle Buttons)
+function setupLanguageSelector() {
+    const langToggle = document.getElementById('langToggle');
+    if (!langToggle) return;
+    
+    const langBtns = langToggle.querySelectorAll('.lang-btn');
+    const currentLang = typeof getLang === 'function' ? getLang() : 'en';
+    
+    // Set initial active state
+    langBtns.forEach(btn => {
+        if (btn.dataset.lang === currentLang) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+        
+        btn.addEventListener('click', () => {
+            const lang = btn.dataset.lang;
+            
+            // Update active state
+            langBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Set language
+            if (typeof setLanguage === 'function') {
+                setLanguage(lang);
+            }
+        });
+    });
+}
+
+// Runner Level Selector
+function setupRunnerLevel() {
+    const levelSelect = document.getElementById('runnerLevel');
+    if (!levelSelect) return;
+    
+    levelSelect.addEventListener('change', () => {
+        if (!gpxData || segments.length === 0) return;
+        
+        // Apply new paces and recalculate
+        applyRunnerLevelPaces();
+        calculateRacePlan();
+    });
+}
 
 // Cookie Consent
 function setupCookieConsent() {
@@ -161,6 +264,7 @@ function setupEarlyAccess() {
             localStorage.setItem('gpxray-early-access', 'unlocked');
             localStorage.setItem('gpxray-access-code', code);
             hideEarlyAccessModal();
+            updateEarlyAccessUI();
             
             // Track with code in multiple ways for visibility
             trackEvent('early_access', { action: 'unlocked', code: code });
@@ -187,36 +291,38 @@ function setupEarlyAccess() {
     
     // Waitlist form submission
     const waitlistForm = document.getElementById('waitlistForm');
+    const waitlistEmail = document.getElementById('waitlistEmail');
     const waitlistSuccess = document.getElementById('waitlistSuccess');
     
     waitlistForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        const emailInput = waitlistForm.querySelector('input[type="email"]');
-        const submitBtn = waitlistForm.querySelector('.waitlist-submit');
-        const email = emailInput.value.trim();
+        const email = waitlistEmail.value.trim();
         
         if (!email) return;
         
         // Disable form while submitting
+        const submitBtn = waitlistForm.querySelector('.waitlist-submit');
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Joining...';
+        submitBtn.textContent = t('btn.joining');
         
         try {
+            // Submit to Formspree
             const response = await fetch('https://formspree.io/f/mqegeeap', {
                 method: 'POST',
+                body: JSON.stringify({
+                    email: email,
+                    type: 'waitlist',
+                    source: 'early_access_modal',
+                    timestamp: new Date().toISOString()
+                }),
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: email,
-                    source: 'early_access_waitlist'
-                })
+                }
             });
             
             if (response.ok) {
-                // Hide form, show success message
+                // Show success message
                 waitlistForm.style.display = 'none';
                 waitlistSuccess.classList.add('visible');
                 trackEvent('waitlist_signup', { source: 'early_access_modal' });
@@ -226,14 +332,31 @@ function setupEarlyAccess() {
         } catch (error) {
             console.error('Waitlist submission error:', error);
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Join Waitlist';
-            showNotification('Failed to join waitlist. Please try again.', 'error');
+            submitBtn.textContent = t('btn.joinWaitlist');
+            showNotification('Something went wrong. Please try again.', 'error');
         }
     });
 }
 
 function isEarlyAccessUnlocked() {
     return localStorage.getItem('gpxray-early-access') === 'unlocked';
+}
+
+// Update UI elements that depend on early access status
+function updateEarlyAccessUI() {
+    const browseRacesBtn = document.getElementById('browseRacesBtn');
+    const demoHint = document.getElementById('demoHint');
+    
+    if (isEarlyAccessUnlocked()) {
+        // Show browse races button for early access users
+        if (browseRacesBtn) browseRacesBtn.style.display = '';
+        // Update hint text
+        if (demoHint) {
+            demoHint.textContent = typeof t === 'function' ? t('upload.demoHintFull') : 'Load a sample trail or browse our curated race database';
+        }
+    } else {
+        if (browseRacesBtn) browseRacesBtn.style.display = 'none';
+    }
 }
 
 function showEarlyAccessModal() {
@@ -298,6 +421,38 @@ function setupFooter() {
     });
 }
 
+// DDL Explainer Modal
+function setupDDLExplainer() {
+    const learnMoreLink = document.getElementById('ddlLearnMore');
+    const explainer = document.getElementById('ddlExplainer');
+    const closeBtn = document.getElementById('ddlExplainerClose');
+    
+    if (!learnMoreLink || !explainer) return;
+    
+    learnMoreLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        explainer.classList.add('active');
+    });
+    
+    closeBtn?.addEventListener('click', () => {
+        explainer.classList.remove('active');
+    });
+    
+    // Close on overlay click
+    explainer.addEventListener('click', (e) => {
+        if (e.target === explainer) {
+            explainer.classList.remove('active');
+        }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && explainer.classList.contains('active')) {
+            explainer.classList.remove('active');
+        }
+    });
+}
+
 // Sun times setup
 function setupSunTimes() {
     const dateInput = document.getElementById('raceStartDate');
@@ -337,7 +492,7 @@ async function loadDemoGpx() {
     
     try {
         demoBtn.disabled = true;
-        demoBtn.textContent = '⏳ Loading...';
+        demoBtn.textContent = t('btn.loading');
         
         const response = await fetch('races/demo.gpx');
         if (!response.ok) {
@@ -357,7 +512,7 @@ async function loadDemoGpx() {
         ];
         renderAidStations();
         
-        demoBtn.textContent = '✅ Demo Loaded!';
+        demoBtn.textContent = t('btn.demoLoaded');
         setTimeout(() => {
             demoBtn.textContent = originalText;
             demoBtn.disabled = false;
@@ -485,7 +640,7 @@ function renderRaceList(filter, searchText) {
     });
     
     if (filtered.length === 0) {
-        list.innerHTML = '<div class="no-races-found">No races found matching your criteria.</div>';
+        list.innerHTML = '<div class="no-races-found">' + t('races.noResults') + '</div>';
         return;
     }
     
@@ -704,6 +859,10 @@ function parseGPX(gpxContent) {
     
     // Update sun times display based on route center
     updateSunTimesDisplay();
+    
+    // Auto-calculate race plan with runner level paces
+    applyRunnerLevelPaces();
+    calculateRacePlan();
     
     // Track GPX load
     trackEvent('gpx_loaded', { 
@@ -1236,7 +1395,7 @@ function countSurfaces() {
     for (const [type, dist] of Object.entries(counts)) {
         if (dist > 0) {
             const pct = Math.round((dist / totalDist) * 100);
-            parts.push(`${SURFACE_TYPES[type].name}: ${pct}%`);
+            parts.push(`${getSurfaceName(type)}: ${pct}%`);
         }
     }
     
@@ -1299,7 +1458,7 @@ function displaySurfaceStats() {
                 <span class="surface-stat-item">
                     <span class="surface-color ${type}"></span>
                     <span class="surface-pct">${pct}%</span>
-                    <span class="surface-name">${SURFACE_TYPES[type].name}</span>
+                    <span class="surface-name">${getSurfaceName(type)}</span>
                 </span>
             `;
         }
@@ -1401,8 +1560,8 @@ function displayMap() {
         
         // Create tooltip content
         const tooltipContent = `
-            ${segment.terrainType.charAt(0).toUpperCase() + segment.terrainType.slice(1)}
-            ${hasSurfaceData ? ' | ' + SURFACE_TYPES[segment.surfaceType].name : ''}
+            ${getTerrainName(segment.terrainType)}
+            ${hasSurfaceData ? ' | ' + getSurfaceName(segment.surfaceType) : ''}
             | ${segment.grade.toFixed(1)}% grade
         `;
         
@@ -1449,16 +1608,16 @@ function updateMapLegend(showSurfaceColors) {
     
     if (showSurfaceColors) {
         legendEl.innerHTML = `
-            <span class="legend-item"><span class="legend-color" style="background: #4CAF50;"></span> Road</span>
-            <span class="legend-item"><span class="legend-color" style="background: #FF9800;"></span> Trail</span>
-            <span class="legend-item"><span class="legend-color" style="background: #9C27B0;"></span> Technical</span>
-            <span class="legend-item"><span class="legend-color" style="background: #9E9E9E;"></span> Unknown</span>
+            <span class="legend-item"><span class="legend-color" style="background: #4CAF50;"></span> ${t('surface.road')}</span>
+            <span class="legend-item"><span class="legend-color" style="background: #FF9800;"></span> ${t('surface.trail')}</span>
+            <span class="legend-item"><span class="legend-color" style="background: #9C27B0;"></span> ${t('surface.technical')}</span>
+            <span class="legend-item"><span class="legend-color" style="background: #9E9E9E;"></span> ${t('surface.unknown')}</span>
         `;
     } else {
         legendEl.innerHTML = `
-            <span class="legend-item"><span class="legend-color flat"></span> Flat</span>
-            <span class="legend-item"><span class="legend-color uphill"></span> Uphill</span>
-            <span class="legend-item"><span class="legend-color downhill"></span> Downhill</span>
+            <span class="legend-item"><span class="legend-color flat"></span> ${t('terrain.flat')}</span>
+            <span class="legend-item"><span class="legend-color uphill"></span> ${t('terrain.uphill')}</span>
+            <span class="legend-item"><span class="legend-color downhill"></span> ${t('terrain.downhill')}</span>
         `;
     }
 }
@@ -2217,7 +2376,7 @@ function printRaceCard() {
     const distanceUnit = useMetric ? 'km' : 'mi';
     const distance = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
     
-    document.getElementById('printTitle').textContent = 'Race Strategy';
+    document.getElementById('printTitle').textContent = t('print.title');
     document.getElementById('printDistance').textContent = `${distance.toFixed(2)} ${distanceUnit}`;
     document.getElementById('printElevation').textContent = `↑${gpxData.elevationGain.toFixed(0)}m ↓${gpxData.elevationLoss.toFixed(0)}m`;
     document.getElementById('printTime').textContent = document.getElementById('totalTime')?.textContent || '-';
@@ -2844,6 +3003,38 @@ function getPaceInMinutes(minInput, secInput) {
     return min + sec / 60;
 }
 
+// Apply runner level paces to manual inputs
+function applyRunnerLevelPaces() {
+    const levelSelect = document.getElementById('runnerLevel');
+    const level = levelSelect ? levelSelect.value : 'intermediate';
+    const preset = RUNNER_LEVELS[level] || RUNNER_LEVELS.intermediate;
+    
+    const flatPace = preset.flatPace;
+    const uphillPace = flatPace * preset.uphillRatio;
+    const downhillPace = flatPace * preset.downhillRatio;
+    
+    // Update manual pace inputs
+    const flatMin = document.getElementById('flatPaceMin');
+    const flatSec = document.getElementById('flatPaceSec');
+    const uphillMin = document.getElementById('uphillPaceMin');
+    const uphillSec = document.getElementById('uphillPaceSec');
+    const downhillMin = document.getElementById('downhillPaceMin');
+    const downhillSec = document.getElementById('downhillPaceSec');
+    
+    if (flatMin && flatSec) {
+        flatMin.value = Math.floor(flatPace);
+        flatSec.value = Math.round((flatPace % 1) * 60);
+    }
+    if (uphillMin && uphillSec) {
+        uphillMin.value = Math.floor(uphillPace);
+        uphillSec.value = Math.round((uphillPace % 1) * 60);
+    }
+    if (downhillMin && downhillSec) {
+        downhillMin.value = Math.floor(downhillPace);
+        downhillSec.value = Math.round((downhillPace % 1) * 60);
+    }
+}
+
 function formatTime(totalMinutes) {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = Math.floor(totalMinutes % 60);
@@ -2967,10 +3158,10 @@ function updateSunTimesDisplay() {
     const sunsetSpan = document.getElementById('sunsetTime');
     
     if (sunTimes.polarNight) {
-        sunriseSpan.textContent = 'Polar night';
+        sunriseSpan.textContent = t('sun.polarNight');
         sunsetSpan.textContent = '';
     } else if (sunTimes.midnightSun) {
-        sunriseSpan.textContent = 'Midnight sun';
+        sunriseSpan.textContent = t('sun.midnightSun');
         sunsetSpan.textContent = '';
     } else {
         sunriseSpan.textContent = formatSunTime(sunTimes.sunrise);
@@ -3141,6 +3332,9 @@ function calculateRacePlan() {
     
     // Generate splits table
     generateSplitsTable(flatPace, uphillPace, downhillPace);
+    
+    // Update Hero section
+    updateHeroSection(totalTime);
 }
 
 // Generate kilometer splits table
@@ -3361,13 +3555,13 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
         }
         
         // Get surface display name and class
-        const surfaceDisplay = isSurfaceLoading ? 'Loading...' : (SURFACE_TYPES[dominantSurface] ? SURFACE_TYPES[dominantSurface].name : 'Unknown');
+        const surfaceDisplay = isSurfaceLoading ? t('general.loading') : getSurfaceName(dominantSurface);
         const surfaceClass = isSurfaceLoading ? 'surface-loading' : `surface-${dominantSurface}`;
         
         row.innerHTML = `
             <td>${unit}</td>
             <td>${elevationChange >= 0 ? '+' : ''}${elevationChange.toFixed(0)} m</td>
-            <td class="terrain-${terrain}">${terrain.charAt(0).toUpperCase() + terrain.slice(1)}</td>
+            <td class="terrain-${terrain}">${getTerrainName(terrain)}</td>
             <td class="${surfaceClass}">${surfaceDisplay}</td>
             <td class="${hasAidStation ? 'aid-station-cell' : ''}">${aidStationText}</td>
             <td class="stop-time">${stopTime > 0 ? '+' + stopTime + ' min' : '-'}</td>
@@ -3482,6 +3676,380 @@ function renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, star
     }).join('');
     
     legSummary.style.display = 'block';
+}
+
+// Update Hero Result Section with finish time and AID checkpoints
+function updateHeroSection(totalTime) {
+    const heroTime = document.getElementById('heroFinishTime');
+    const heroCheckpoints = document.getElementById('heroCheckpoints');
+    const heroDistance = document.getElementById('heroDistance');
+    
+    if (!heroTime) return;
+    
+    // Update finish time
+    heroTime.textContent = formatTime(totalTime);
+    
+    // Update distance
+    if (heroDistance && gpxData) {
+        const dist = useMetric ? gpxData.totalDistance : gpxData.totalDistance * KM_TO_MILES;
+        const unit = useMetric ? 'km' : 'mi';
+        heroDistance.textContent = `${dist.toFixed(1)} ${unit}`;
+    }
+    
+    // Update Elevation Gain
+    const heroClimbLoad = document.getElementById('heroClimbLoad');
+    if (heroClimbLoad && gpxData) {
+        heroClimbLoad.textContent = `+${Math.round(gpxData.elevationGain)}m`;
+    }
+    
+    // Update Main Climb (longest continuous ascent)
+    const heroLongestClimb = document.getElementById('heroLongestClimb');
+    const heroLongestClimbGain = document.getElementById('heroLongestClimbGain');
+    if (heroLongestClimb && gpxData) {
+        const mainClimb = findLongestClimb();
+        if (mainClimb && mainClimb.gain > 150) {
+            heroLongestClimb.textContent = `KM ${mainClimb.start.toFixed(1)}–${mainClimb.end.toFixed(1)}`;
+            if (heroLongestClimbGain) {
+                heroLongestClimbGain.textContent = `+${Math.round(mainClimb.gain)}m`;
+            }
+        } else {
+            heroLongestClimb.textContent = '-';
+            if (heroLongestClimbGain) heroLongestClimbGain.textContent = '';
+        }
+    }
+    
+    // Update Dynamic Descent Load (elevation-based muscular stress)
+    // DDL = Σ(elevationDrop × slopeWeight × surfaceWeight × fatigueWeight)
+    const heroDescentLoad = document.getElementById('heroDescentLoad');
+    const heroDescentDetail = document.getElementById('heroDescentDetail');
+    const heroDescentInsight = document.getElementById('heroDescentInsight');
+    if (heroDescentLoad && segments.length > 0 && gpxData) {
+        // Get runner's DFT (Downhill Fatigue Threshold)
+        const levelSelect = document.getElementById('runnerLevel');
+        const level = levelSelect ? levelSelect.value : 'intermediate';
+        const runnerDFT = RUNNER_LEVELS[level]?.dft || 9000;
+        
+        let ddlTotal = 0;
+        let cumulativeDDL = 0;
+        let fatigueOnsetKm = null;  // Where fatigue ratio first exceeds 0.8
+        
+        // Fatigue threshold - after this much DDL, fatigue compounds
+        const fatigueThreshold = 3000;
+        
+        for (const segment of segments) {
+            if (segment.terrainType === 'downhill' && segment.elevationChange < 0) {
+                const gradePercent = Math.abs(segment.grade);
+                const elevationDrop = Math.abs(segment.elevationChange);
+                
+                // Slope weight: steeper = more braking force per meter
+                const slopeWeight = 1 + Math.pow(gradePercent / 20, 1.4);
+                
+                // Surface weight: technical terrain = more instability cost
+                const surfaceMultiplier = SURFACE_TYPES[segment.surfaceType] 
+                    ? SURFACE_TYPES[segment.surfaceType].multiplier.downhill 
+                    : 1.0;
+                const surfaceWeight = surfaceMultiplier;
+                
+                // Fatigue weight: accumulated damage compounds (subtle effect)
+                const fatigueWeight = 1 + (cumulativeDDL / fatigueThreshold) * 0.15;
+                
+                // Calculate segment DDL
+                const segmentDDL = elevationDrop * slopeWeight * surfaceWeight * fatigueWeight;
+                ddlTotal += segmentDDL;
+                cumulativeDDL += segmentDDL;
+                
+                // Check fatigue ratio threshold (onset at 0.8)
+                const km = Math.floor(segment.startDistance);
+                const fatigueRatio = cumulativeDDL / runnerDFT;
+                if (fatigueRatio >= 0.8 && fatigueOnsetKm === null) {
+                    fatigueOnsetKm = km;
+                }
+            }
+        }
+        
+        // Calculate pace loss using quadratic formula
+        // paceLossFactor = 1 + max(0, ratio - 0.8)²
+        const finalFatigueRatio = ddlTotal / runnerDFT;
+        const basePaceSec = (RUNNER_LEVELS[level]?.flatPace || 6.5) * 
+                            (RUNNER_LEVELS[level]?.downhillRatio || 0.85) * 60; // seconds/km
+        const paceLossFactor = 1 + Math.pow(Math.max(0, finalFatigueRatio - 0.8), 2);
+        const adjustedPaceSec = basePaceSec * paceLossFactor;
+        const paceLossSec = Math.round(adjustedPaceSec - basePaceSec);
+        
+        // Calculate pace loss range (±30% for uncertainty)
+        const paceLossMin = Math.round(paceLossSec * 0.7);
+        const paceLossMax = Math.round(paceLossSec * 1.3);
+        
+        // Show DDL/km as main value
+        const ddlPerKm = ddlTotal / gpxData.totalDistance;
+        heroDescentLoad.textContent = `${Math.round(ddlPerKm)}/km`;
+        
+        // Show expected downhill pace loss as detail (with range)
+        if (heroDescentDetail) {
+            if (finalFatigueRatio >= 0.8 && paceLossSec >= 5) {
+                const text = typeof t === 'function' 
+                    ? t('ddl.downhillPaceLoss', { min: paceLossMin, max: paceLossMax })
+                    : `Downhill pace loss: +${paceLossMin}-${paceLossMax} sec/km`;
+                heroDescentDetail.textContent = text;
+            } else {
+                heroDescentDetail.textContent = typeof t === 'function' ? t('ddl.noPaceLoss') : 'No pace loss expected';
+            }
+        }
+        
+        // Generate late-race insight (readable sentence format)
+        if (heroDescentInsight) {
+            if (paceLossSec >= 25 && fatigueOnsetKm !== null) {
+                const text = typeof t === 'function'
+                    ? `⚠ ${t('ddl.expectSlower', { km: fatigueOnsetKm, min: paceLossMin, max: paceLossMax })}`
+                    : `⚠ Expect slower descents after KM${fatigueOnsetKm} (+${paceLossMin}-${paceLossMax} sec/km)`;
+                heroDescentInsight.textContent = text;
+                heroDescentInsight.className = 'hero-metric-insight warning';
+            } else if (paceLossSec >= 10 && fatigueOnsetKm !== null) {
+                const text = typeof t === 'function'
+                    ? t('ddl.expectSlower', { km: fatigueOnsetKm, min: paceLossMin, max: paceLossMax })
+                    : `Expect slower descents after KM${fatigueOnsetKm} (+${paceLossMin}-${paceLossMax} sec/km)`;
+                heroDescentInsight.textContent = text;
+                heroDescentInsight.className = 'hero-metric-insight';
+            } else if (paceLossSec >= 5 && fatigueOnsetKm !== null) {
+                const text = typeof t === 'function'
+                    ? t('ddl.mildSlowdown', { km: fatigueOnsetKm })
+                    : `Mild downhill slowdown after KM${fatigueOnsetKm}`;
+                heroDescentInsight.textContent = text;
+                heroDescentInsight.className = 'hero-metric-insight';
+            } else {
+                heroDescentInsight.textContent = '';
+            }
+        }
+    }
+    
+    // Update Course Shape
+    updateCourseShape();
+    
+    // Populate AID station checkpoints (only if stations configured)
+    if (heroCheckpoints && aidStations.length > 0 && lastCalculatedPaces) {
+        const checkpointsHtml = calculateCheckpointTimes();
+        heroCheckpoints.innerHTML = checkpointsHtml;
+        heroCheckpoints.style.display = 'flex';
+    } else if (heroCheckpoints) {
+        heroCheckpoints.innerHTML = '';
+        heroCheckpoints.style.display = 'none';
+    }
+}
+
+// Find the main climb (longest continuous ascent window)
+// Uses monotonic ascent detection with tolerance for small dips
+function findLongestClimb() {
+    if (!gpxData || !gpxData.points || gpxData.points.length < 10) return null;
+    
+    const points = gpxData.points;
+    const DIP_TOLERANCE = 30; // Allow up to 30m dips within a climb
+    
+    let mainClimb = null;
+    let windowStart = 0;
+    let windowMinElevation = points[0].elevation || 0;
+    let windowMaxElevation = windowMinElevation;
+    let windowMinDistance = 0;
+    
+    for (let i = 1; i < points.length; i++) {
+        const point = points[i];
+        const elevation = point.elevation || 0;
+        
+        // Update max if we're still climbing
+        if (elevation > windowMaxElevation) {
+            windowMaxElevation = elevation;
+        }
+        
+        // Check if we've descended too far from the max (end of climb)
+        const dropFromMax = windowMaxElevation - elevation;
+        
+        if (dropFromMax > DIP_TOLERANCE) {
+            // End current climb window
+            const gain = windowMaxElevation - windowMinElevation;
+            
+            if (gain > 100 && (!mainClimb || gain > mainClimb.gain)) {
+                // Find the point where max elevation was reached
+                let maxElevDistance = windowMinDistance;
+                for (let j = windowStart; j <= i; j++) {
+                    if ((points[j].elevation || 0) === windowMaxElevation) {
+                        maxElevDistance = points[j].distance;
+                        break;
+                    }
+                }
+                
+                mainClimb = {
+                    start: windowMinDistance,
+                    end: maxElevDistance,
+                    gain: gain
+                };
+            }
+            
+            // Start new window from current point
+            windowStart = i;
+            windowMinElevation = elevation;
+            windowMaxElevation = elevation;
+            windowMinDistance = point.distance;
+        }
+        
+        // Update minimum if we found a new low (starting point of potential climb)
+        if (elevation < windowMinElevation) {
+            windowMinElevation = elevation;
+            windowMinDistance = point.distance;
+            windowStart = i;
+            windowMaxElevation = elevation;
+        }
+    }
+    
+    // Check final window
+    const finalGain = windowMaxElevation - windowMinElevation;
+    if (finalGain > 100 && (!mainClimb || finalGain > mainClimb.gain)) {
+        let maxElevDistance = windowMinDistance;
+        for (let j = windowStart; j < points.length; j++) {
+            if ((points[j].elevation || 0) === windowMaxElevation) {
+                maxElevDistance = points[j].distance;
+                break;
+            }
+        }
+        mainClimb = {
+            start: windowMinDistance,
+            end: maxElevDistance,
+            gain: finalGain
+        };
+    }
+    
+    return mainClimb;
+}
+
+// Update Course Shape - Race Intelligence
+function updateCourseShape() {
+    const courseShapeSection = document.getElementById('heroCourseShape');
+    const courseShapeBadge = document.getElementById('courseShapeBadge');
+    const courseShapeInsight = document.getElementById('courseShapeInsight');
+    
+    if (!courseShapeSection || !courseShapeBadge || !gpxData || segments.length === 0) return;
+    
+    const totalDist = gpxData.totalDistance;
+    const totalGain = gpxData.elevationGain;
+    const halfwayPoint = totalDist / 2;
+    
+    // Calculate climb in first half vs second half
+    let firstHalfClimb = 0;
+    let secondHalfClimb = 0;
+    
+    for (const segment of segments) {
+        if (segment.terrainType === 'uphill' && segment.elevationChange > 0) {
+            const midpoint = (segment.startDistance + segment.endDistance) / 2;
+            if (midpoint <= halfwayPoint) {
+                firstHalfClimb += segment.elevationChange;
+            } else {
+                secondHalfClimb += segment.elevationChange;
+            }
+        }
+    }
+    
+    const firstHalfPercent = (firstHalfClimb / totalGain) * 100;
+    
+    // Determine course shape
+    let shapeType, insight;
+    
+    if (firstHalfPercent >= 65) {
+        // Front-loaded: most climbing early
+        shapeType = 'front-loaded';
+        const percentVal = Math.round(firstHalfPercent);
+        
+        // Find where the main climbing ends
+        let cumulativeGain = 0;
+        let climbEndKm = totalDist;
+        for (const segment of segments) {
+            if (segment.terrainType === 'uphill' && segment.elevationChange > 0) {
+                cumulativeGain += segment.elevationChange;
+            }
+            if (cumulativeGain >= totalGain * 0.8) {
+                climbEndKm = segment.endDistance;
+                break;
+            }
+        }
+        
+        courseShapeBadge.textContent = '⛰️ ' + t('shape.frontLoaded');
+        courseShapeBadge.className = 'course-shape-badge front-loaded';
+        insight = t('shape.frontInsightDynamic', { pct: percentVal, km: Math.round(climbEndKm) });
+        
+    } else if (firstHalfPercent <= 35) {
+        // Back-loaded: most climbing late
+        shapeType = 'back-loaded';
+        const percentVal = Math.round(100 - firstHalfPercent);
+        
+        courseShapeBadge.textContent = '📈 ' + t('shape.backLoaded');
+        courseShapeBadge.className = 'course-shape-badge back-loaded';
+        insight = t('shape.backInsightDynamic', { pct: percentVal });
+        
+    } else {
+        // Balanced
+        shapeType = 'balanced';
+        
+        courseShapeBadge.textContent = '⚖️ ' + t('shape.balanced');
+        courseShapeBadge.className = 'course-shape-badge balanced';
+        insight = t('shape.balancedInsightDynamic');
+    }
+    
+    courseShapeInsight.textContent = insight;
+    courseShapeSection.style.display = 'flex';
+}
+
+// Calculate arrival times at each checkpoint/AID station
+function calculateCheckpointTimes() {
+    if (!gpxData || !lastCalculatedPaces || aidStations.length === 0) return '';
+    
+    const { flat: flatPace, uphill: uphillPace, downhill: downhillPace } = lastCalculatedPaces;
+    const surfaceToggle = document.getElementById('surfaceEnabled');
+    const applySurface = surfaceToggle ? surfaceToggle.checked : false;
+    
+    let checkpointsHtml = '';
+    
+    aidStations.forEach((station, index) => {
+        const stationKm = station.km;
+        let timeToStation = 0;
+        let stopTimeAccumulated = 0;
+        
+        // Calculate time to reach this station
+        for (const segment of segments) {
+            if (segment.endDistance <= stationKm) {
+                // Full segment before station
+                const surfaceMultiplier = applySurface && SURFACE_TYPES[segment.surfaceType] 
+                    ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType] : 1.0;
+                const pace = segment.terrainType === 'uphill' ? uphillPace : 
+                             segment.terrainType === 'downhill' ? downhillPace : flatPace;
+                timeToStation += segment.distance * pace * surfaceMultiplier;
+            } else if (segment.startDistance < stationKm) {
+                // Partial segment
+                const partialDist = stationKm - segment.startDistance;
+                const surfaceMultiplier = applySurface && SURFACE_TYPES[segment.surfaceType] 
+                    ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType] : 1.0;
+                const pace = segment.terrainType === 'uphill' ? uphillPace : 
+                             segment.terrainType === 'downhill' ? downhillPace : flatPace;
+                timeToStation += partialDist * pace * surfaceMultiplier;
+                break;
+            }
+            
+            // Add stop time from previous AID stations
+            const passedStation = aidStations.find(s => 
+                Math.abs(s.km - segment.endDistance) < 0.1 && s.km < stationKm
+            );
+            if (passedStation) {
+                stopTimeAccumulated += passedStation.stopMin || 0;
+            }
+        }
+        
+        timeToStation += stopTimeAccumulated;
+        
+        checkpointsHtml += `
+            <div class="hero-checkpoint">
+                <span class="hero-checkpoint-name">${station.name}</span>
+                <span class="hero-checkpoint-time">${formatTime(timeToStation)}</span>
+            </div>
+        `;
+    });
+    
+    return checkpointsHtml;
 }
 
 // CSV Export functionality
@@ -3653,7 +4221,7 @@ async function exportToPdf() {
 
     const btn = document.getElementById('exportPdf');
     const originalText = btn.textContent;
-    btn.textContent = '⏳ Generating...';
+    btn.textContent = t('btn.generating');
     btn.disabled = true;
 
     try {
@@ -3892,7 +4460,7 @@ async function exportShareCard() {
 
     const btn = document.getElementById('exportShareCard');
     const originalText = btn.textContent;
-    btn.textContent = '⏳ Creating...';
+    btn.textContent = t('btn.creating');
     btn.disabled = true;
 
     try {
@@ -4235,7 +4803,7 @@ async function exportCrewCard() {
 
     const btn = document.getElementById('exportCrewCard');
     const originalText = btn.textContent;
-    btn.textContent = '⏳ Creating...';
+    btn.textContent = t('btn.creating');
     btn.disabled = true;
 
     try {

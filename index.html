@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPXray - Know your race before it starts</title>
+    <title>GPXray BETA - Know your race before it starts</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -48,8 +48,8 @@
     </script>
 </head>
 <body>
-    <!-- Beta Password Gate - Disabled on main -->
-    <div class="beta-gate" id="betaGate" style="display: none;">
+    <!-- Beta Password Gate -->
+    <div class="beta-gate" id="betaGate">
         <div class="beta-gate-content">
             <h1>GPXray <span class="beta-badge">BETA</span></h1>
             <p>This is a beta version with experimental features.</p>
@@ -62,30 +62,34 @@
         </div>
     </div>
 
-    <div class="container" id="mainContent">
+    <div class="container" id="mainContent" style="display: none;">
         <header>
             <div class="header-content">
                 <div class="header-title">
-                    <h1>GPXray</h1>
-                    <p class="tagline">Know your race before it starts.</p>
+                    <h1>GPXray <span class="beta-badge">BETA</span></h1>
+                    <p class="tagline" data-i18n="header.tagline">Know your race before it starts.</p>
                 </div>
                 <div class="header-buttons">
-                    <button type="button" class="header-btn feedback-btn" id="feedbackBtn" title="Send Feedback">💬 Feedback</button>
-                    <button type="button" class="header-btn history-btn" id="historyBtn" title="View History">📋 History</button>
+                    <div class="lang-toggle" id="langToggle">
+                        <button type="button" class="lang-btn active" data-lang="en">EN</button>
+                        <button type="button" class="lang-btn" data-lang="de">DE</button>
+                    </div>
+                    <button type="button" class="header-btn feedback-btn" id="feedbackBtn" title="Send Feedback">💬 <span data-i18n="header.feedback">Feedback</span></button>
+                    <button type="button" class="header-btn history-btn" id="historyBtn" title="View History">📋 <span data-i18n="header.history">History</span></button>
                 </div>
             </div>
         </header>
 
         <!-- Intro Section -->
         <section class="intro-section">
-            <p class="intro-text">Plan your trail race with precision. Upload a GPX file to analyze terrain, estimate pace, and create your race strategy.</p>
+            <p class="intro-text" data-i18n="intro.text">Plan your trail race with precision. Upload a GPX file to analyze terrain, estimate pace, and create your race strategy.</p>
             <div class="feature-pills">
-                <span class="feature-pill">📊 Smart Pace</span>
-                <span class="feature-pill">🗺️ Surface Analysis</span>
-                <span class="feature-pill">🚰 AID Stations</span>
-                <span class="feature-pill">🌅 Sun Times</span>
-                <span class="feature-pill">📱 Share Card</span>
-                <span class="feature-pill">📄 PDF Export</span>
+                <span class="feature-pill">📊 <span data-i18n="intro.smartPace">Smart Pace</span></span>
+                <span class="feature-pill">🗺️ <span data-i18n="intro.surfaceAnalysis">Surface Analysis</span></span>
+                <span class="feature-pill">🚰 <span data-i18n="intro.aidStations">AID Stations</span></span>
+                <span class="feature-pill">🌅 <span data-i18n="intro.sunTimes">Sun Times</span></span>
+                <span class="feature-pill">📱 <span data-i18n="intro.shareCard">Share Card</span></span>
+                <span class="feature-pill">📄 <span data-i18n="intro.pdfExport">PDF Export</span></span>
             </div>
         </section>
 
@@ -93,35 +97,35 @@
         <div class="feedback-overlay" id="feedbackOverlay"></div>
         <aside class="feedback-panel" id="feedbackPanel">
             <div class="feedback-header">
-                <h3>💬 Send Feedback</h3>
+                <h3>💬 <span data-i18n="feedback.title">Send Feedback</span></h3>
                 <button type="button" class="feedback-close" id="feedbackClose">✕</button>
             </div>
             <form class="feedback-form" id="feedbackForm">
                 <div class="feedback-field">
-                    <label for="feedbackLike">What do you like about GPXray?</label>
-                    <textarea id="feedbackLike" name="like" rows="2" placeholder="The features I find most useful..."></textarea>
+                    <label for="feedbackLike" data-i18n="feedback.like">What do you like about GPXray?</label>
+                    <textarea id="feedbackLike" name="like" rows="2" data-i18n-placeholder="feedback.likePlaceholder" placeholder="The features I find most useful..."></textarea>
                 </div>
                 <div class="feedback-field">
-                    <label for="feedbackMissing">What features are missing?</label>
-                    <textarea id="feedbackMissing" name="missing" rows="2" placeholder="I wish GPXray could..."></textarea>
+                    <label for="feedbackMissing" data-i18n="feedback.missing">What features are missing?</label>
+                    <textarea id="feedbackMissing" name="missing" rows="2" data-i18n-placeholder="feedback.missingPlaceholder" placeholder="I wish GPXray could..."></textarea>
                 </div>
                 <div class="feedback-field">
-                    <label for="feedbackBugs">Any bugs or issues?</label>
-                    <textarea id="feedbackBugs" name="bugs" rows="2" placeholder="I noticed that..."></textarea>
+                    <label for="feedbackBugs" data-i18n="feedback.bugs">Any bugs or issues?</label>
+                    <textarea id="feedbackBugs" name="bugs" rows="2" data-i18n-placeholder="feedback.bugsPlaceholder" placeholder="I noticed that..."></textarea>
                 </div>
                 <div class="feedback-field">
-                    <label for="feedbackEmail">Email (optional, for follow-up)</label>
+                    <label for="feedbackEmail" data-i18n="feedback.email">Email (optional, for follow-up)</label>
                     <input type="email" id="feedbackEmail" name="email" placeholder="your@email.com">
                 </div>
                 <div class="feedback-actions">
-                    <button type="submit" class="feedback-submit">📨 Send Feedback</button>
-                    <a href="mailto:gpxrayrun@gmail.com?subject=GPXray%20Feedback" class="feedback-email-link">or email us directly</a>
+                    <button type="submit" class="feedback-submit">📨 <span data-i18n="feedback.send">Send Feedback</span></button>
+                    <a href="mailto:gpxrayrun@gmail.com?subject=GPXray%20Feedback" class="feedback-email-link" data-i18n="feedback.orEmail">or email us directly</a>
                 </div>
             </form>
             <div class="feedback-success" id="feedbackSuccess" style="display: none;">
                 <div class="feedback-success-icon">✅</div>
-                <h4>Thank you!</h4>
-                <p>Your feedback helps us improve GPXray.</p>
+                <h4 data-i18n="feedback.thanks">Thank you!</h4>
+                <p data-i18n="feedback.thanksSub">Your feedback helps us improve GPXray.</p>
             </div>
         </aside>
 
@@ -129,7 +133,7 @@
         <div class="history-overlay" id="historyOverlay"></div>
         <aside class="history-panel" id="historyPanel">
             <div class="history-header">
-                <h3>📋 Analysis History</h3>
+                <h3>📋 <span data-i18n="history.title">Analysis History</span></h3>
                 <button type="button" class="history-close" id="historyClose">✕</button>
             </div>
             <div class="history-content">
@@ -151,25 +155,25 @@
                 <input type="file" id="gpxInput" accept=".gpx" hidden>
                 <div class="upload-content">
                     <span class="upload-icon">📁</span>
-                    <p class="upload-text-desktop">Drag & drop a GPX file here or <button id="browseBtn">Browse locally</button></p>
-                    <p class="upload-text-mobile"><button id="browseBtnMobile">Select GPX File</button></p>
+                    <p class="upload-text-desktop"><span data-i18n="upload.dragDrop">Drag & drop a GPX file here or</span> <button id="browseBtn" data-i18n="upload.browse">Browse locally</button></p>
+                    <p class="upload-text-mobile"><button id="browseBtnMobile" data-i18n="upload.selectFile">Select GPX File</button></p>
                 </div>
             </div>
             <div class="demo-section">
-                <span class="demo-divider">or</span>
+                <span class="demo-divider" data-i18n="upload.or">or</span>
                 <div class="demo-buttons">
                     <button type="button" class="demo-btn" id="loadDemoBtn">
-                        🏔️ Try Demo: ZUT Garmisch-Partenkirchen Trail
+                        🏔️ <span data-i18n="upload.tryDemo">Run Simulation: ZUT Garmisch-Partenkirchen Trail</span>
                     </button>
-                    <button type="button" class="browse-races-btn" id="browseRacesBtn">
-                        🔍 Browse Popular Races
+                    <button type="button" class="browse-races-btn" id="browseRacesBtn" style="display: none;">
+                        🔍 <span data-i18n="upload.browseRaces">Browse Popular Races</span>
                     </button>
                 </div>
-                <p class="demo-hint">Load a sample trail or browse our curated race database</p>
+                <p class="demo-hint" id="demoHint" data-i18n="upload.demoHint">Load a sample trail to explore the features</p>
             </div>
             <div class="privacy-badge">
                 <span class="privacy-icon">🔒</span>
-                <span class="privacy-text">100% Local Processing – Your GPX data never leaves your device</span>
+                <span class="privacy-text" data-i18n="upload.privacy">100% Local Processing – Your GPX data never leaves your device</span>
             </div>
         </section>
 
@@ -177,23 +181,23 @@
         <div class="race-browser-overlay" id="raceBrowserOverlay"></div>
         <aside class="race-browser-panel" id="raceBrowserPanel">
             <div class="race-browser-header">
-                <h3>🔍 Popular Trail Races</h3>
+                <h3>🔍 <span data-i18n="races.title">Popular Trail Races</span></h3>
                 <button type="button" class="race-browser-close" id="raceBrowserClose">✕</button>
             </div>
             <div class="race-browser-search">
-                <input type="text" id="raceSearchInput" placeholder="Search races..." autocomplete="off">
+                <input type="text" id="raceSearchInput" data-i18n-placeholder="races.search" placeholder="Search races..." autocomplete="off">
             </div>
             <div class="race-browser-filters">
-                <button type="button" class="race-filter-btn active" data-filter="all">All</button>
-                <button type="button" class="race-filter-btn" data-filter="ultra">Ultra (100km+)</button>
-                <button type="button" class="race-filter-btn" data-filter="marathon">Marathon Trail</button>
-                <button type="button" class="race-filter-btn" data-filter="short">Short (<42km)</button>
+                <button type="button" class="race-filter-btn active" data-filter="all" data-i18n="races.all">All</button>
+                <button type="button" class="race-filter-btn" data-filter="ultra" data-i18n="races.ultra">Ultra (100km+)</button>
+                <button type="button" class="race-filter-btn" data-filter="marathon" data-i18n="races.marathon">Marathon Trail</button>
+                <button type="button" class="race-filter-btn" data-filter="short" data-i18n="races.short">Short (<42km)</button>
             </div>
             <div class="race-browser-list" id="raceBrowserList">
                 <!-- Races will be populated here -->
             </div>
             <div class="race-browser-footer">
-                <p>Missing a race? <a href="mailto:gpxrayrun@gmail.com?subject=Race%20Request">Request it!</a></p>
+                <p><span data-i18n="races.missing">Missing a race?</span> <a href="mailto:gpxrayrun@gmail.com?subject=Race%20Request" data-i18n="races.request">Request it!</a></p>
             </div>
         </aside>
 
@@ -202,33 +206,148 @@
                 <span class="route-icon">🏞️</span>
                 <h2 id="routeName">Route</h2>
             </div>
-            <h3 class="section-subtitle">Route Statistics</h3>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <span class="stat-label">Total Distance</span>
-                    <span class="stat-value" id="totalDistance">-</span>
+            
+            <!-- Hero Result Section - immediate value -->
+            <div class="hero-result" id="heroResult">
+                <div class="hero-main">
+                    <div class="hero-primary">
+                        <div class="hero-time">
+                            <span class="hero-label" data-i18n="hero.estimatedFinish">Estimated Finish Time</span>
+                            <span class="hero-value" id="heroFinishTime">-</span>
+                        </div>
+                        <div class="hero-distance">
+                            <span class="hero-distance-value" id="heroDistance">-</span>
+                        </div>
+                    </div>
+                    <div class="runner-level-selector">
+                        <label for="runnerLevel" data-i18n="hero.runnerLevel">Runner Level:</label>
+                        <select id="runnerLevel">
+                            <option value="beginner" data-i18n="hero.beginner">Beginner</option>
+                            <option value="intermediate" selected data-i18n="hero.intermediate">Intermediate</option>
+                            <option value="advanced" data-i18n="hero.advanced">Advanced</option>
+                            <option value="elite" data-i18n="hero.elite">Elite</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <span class="stat-label">Elevation Gain</span>
-                    <span class="stat-value" id="elevationGain">-</span>
+                
+                <!-- Course Shape Banner -->
+                <div class="hero-course-shape" id="heroCourseShape" style="display: none;">
+                    <span class="course-shape-badge" id="courseShapeBadge">-</span>
+                    <span class="course-shape-insight" id="courseShapeInsight">-</span>
                 </div>
-                <div class="stat-card">
-                    <span class="stat-label">Elevation Loss</span>
-                    <span class="stat-value" id="elevationLoss">-</span>
+                
+                <div class="hero-metrics">
+                    <div class="hero-metric">
+                        <span class="hero-metric-icon">🏔️</span>
+                        <div class="hero-metric-content">
+                            <span class="hero-metric-label" data-i18n="hero.mainClimb">Main Climb</span>
+                            <span class="hero-metric-value" id="heroLongestClimb">-</span>
+                            <span class="hero-metric-detail" id="heroLongestClimbGain"></span>
+                        </div>
+                    </div>
+                    <div class="hero-metric">
+                        <span class="hero-metric-icon">⬇️</span>
+                        <div class="hero-metric-content">
+                            <span class="hero-metric-label">
+                                <span data-i18n="hero.downhillLoad">Downhill Load</span>
+                                <span class="info-tooltip" tabindex="0">
+                                    ⓘ
+                                    <span class="info-tooltip-content">
+                                        <strong data-i18n="ddl.title">Descent Load (DDL/km)</strong><br>
+                                        <span data-i18n="ddl.description">Measures downhill stress (steepness + time + surface).</span><br><br>
+                                        <span data-i18n="ddl.paceEstimate">We use cumulative DDL to estimate <strong>downhill pace loss</strong>.</span><br><br>
+                                        <em data-i18n="ddl.fatigueRatio">Fatigue ratio = cumulative DDL ÷ DFT</em><br><br>
+                                        <strong data-i18n="ddl.paceLoss">Pace loss on descents:</strong><br>
+                                        • &lt;0.8: <span data-i18n="ddl.none">none</span><br>
+                                        • 0.8-1.0: +5-15 sec/km<br>
+                                        • 1.0-1.2: +15-30 sec/km<br>
+                                        • &gt;1.2: +30-60 sec/km
+                                    </span>
+                                </span>
+                            </span>
+                            <span class="hero-metric-value" id="heroDescentLoad">-</span>
+                            <span class="hero-metric-detail" id="heroDescentDetail"></span>
+                            <span class="hero-metric-insight" id="heroDescentInsight"></span>
+                            <a href="#" class="ddl-learn-more" id="ddlLearnMore" data-i18n="ddl.howItWorks">How it works</a>
+                        </div>
+                    </div>
+                    <div class="hero-metric">
+                        <span class="hero-metric-icon">⛰️</span>
+                        <div class="hero-metric-content">
+                            <span class="hero-metric-label" data-i18n="hero.elevationGain">Elevation Gain</span>
+                            <span class="hero-metric-value" id="heroClimbLoad">-</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <span class="stat-label">Min Elevation</span>
-                    <span class="stat-value" id="minElevation">-</span>
+                
+                <!-- DDL Explainer Modal -->
+                <div class="ddl-explainer" id="ddlExplainer">
+                    <div class="ddl-explainer-content">
+                        <button class="ddl-explainer-close" id="ddlExplainerClose">✕</button>
+                        <h4>⬇️ Dynamic Descent Load → Pace Loss</h4>
+                        <p class="ddl-tagline">DDL builds up as you descend. When cumulative DDL approaches your DFT, quads fatigue → downhill pace drops.</p>
+                        
+                        <div class="ddl-comparison">
+                            <div class="ddl-example good">
+                                <span class="ddl-example-label">Ratio &lt;0.8</span>
+                                <span class="ddl-example-detail">Fresh legs</span>
+                                <span class="ddl-example-result">→ No pace loss</span>
+                            </div>
+                            <div class="ddl-example bad">
+                                <span class="ddl-example-label">Ratio &gt;1.0</span>
+                                <span class="ddl-example-detail">Late race fatigue</span>
+                                <span class="ddl-example-result">→ +15-30 sec/km</span>
+                            </div>
+                        </div>
+                        
+                        <p class="ddl-takeaway">💡 <strong>DFT = your downhill fatigue threshold</strong> (depends on runner level). Change level above to personalize.</p>
+                        
+                        <details class="ddl-formula-details">
+                            <summary>Show formula</summary>
+                            <p class="ddl-formula">paceLoss = basePace × (1 + max(0, ratio–0.8)²) − basePace</p>
+                        </details>
+                        
+                        <p class="ddl-disclaimer"><em>This is a heuristic model, not medical advice.</em></p>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <span class="stat-label">Max Elevation</span>
-                    <span class="stat-value" id="maxElevation">-</span>
+                
+                <div class="hero-checkpoints" id="heroCheckpoints" style="display: none;">
+                    <!-- AID station times will appear here -->
                 </div>
-                <div class="stat-card">
-                    <span class="stat-label">Estimated Time</span>
-                    <span class="stat-value" id="estimatedTime">-</span>
-                </div>
+                
+                <p class="hero-hint"><span data-i18n="hero.hint">Based on default paces</span> • <a href="#paceSection" data-i18n="hero.customize">Customize strategy ↓</a></p>
             </div>
+            
+            <!-- Secondary stats (collapsed) -->
+            <details class="stats-details">
+                <summary>📊 <span data-i18n="stats.courseDetails">Course Details</span></summary>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Distance</span>
+                        <span class="stat-value" id="totalDistance">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Elevation Gain</span>
+                        <span class="stat-value" id="elevationGain">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Elevation Loss</span>
+                        <span class="stat-value" id="elevationLoss">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Min Elevation</span>
+                        <span class="stat-value" id="minElevation">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Max Elevation</span>
+                        <span class="stat-value" id="maxElevation">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Estimated Time</span>
+                        <span class="stat-value" id="estimatedTime">-</span>
+                    </div>
+                </div>
+            </details>
         </section>
 
         <section class="map-section" id="mapSection" style="display: none;">
@@ -260,7 +379,7 @@
 
         <section class="elevation-section" id="elevationSection" style="display: none;">
             <div class="chart-header">
-                <h2>Profile</h2>
+                <h2>Course Load</h2>
                 <select id="chartSelector" class="chart-selector">
                     <option value="elevation">Elevation Profile</option>
                     <option value="gradient">Gradient Profile</option>
@@ -306,7 +425,7 @@
         </section>
 
         <section class="pace-section" id="paceSection" style="display: none;">
-            <h2>Pace Planner</h2>
+            <h2>Race Strategy</h2>
             
             <div class="settings-bar">
                 <div class="unit-toggle">
@@ -321,13 +440,13 @@
             </div>
             
             <div class="mode-selector">
-                <button type="button" class="mode-btn active" id="targetModeBtn">Target Time</button>
+                <button type="button" class="mode-btn" id="targetModeBtn">Target Time</button>
                 <button type="button" class="mode-btn" id="itraModeBtn">ITRA Index</button>
-                <button type="button" class="mode-btn" id="manualModeBtn">Manual Pace</button>
+                <button type="button" class="mode-btn active" id="manualModeBtn">Manual Pace</button>
             </div>
             
             <!-- Manual Mode -->
-            <div id="manualMode" class="pace-mode" style="display: none;">
+            <div id="manualMode" class="pace-mode">
                 <p class="pace-description">Set your target pace for different terrain types. Pace is in minutes per kilometer (min/km).</p>
                 
                 <div class="pace-inputs">
@@ -373,7 +492,7 @@
             </div>
             
             <!-- Target Time Mode -->
-            <div id="targetMode" class="pace-mode">
+            <div id="targetMode" class="pace-mode" style="display: none;">
                 <p class="pace-description">Enter your target finish time and adjust the pace ratios for different terrain.</p>
                 
                 <div class="target-time-input">
@@ -603,16 +722,16 @@
             
             <!-- Leg Summary (between AID stations) -->
             <div class="leg-summary" id="legSummary" style="display: none;">
-                <h3>🚰 Leg Summary</h3>
+                <h3>🚰 <span data-i18n="leg.title">Leg Summary</span></h3>
                 <div class="leg-summary-table-container">
                     <table class="leg-summary-table">
                         <thead>
                             <tr>
-                                <th>Leg</th>
-                                <th>Distance</th>
-                                <th>Elevation</th>
-                                <th>Est. Time</th>
-                                <th>Arrival</th>
+                                <th data-i18n="leg.leg">Leg</th>
+                                <th data-i18n="leg.dist">Distance</th>
+                                <th data-i18n="splits.elevation">Elevation</th>
+                                <th data-i18n="leg.time">Est. Time</th>
+                                <th data-i18n="leg.arrival">Arrival</th>
                             </tr>
                         </thead>
                         <tbody id="legSummaryBody">
@@ -625,16 +744,16 @@
                 <table id="splitsTable">
                     <thead>
                         <tr>
-                            <th id="distanceHeader">KM</th>
-                            <th>Elevation Change</th>
-                            <th>Terrain</th>
-                            <th>Surface</th>
-                            <th>AID Station</th>
-                            <th>Stop</th>
-                            <th>Target Pace</th>
-                            <th>Split Time</th>
-                            <th>Race Time</th>
-                            <th>Clock Time</th>
+                            <th id="distanceHeader" data-i18n="splits.km">KM</th>
+                            <th data-i18n="splits.elevation">Elevation Change</th>
+                            <th data-i18n="splits.terrain">Terrain</th>
+                            <th data-i18n="splits.surface">Surface</th>
+                            <th data-i18n="splits.aid">AID Station</th>
+                            <th data-i18n="splits.stop">Stop</th>
+                            <th data-i18n="splits.pace">Target Pace</th>
+                            <th data-i18n="splits.splitTime">Split Time</th>
+                            <th data-i18n="splits.cumulative">Race Time</th>
+                            <th data-i18n="splits.clock">Clock Time</th>
                         </tr>
                     </thead>
                     <tbody id="splitsBody">
@@ -673,8 +792,7 @@
     </div>
 
     <script>
-    // Beta password gate - DISABLED on main branch
-    /*
+    // Beta password gate
     (function() {
         const BETA_PASSWORD = 'GPXray#2026!';
         const STORAGE_KEY = 'gpxray_beta_access';
@@ -706,7 +824,6 @@
             }
         }
     })();
-    */
     </script>
 
     <footer class="site-footer">
@@ -731,13 +848,13 @@
     <div class="early-access-modal" id="earlyAccessModal">
         <div class="early-access-content">
             <div class="early-access-icon">🔐</div>
-            <h2>Early Access</h2>
-            <p>GPXray is currently in private beta. Enter your access code to unlock GPX upload.</p>
+            <h2 data-i18n="earlyAccess.title">Early Access</h2>
+            <p data-i18n="earlyAccess.description">Unlock full race strategy for your GPX file.</p>
             <form class="early-access-form" id="earlyAccessForm">
-                <input type="text" id="earlyAccessCode" placeholder="Enter access code" autocomplete="off">
-                <button type="submit" class="early-access-submit">Unlock</button>
+                <input type="text" id="earlyAccessCode" data-i18n-placeholder="earlyAccess.placeholder" placeholder="Enter access code" autocomplete="off">
+                <button type="submit" class="early-access-submit" data-i18n="earlyAccess.unlock">Unlock</button>
             </form>
-            <p class="early-access-error" id="earlyAccessError">Invalid code. Please try again.</p>
+            <p class="early-access-error" id="earlyAccessError" data-i18n="earlyAccess.error">Invalid code. Please try again.</p>
             
             <div class="early-access-divider">
                 <span>or</span>
@@ -759,7 +876,7 @@
                 DM @daniel.runs.trails for a code
             </a>
             
-            <p class="early-access-hint">Or try the demo and browse popular races below!</p>
+            <p class="early-access-hint" data-i18n="earlyAccess.hint">Or run the simulation below to see how it works!</p>
             <button id="earlyAccessClose" class="early-access-close">✕</button>
         </div>
     </div>
@@ -776,6 +893,7 @@
         </div>
     </div>
 
+    <script src="i18n.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
