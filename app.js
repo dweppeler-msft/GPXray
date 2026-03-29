@@ -134,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDDLExplainer();
     setupCookieConsent();
     setupEarlyAccess();
+    updateEarlyAccessUI();
     setupRunnerLevel();
 });
 
@@ -263,6 +264,7 @@ function setupEarlyAccess() {
             localStorage.setItem('gpxray-early-access', 'unlocked');
             localStorage.setItem('gpxray-access-code', code);
             hideEarlyAccessModal();
+            updateEarlyAccessUI();
             
             // Track with code in multiple ways for visibility
             trackEvent('early_access', { action: 'unlocked', code: code });
@@ -338,6 +340,23 @@ function setupEarlyAccess() {
 
 function isEarlyAccessUnlocked() {
     return localStorage.getItem('gpxray-early-access') === 'unlocked';
+}
+
+// Update UI elements that depend on early access status
+function updateEarlyAccessUI() {
+    const browseRacesBtn = document.getElementById('browseRacesBtn');
+    const demoHint = document.getElementById('demoHint');
+    
+    if (isEarlyAccessUnlocked()) {
+        // Show browse races button for early access users
+        if (browseRacesBtn) browseRacesBtn.style.display = '';
+        // Update hint text
+        if (demoHint) {
+            demoHint.textContent = typeof t === 'function' ? t('upload.demoHintFull') : 'Load a sample trail or browse our curated race database';
+        }
+    } else {
+        if (browseRacesBtn) browseRacesBtn.style.display = 'none';
+    }
 }
 
 function showEarlyAccessModal() {
