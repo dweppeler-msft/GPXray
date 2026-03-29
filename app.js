@@ -5094,17 +5094,7 @@ function initRaceMode() {
     if (uploadSection) uploadSection.style.display = 'none';
     if (introSection) introSection.style.display = 'none';
     
-    // Update header for race mode
-    const headerTitle = document.querySelector('.header-title h1');
-    const headerTagline = document.querySelector('.header-title .tagline');
-    if (headerTitle) {
-        headerTitle.innerHTML = `${raceConfig.shortName || raceConfig.name} <span class="race-mode-badge">Race Strategy</span>`;
-    }
-    if (headerTagline) {
-        headerTagline.textContent = raceConfig.tagline || 'Create your race strategy';
-    }
-    
-    // Update page title
+    // Update page title for SEO
     document.title = `${raceConfig.name} - Race Strategy | GPXray`;
     
     // Populate race landing page
