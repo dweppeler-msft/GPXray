@@ -5256,11 +5256,13 @@ function initRaceModeContent(raceConfig) {
     const raceLanding = document.getElementById('raceLanding');
     const uploadSection = document.querySelector('.upload-section');
     const introSection = document.querySelector('.intro-section');
+    const addAidStationBox = document.getElementById('addAidStationBox');
     
     if (mainContent) mainContent.style.display = 'block';
     if (raceLanding) raceLanding.style.display = 'block';
     if (uploadSection) uploadSection.style.display = 'none';
     if (introSection) introSection.style.display = 'none';
+    if (addAidStationBox) addAidStationBox.style.display = 'none'; // Hide add AID station in race mode
     
     // Update page title for SEO
     document.title = `${raceConfig.name} - Race Strategy | GPXray`;
