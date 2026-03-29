@@ -2890,7 +2890,10 @@ function renderAidStations() {
                 <div class="aid-station-info">
                     <span class="aid-station-km">KM ${station.km}</span>
                     <span class="aid-station-name">${station.name}</span>
-                    <span class="aid-station-stop">(${station.stopMin || 0} min stop)</span>
+                    <span class="aid-station-stop ${currentRaceConfig ? 'editable' : ''}" 
+                          ${currentRaceConfig ? `onclick="editStopTime(${index})" title="Click to edit stop time"` : ''}>
+                        (${station.stopMin || 0} min stop)
+                    </span>
                 </div>
                 ${legInfo}
                 ${(isDemoMode || currentRaceConfig) ? '' : `
@@ -2994,6 +2997,48 @@ function removeAidStation(index) {
     }
     aidStations.splice(index, 1);
     renderAidStations();
+}
+
+// Edit stop time inline (for race mode)
+function editStopTime(index) {
+    const station = aidStations[index];
+    if (!station) return;
+    
+    const item = document.getElementById(`aid-station-${index}`);
+    if (!item) return;
+    
+    const stopSpan = item.querySelector('.aid-station-stop');
+    if (!stopSpan || stopSpan.querySelector('input')) return; // Already editing
+    
+    const currentMin = station.stopMin || 0;
+    
+    // Replace with input
+    stopSpan.innerHTML = `
+        <input type="number" class="stop-time-input" value="${currentMin}" min="0" max="60" step="1">
+        <span>min</span>
+    `;
+    stopSpan.onclick = null; // Disable click while editing
+    
+    const input = stopSpan.querySelector('input');
+    input.focus();
+    input.select();
+    
+    const saveStopTime = () => {
+        const newMin = parseInt(input.value) || 0;
+        aidStations[index].stopMin = Math.max(0, Math.min(60, newMin));
+        renderAidStations();
+        calculateRacePlan();
+    };
+    
+    input.addEventListener('blur', saveStopTime);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveStopTime();
+        } else if (e.key === 'Escape') {
+            renderAidStations(); // Cancel edit
+        }
+    });
 }
 
 function editAidStation(index) {
