@@ -157,37 +157,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Feature Pill Tooltips
 function setupFeaturePillTooltips() {
-    // Add click handlers to all feature pills with data-tooltip
+    let activeTooltipKey = null;
+    
+    function closeAllTooltips() {
+        document.querySelectorAll('.feature-pill-tooltip').forEach(t => t.remove());
+        activeTooltipKey = null;
+    }
+    
+    function showTooltip(pill) {
+        const tooltipKey = pill.dataset.tooltip;
+        
+        // If same pill, close tooltip
+        if (activeTooltipKey === tooltipKey) {
+            closeAllTooltips();
+            return;
+        }
+        
+        // Close any existing tooltips first
+        closeAllTooltips();
+        
+        // Create tooltip element
+        const tooltip = document.createElement('div');
+        tooltip.className = 'feature-pill-tooltip';
+        tooltip.textContent = t(tooltipKey);
+        
+        // Append to pill (CSS handles positioning)
+        pill.appendChild(tooltip);
+        activeTooltipKey = tooltipKey;
+    }
+    
+    // Add click/touch handlers to all feature pills with data-tooltip
     document.querySelectorAll('.feature-pill[data-tooltip]').forEach(pill => {
+        // Use touchend for mobile to prevent double-firing
+        pill.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showTooltip(pill);
+        }, { passive: false });
+        
+        // Click for desktop
         pill.addEventListener('click', (e) => {
             e.stopPropagation();
-            
-            // Remove any existing tooltip
-            const existing = document.querySelector('.feature-pill-tooltip');
-            if (existing) {
-                existing.remove();
-                // If clicking the same pill, just close
-                if (existing.dataset.forPill === pill.dataset.tooltip) {
-                    return;
-                }
-            }
-            
-            // Create tooltip element
-            const tooltip = document.createElement('div');
-            tooltip.className = 'feature-pill-tooltip';
-            tooltip.dataset.forPill = pill.dataset.tooltip;
-            tooltip.textContent = t(pill.dataset.tooltip);
-            
-            // Append to pill (CSS handles positioning)
-            pill.appendChild(tooltip);
+            // Skip if touch event already handled
+            if (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
+            showTooltip(pill);
         });
     });
     
-    // Close tooltip when clicking elsewhere
+    // Close tooltip when clicking/touching elsewhere
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.feature-pill')) {
-            const tooltip = document.querySelector('.feature-pill-tooltip');
-            if (tooltip) tooltip.remove();
+            closeAllTooltips();
+        }
+    });
+    
+    document.addEventListener('touchend', (e) => {
+        if (!e.target.closest('.feature-pill')) {
+            closeAllTooltips();
         }
     });
 }
