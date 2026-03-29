@@ -1,0 +1,139 @@
+// Race Landing Page Configurations
+// B2B feature: Dedicated race pages with pre-configured distances
+
+const RACE_CONFIGS = {
+    'zut': {
+        id: 'zut',
+        name: 'Zugspitz Ultratrail',
+        shortName: 'ZUT',
+        year: 2025,
+        date: '2025-06-20',
+        location: 'Garmisch-Partenkirchen, Germany',
+        website: 'https://www.zugspitz-ultratrail.com',
+        logo: null, // Optional: 'races/zut-logo.png'
+        tagline: 'Run where the mountains touch the sky',
+        
+        // Branding colors
+        branding: {
+            primary: '#1a365d',    // Dark blue
+            accent: '#38a169',     // Green
+            background: '#0a1628'  // Dark background
+        },
+        
+        // Available distances (sorted by distance)
+        distances: [
+            {
+                id: 'grainau',
+                name: 'Grainau Trail',
+                distance: 16,
+                elevation: 800,
+                gpxUrl: 'races/Grainau_Trail_ZUT_2025_01bfa09fb6.gpx',
+                aidStations: [
+                    { km: 8.0, name: 'VP Hammersbach', stopMin: 2 }
+                ],
+                cutoffs: [],
+                description: 'Perfect introduction to trail running'
+            },
+            {
+                id: 'mittenwald',
+                name: 'Mittenwald Trail',
+                distance: 43,
+                elevation: 2100,
+                gpxUrl: 'races/Mittenwald_Trail_ZUT_2025_fa6c0d4010.gpx',
+                aidStations: [
+                    { km: 12.0, name: 'VP1 Kranzberg', stopMin: 3 },
+                    { km: 28.0, name: 'VP2 Lautersee', stopMin: 5 }
+                ],
+                cutoffs: [],
+                description: 'Challenging marathon distance with stunning views'
+            },
+            {
+                id: 'leutasch',
+                name: 'Leutasch Trail',
+                distance: 68,
+                elevation: 3500,
+                gpxUrl: 'races/Leutasch_Trail_ZUT_2025_620e36ae36.gpx',
+                aidStations: [
+                    { km: 18.0, name: 'VP1 Mittenwald', stopMin: 5 },
+                    { km: 35.0, name: 'VP2 Leutasch', stopMin: 8 },
+                    { km: 52.0, name: 'VP3 Gaistal', stopMin: 5 }
+                ],
+                cutoffs: [],
+                description: 'Cross the Austrian border and back'
+            },
+            {
+                id: 'ehrwald',
+                name: 'Ehrwald Trail',
+                distance: 85,
+                elevation: 4500,
+                gpxUrl: 'races/Ehrwald_Trail_ZUT_2025_85a841b963.gpx',
+                aidStations: [
+                    { km: 20.0, name: 'VP1 Mittenwald', stopMin: 5 },
+                    { km: 40.0, name: 'VP2 Leutasch', stopMin: 8 },
+                    { km: 58.0, name: 'VP3 Ehrwald', stopMin: 10 },
+                    { km: 72.0, name: 'VP4 Gaistal', stopMin: 5 }
+                ],
+                cutoffs: [],
+                description: 'Around the Zugspitze massif'
+            },
+            {
+                id: 'ultratrail',
+                name: 'Ultratrail',
+                distance: 106,
+                elevation: 5400,
+                gpxUrl: 'races/Ultratrail_ZUT_2025_3b6cbaa510.gpx',
+                aidStations: [
+                    { km: 22.0, name: 'VP1 Mittenwald', stopMin: 5 },
+                    { km: 42.0, name: 'VP2 Leutasch', stopMin: 10 },
+                    { km: 62.0, name: 'VP3 Ehrwald', stopMin: 10 },
+                    { km: 80.0, name: 'VP4 Gaistal', stopMin: 8 },
+                    { km: 95.0, name: 'VP5 Partnachklamm', stopMin: 5 }
+                ],
+                cutoffs: [],
+                description: 'The classic ultratrail experience'
+            },
+            {
+                id: 'zut100',
+                name: 'ZUT 100',
+                distance: 164,
+                elevation: 8500,
+                gpxUrl: 'races/ZUT_100_2025_71c0e173fd.gpx',
+                aidStations: [
+                    { km: 25.0, name: 'VP1 Mittenwald', stopMin: 8 },
+                    { km: 50.0, name: 'VP2 Leutasch', stopMin: 12 },
+                    { km: 75.0, name: 'VP3 Ehrwald', stopMin: 15 },
+                    { km: 100.0, name: 'VP4 Biberwier', stopMin: 12 },
+                    { km: 125.0, name: 'VP5 Gaistal', stopMin: 10 },
+                    { km: 145.0, name: 'VP6 Partnachklamm', stopMin: 8 }
+                ],
+                cutoffs: [],
+                description: 'The ultimate 100-mile challenge'
+            }
+        ]
+    }
+    
+    // Add more races here:
+    // 'utmb': { ... },
+    // 'eiger': { ... }
+};
+
+// Get race config by ID
+function getRaceConfig(raceId) {
+    return RACE_CONFIGS[raceId] || null;
+}
+
+// Get all available race IDs
+function getAvailableRaces() {
+    return Object.keys(RACE_CONFIGS);
+}
+
+// Check if URL indicates race mode
+function detectRaceMode() {
+    const params = new URLSearchParams(window.location.search);
+    const raceParam = params.get('race');
+    
+    // Check URL path for /race/xxx pattern
+    const pathMatch = window.location.pathname.match(/\/race\/([a-z0-9-]+)/i);
+    
+    return raceParam || (pathMatch ? pathMatch[1] : null);
+}

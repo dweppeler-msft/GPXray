@@ -136,6 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEarlyAccess();
     updateEarlyAccessUI();
     setupRunnerLevel();
+    
+    // Check for race landing page mode
+    initRaceMode();
 });
 
 // Language Selector (Toggle Buttons)
@@ -5059,4 +5062,151 @@ function downloadCrewCard(canvas, fileName) {
     
     // Track export
     trackEvent('export_crew_card', { race_name: currentRouteName || 'unknown' });
+}
+
+// ========================================
+// Race Landing Page Mode (B2B Feature)
+// ========================================
+
+let currentRaceConfig = null;
+
+function initRaceMode() {
+    // Check if races-config.js is loaded
+    if (typeof detectRaceMode !== 'function') return;
+    
+    const raceId = detectRaceMode();
+    if (!raceId) return;
+    
+    const raceConfig = getRaceConfig(raceId);
+    if (!raceConfig) {
+        console.warn(`Race config not found for: ${raceId}`);
+        return;
+    }
+    
+    currentRaceConfig = raceConfig;
+    
+    // Show race landing, hide upload section
+    const raceLanding = document.getElementById('raceLanding');
+    const uploadSection = document.querySelector('.upload-section');
+    const introSection = document.querySelector('.intro-section');
+    
+    if (raceLanding) raceLanding.style.display = 'block';
+    if (uploadSection) uploadSection.style.display = 'none';
+    if (introSection) introSection.style.display = 'none';
+    
+    // Update header for race mode
+    const headerTitle = document.querySelector('.header-title h1');
+    const headerTagline = document.querySelector('.header-title .tagline');
+    if (headerTitle) {
+        headerTitle.innerHTML = `${raceConfig.shortName || raceConfig.name} <span class="race-mode-badge">Race Strategy</span>`;
+    }
+    if (headerTagline) {
+        headerTagline.textContent = raceConfig.tagline || 'Create your race strategy';
+    }
+    
+    // Update page title
+    document.title = `${raceConfig.name} - Race Strategy | GPXray`;
+    
+    // Populate race landing page
+    populateRaceLanding(raceConfig);
+    
+    // Track race page view
+    trackEvent('race_landing_view', { race_id: raceId, race_name: raceConfig.name });
+}
+
+function populateRaceLanding(config) {
+    // Set race info
+    const raceName = document.getElementById('raceName');
+    const raceTagline = document.getElementById('raceTagline');
+    const raceDate = document.getElementById('raceDate');
+    const raceLocation = document.getElementById('raceLocation');
+    const raceLogo = document.getElementById('raceLogo');
+    
+    if (raceName) raceName.textContent = config.name + (config.year ? ` ${config.year}` : '');
+    if (raceTagline) raceTagline.textContent = config.tagline || '';
+    if (raceDate && config.date) {
+        const dateObj = new Date(config.date);
+        raceDate.textContent = dateObj.toLocaleDateString(currentLang === 'de' ? 'de-DE' : 'en-US', { 
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
+    }
+    if (raceLocation) raceLocation.textContent = config.location || '';
+    
+    // Set logo if available
+    if (raceLogo && config.logo) {
+        raceLogo.innerHTML = `<img src="${config.logo}" alt="${config.name} logo">`;
+    }
+    
+    // Populate distance buttons
+    const distancesContainer = document.getElementById('raceDistances');
+    if (!distancesContainer) return;
+    
+    distancesContainer.innerHTML = '';
+    
+    config.distances.forEach(dist => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'race-distance-btn';
+        btn.dataset.distanceId = dist.id;
+        btn.innerHTML = `
+            <span class="race-distance-name">${dist.name}</span>
+            <span class="race-distance-stats">
+                <span class="race-distance-km">${dist.distance} km</span>
+                <span class="race-distance-elev"> · ↑${dist.elevation}m</span>
+            </span>
+        `;
+        
+        btn.addEventListener('click', () => selectRaceDistance(dist, btn));
+        distancesContainer.appendChild(btn);
+    });
+}
+
+async function selectRaceDistance(distanceConfig, buttonEl) {
+    // Highlight selected button
+    document.querySelectorAll('.race-distance-btn').forEach(btn => btn.classList.remove('selected'));
+    buttonEl.classList.add('selected');
+    
+    // Show loading state
+    const originalHTML = buttonEl.innerHTML;
+    buttonEl.innerHTML = '<span class="race-distance-name">⏳ Loading...</span>';
+    buttonEl.disabled = true;
+    
+    try {
+        // Load GPX file
+        const response = await fetch(distanceConfig.gpxUrl);
+        if (!response.ok) throw new Error('Failed to load GPX');
+        
+        const gpxContent = await response.text();
+        
+        // Set route name
+        currentRouteName = `${currentRaceConfig.shortName || currentRaceConfig.name} - ${distanceConfig.name}`;
+        
+        // Parse GPX
+        parseGPX(gpxContent);
+        
+        // Load pre-configured AID stations
+        if (distanceConfig.aidStations && distanceConfig.aidStations.length > 0) {
+            aidStations = [...distanceConfig.aidStations];
+            renderAidStations();
+        }
+        
+        // Track selection
+        trackEvent('race_distance_selected', { 
+            race_id: currentRaceConfig.id, 
+            distance_id: distanceConfig.id,
+            distance_km: distanceConfig.distance 
+        });
+        
+        // Scroll to results
+        setTimeout(() => {
+            document.getElementById('statsSection')?.scrollIntoView({ behavior: 'smooth' });
+        }, 500);
+        
+    } catch (error) {
+        console.error('Error loading race distance:', error);
+        alert('Failed to load race data. Please try again.');
+    } finally {
+        buttonEl.innerHTML = originalHTML;
+        buttonEl.disabled = false;
+    }
 }

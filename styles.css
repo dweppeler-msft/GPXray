@@ -3915,3 +3915,175 @@ h2 {
         margin: 15px 0;
     }
 }
+
+/* ========================================
+   Race Landing Page (B2B Feature)
+   ======================================== */
+
+.race-landing {
+    background: linear-gradient(135deg, rgba(26, 54, 93, 0.3) 0%, rgba(56, 161, 105, 0.2) 100%);
+    border-radius: 15px;
+    padding: 40px;
+    margin-bottom: 30px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.race-landing-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.race-logo img {
+    max-height: 80px;
+    max-width: 200px;
+    object-fit: contain;
+}
+
+.race-info {
+    text-align: center;
+}
+
+.race-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 8px 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.race-tagline {
+    font-size: 1.1rem;
+    color: #00d4ff;
+    margin: 0 0 12px 0;
+    font-style: italic;
+}
+
+.race-details {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    color: #aaa;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.race-details span::before {
+    margin-right: 5px;
+}
+
+.race-date::before {
+    content: '📅';
+}
+
+.race-location::before {
+    content: '📍';
+}
+
+.race-distances {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.race-distance-btn {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 140px;
+    text-align: center;
+}
+
+.race-distance-btn:hover {
+    border-color: #00d4ff;
+    background: rgba(0, 212, 255, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 212, 255, 0.2);
+}
+
+.race-distance-btn.selected {
+    border-color: #00d4ff;
+    background: rgba(0, 212, 255, 0.2);
+}
+
+.race-distance-name {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.race-distance-stats {
+    display: block;
+    font-size: 0.85rem;
+    color: #aaa;
+}
+
+.race-distance-km {
+    color: #00d4ff;
+    font-weight: 600;
+}
+
+.race-distance-elev {
+    color: #888;
+}
+
+.race-instruction {
+    color: #888;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Race Landing Mobile */
+@media (max-width: 768px) {
+    .race-landing {
+        padding: 25px 15px;
+    }
+    
+    .race-name {
+        font-size: 1.5rem;
+    }
+    
+    .race-tagline {
+        font-size: 0.95rem;
+    }
+    
+    .race-details {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .race-distances {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .race-distance-btn {
+        width: 100%;
+        padding: 15px 20px;
+    }
+}
+
+/* Race Mode Badge in Header */
+.race-mode-badge {
+    background: linear-gradient(135deg, #00d4ff, #00a8cc);
+    color: #0a1628;
+    font-size: 0.5em;
+    padding: 4px 10px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-left: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
