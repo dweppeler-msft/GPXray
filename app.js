@@ -3737,20 +3737,26 @@ function updateHeroSection(totalTime) {
         heroClimbLoad.textContent = `+${Math.round(gpxData.elevationGain)}m`;
     }
     
-    // Update Main Climb (longest continuous ascent)
-    const heroLongestClimb = document.getElementById('heroLongestClimb');
-    const heroLongestClimbGain = document.getElementById('heroLongestClimbGain');
-    if (heroLongestClimb && gpxData) {
-        const mainClimb = findLongestClimb();
-        if (mainClimb && mainClimb.gain > 150) {
-            heroLongestClimb.textContent = `KM ${mainClimb.start.toFixed(1)}–${mainClimb.end.toFixed(1)}`;
-            if (heroLongestClimbGain) {
-                heroLongestClimbGain.textContent = `+${Math.round(mainClimb.gain)}m`;
+    // Update Top Climbs (3 biggest continuous ascents)
+    const heroTopClimbs = document.getElementById('heroTopClimbs');
+    if (heroTopClimbs && gpxData) {
+        const topClimbs = findTopClimbs(3);
+        const climbItems = heroTopClimbs.querySelectorAll('.top-climb-item');
+        
+        climbItems.forEach((item, index) => {
+            const locationEl = item.querySelector('.climb-location');
+            const gainEl = item.querySelector('.climb-gain');
+            
+            if (topClimbs[index] && topClimbs[index].gain > 100) {
+                locationEl.textContent = `KM ${topClimbs[index].start.toFixed(1)}–${topClimbs[index].end.toFixed(1)}`;
+                gainEl.textContent = `+${Math.round(topClimbs[index].gain)}m`;
+                item.style.display = 'flex';
+            } else {
+                locationEl.textContent = '-';
+                gainEl.textContent = '';
+                item.style.display = index === 0 ? 'flex' : 'none';
             }
-        } else {
-            heroLongestClimb.textContent = '-';
-            if (heroLongestClimbGain) heroLongestClimbGain.textContent = '';
-        }
+        });
     }
     
     // Update Dynamic Descent Load (elevation-based muscular stress)
@@ -3952,6 +3958,83 @@ function findLongestClimb() {
     }
     
     return mainClimb;
+}
+
+// Find top N climbs sorted by elevation gain
+function findTopClimbs(count = 3) {
+    if (!gpxData || !gpxData.points || gpxData.points.length < 10) return [];
+    
+    const points = gpxData.points;
+    const DIP_TOLERANCE = 30; // Allow up to 30m dips within a climb
+    const allClimbs = [];
+    
+    let windowStart = 0;
+    let windowMinElevation = points[0].elevation || 0;
+    let windowMaxElevation = windowMinElevation;
+    let windowMinDistance = 0;
+    
+    for (let i = 1; i < points.length; i++) {
+        const point = points[i];
+        const elevation = point.elevation || 0;
+        
+        if (elevation > windowMaxElevation) {
+            windowMaxElevation = elevation;
+        }
+        
+        const dropFromMax = windowMaxElevation - elevation;
+        
+        if (dropFromMax > DIP_TOLERANCE) {
+            const gain = windowMaxElevation - windowMinElevation;
+            
+            if (gain > 100) {
+                let maxElevDistance = windowMinDistance;
+                for (let j = windowStart; j <= i; j++) {
+                    if ((points[j].elevation || 0) === windowMaxElevation) {
+                        maxElevDistance = points[j].distance;
+                        break;
+                    }
+                }
+                
+                allClimbs.push({
+                    start: windowMinDistance,
+                    end: maxElevDistance,
+                    gain: gain
+                });
+            }
+            
+            windowStart = i;
+            windowMinElevation = elevation;
+            windowMaxElevation = elevation;
+            windowMinDistance = point.distance;
+        }
+        
+        if (elevation < windowMinElevation) {
+            windowMinElevation = elevation;
+            windowMinDistance = point.distance;
+            windowStart = i;
+            windowMaxElevation = elevation;
+        }
+    }
+    
+    // Check final window
+    const finalGain = windowMaxElevation - windowMinElevation;
+    if (finalGain > 100) {
+        let maxElevDistance = windowMinDistance;
+        for (let j = windowStart; j < points.length; j++) {
+            if ((points[j].elevation || 0) === windowMaxElevation) {
+                maxElevDistance = points[j].distance;
+                break;
+            }
+        }
+        allClimbs.push({
+            start: windowMinDistance,
+            end: maxElevDistance,
+            gain: finalGain
+        });
+    }
+    
+    // Sort by gain descending and return top N
+    return allClimbs.sort((a, b) => b.gain - a.gain).slice(0, count);
 }
 
 // Update Course Shape - Race Intelligence
