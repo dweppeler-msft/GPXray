@@ -3929,6 +3929,26 @@ h2 {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.race-landing-intro {
+    margin-bottom: 30px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.race-landing-intro-text {
+    font-size: 1.1rem;
+    color: #ccc;
+    margin: 0 0 20px 0;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+.race-landing .feature-pills {
+    justify-content: center;
+}
+
 .race-landing-header {
     display: flex;
     flex-direction: column;
