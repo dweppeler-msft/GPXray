@@ -4719,8 +4719,9 @@ async function exportShareCard() {
             // Sort AID stations by km and get their data
             const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
             
-            // Collect matching rows with their data
+            // Collect matching rows with their data (deduplicated by station name)
             const stationData = [];
+            const addedStations = new Set();
             const rows = splitsTable.querySelectorAll('tbody tr.aid-station-row');
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
@@ -4729,14 +4730,22 @@ async function exportShareCard() {
                 const raceTime = cells[8]?.textContent || '';
                 const clockTime = cells[9]?.textContent || '';
                 
-                if (aidName && aidName !== '-') {
+                if (aidName && aidName !== '-' && !addedStations.has(aidName)) {
                     // Parse distance and find matching AID station (tolerance-based matching)
                     const rowDist = parseFloat(distCell);
                     const rowKm = useMetric ? rowDist : rowDist * MILES_TO_KM;
                     const matchingStation = sortedStations.find(s => Math.abs(s.km - rowKm) < 0.5);
                     
                     if (matchingStation) {
-                        stationData.push({ dist: distCell, name: aidName, raceTime, clockTime });
+                        // Use exact station km for display
+                        const displayDist = useMetric ? matchingStation.km : matchingStation.km * KM_TO_MILES;
+                        stationData.push({ 
+                            dist: displayDist.toFixed(1), 
+                            name: aidName, 
+                            raceTime, 
+                            clockTime 
+                        });
+                        addedStations.add(aidName);
                     }
                 }
             });
@@ -5050,6 +5059,7 @@ async function exportCrewCard() {
         // Get AID station data from splits table
         const sortedStations = [...aidStations].sort((a, b) => a.km - b.km);
         const stationData = [];
+        const addedStations = new Set(); // Track added stations to prevent duplicates
         
         if (splitsTable) {
             const rows = splitsTable.querySelectorAll('tbody tr.aid-station-row');
@@ -5060,20 +5070,41 @@ async function exportCrewCard() {
                 const aidName = cells[4]?.textContent || '';
                 const clockTime = cells[9]?.textContent || '';
                 
-                if (aidName && aidName !== '-') {
-                    // Parse distance and find matching AID station (tolerance-based matching)
+                if (aidName && aidName !== '-' && !addedStations.has(aidName)) {
+                    // Parse distance and find matching AID station
                     const rowDist = parseFloat(distCell);
                     const rowKm = useMetric ? rowDist : rowDist * MILES_TO_KM;
                     const station = sortedStations.find(s => Math.abs(s.km - rowKm) < 0.5);
                     
                     if (station) {
                         const stopMin = station.stopMin || 0;
+                        
+                        // Calculate departure time (arrival + stop time)
+                        let departureTime = clockTime;
+                        if (stopMin > 0 && clockTime) {
+                            const timeParts = clockTime.split(':');
+                            if (timeParts.length >= 2) {
+                                let hours = parseInt(timeParts[0]);
+                                let mins = parseInt(timeParts[1]);
+                                mins += stopMin;
+                                hours += Math.floor(mins / 60);
+                                mins = mins % 60;
+                                hours = hours % 24;
+                                departureTime = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+                            }
+                        }
+                        
+                        // Use exact station km for display
+                        const displayDist = useMetric ? station.km : station.km * KM_TO_MILES;
+                        
                         stationData.push({ 
-                            dist: distCell, 
+                            dist: displayDist.toFixed(1), 
                             name: aidName, 
                             clockTime,
+                            departureTime,
                             stopMin
                         });
+                        addedStations.add(aidName);
                     }
                 }
             });
@@ -5164,6 +5195,13 @@ async function exportCrewCard() {
                 stationName = stationName.substring(0, maxNameLen - 2) + '...';
             }
             
+            // Show arrival time, and time range if there's a stop
+            const arrivalTime = station.clockTime.substring(0, 5); // HH:MM
+            const departureTime = station.departureTime ? station.departureTime.substring(0, 5) : arrivalTime;
+            const hasStop = station.stopMin > 0 && arrivalTime !== departureTime;
+            const timeDisplay = hasStop ? `${arrivalTime} - ${departureTime}` : arrivalTime;
+            const timeFontSize = hasStop ? (stationCount <= 4 ? '20px' : (stationCount <= 7 ? '17px' : '15px')) : timeSize;
+            
             return `
                 <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: ${rowGap};">
                     <div style="font-size: ${iconSize}; margin-right: 12px;">📍</div>
@@ -5172,7 +5210,7 @@ async function exportCrewCard() {
                         <div style="font-size: ${detailSize}; opacity: 0.8;">${station.dist} ${unitLabel}${station.stopMin > 0 ? ' · ' + station.stopMin + ' min stop' : ''}</div>
                     </div>
                     <div style="text-align: right; margin-left: 10px;">
-                        <div style="font-size: ${timeSize}; font-weight: 800;">${station.clockTime}</div>
+                        <div style="font-size: ${timeFontSize}; font-weight: 800;">${timeDisplay}</div>
                         <div style="font-size: ${etaSize}; opacity: 0.7;">ETA</div>
                     </div>
                 </div>
@@ -5180,6 +5218,7 @@ async function exportCrewCard() {
         }).join('');
 
         // Add finish row
+        const finishTimeDisplay = finishClockTime ? finishClockTime.substring(0, 5) : finishClockTime;
         stationsHtml += `
             <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(76,175,80,0.4); border-radius: 10px; border: 2px solid rgba(76,175,80,0.8);">
                 <div style="font-size: ${iconSize}; margin-right: 12px;">🏁</div>
@@ -5188,7 +5227,7 @@ async function exportCrewCard() {
                     <div style="font-size: ${detailSize}; opacity: 0.8;">${distance.toFixed(1)} ${unitLabel} · ${totalTime.split('(')[0].trim()}</div>
                 </div>
                 <div style="text-align: right; margin-left: 10px;">
-                    <div style="font-size: ${timeSize}; font-weight: 800;">${finishClockTime}</div>
+                    <div style="font-size: ${timeSize}; font-weight: 800;">${finishTimeDisplay}</div>
                     <div style="font-size: ${etaSize}; opacity: 0.7;">ETA</div>
                 </div>
             </div>
