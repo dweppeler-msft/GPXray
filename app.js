@@ -552,12 +552,18 @@ async function loadDemoGpx() {
         demoBtn.disabled = true;
         demoBtn.textContent = t('btn.loading');
         
-        const response = await fetch('races/demo.gpx');
+        // Construct absolute URL from current origin
+        const demoUrl = new URL('races/demo.gpx', window.location.origin + '/').href;
+        console.log('Fetching demo from:', demoUrl);
+        
+        const response = await fetch(demoUrl);
+        console.log('Demo fetch response:', response.status, response.statusText);
         if (!response.ok) {
-            throw new Error('Failed to load demo file');
+            throw new Error(`Failed to load demo file: ${response.status} ${response.statusText}`);
         }
         
         const gpxContent = await response.text();
+        console.log('Demo GPX content length:', gpxContent.length);
         currentRouteName = 'ZUT Garmisch-Partenkirchen Trail';
         isDemoMode = true; // Mark as demo mode
         parseGPX(gpxContent);
@@ -750,7 +756,11 @@ async function loadRace(raceId) {
         const loadBtns = document.querySelectorAll('.race-item-load');
         loadBtns.forEach(btn => btn.disabled = true);
         
-        const response = await fetch(race.gpxUrl);
+        // Construct absolute URL from current origin
+        const gpxUrl = new URL(race.gpxUrl, window.location.origin + '/').href;
+        console.log('Loading race from:', gpxUrl);
+        
+        const response = await fetch(gpxUrl);
         if (!response.ok) {
             throw new Error('GPX file not available');
         }
@@ -5433,11 +5443,17 @@ async function selectRaceDistance(distanceConfig, buttonEl) {
     buttonEl.disabled = true;
     
     try {
+        // Construct absolute URL from current origin
+        const gpxUrl = new URL(distanceConfig.gpxUrl, window.location.origin + '/').href;
+        console.log('Fetching race GPX from:', gpxUrl);
+        
         // Load GPX file
-        const response = await fetch(distanceConfig.gpxUrl);
-        if (!response.ok) throw new Error('Failed to load GPX');
+        const response = await fetch(gpxUrl);
+        console.log('Race GPX response:', response.status, response.statusText);
+        if (!response.ok) throw new Error(`Failed to load GPX: ${response.status}`);
         
         const gpxContent = await response.text();
+        console.log('Race GPX content length:', gpxContent.length);
         
         // Set route name
         currentRouteName = `${currentRaceConfig.shortName || currentRaceConfig.name} - ${distanceConfig.name}`;
