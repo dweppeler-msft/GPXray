@@ -16,6 +16,8 @@ const TRANSLATIONS = {
         'intro.sunTimes': 'Sun Times',
         'intro.shareCard': 'Share Card',
         'intro.pdfExport': 'PDF Export',
+        'intro.nutritionPlanner': 'Nutrition Planner',
+        'intro.comingSoon': 'coming soon',
         
         // Upload section
         'upload.dragDrop': 'Drag & drop a GPX file here or',
@@ -280,6 +282,8 @@ const TRANSLATIONS = {
         'intro.sunTimes': 'Sonnenzeiten',
         'intro.shareCard': 'Teilen',
         'intro.pdfExport': 'PDF Export',
+        'intro.nutritionPlanner': 'Ernährungsplaner',
+        'intro.comingSoon': 'bald verfügbar',
         
         // Upload section
         'upload.dragDrop': 'GPX-Datei hierher ziehen oder',
