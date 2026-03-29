@@ -345,17 +345,21 @@ function isEarlyAccessUnlocked() {
 // Update UI elements that depend on early access status
 function updateEarlyAccessUI() {
     const browseRacesBtn = document.getElementById('browseRacesBtn');
+    const demoBtn = document.getElementById('loadDemoBtn');
     const demoHint = document.getElementById('demoHint');
     
     if (isEarlyAccessUnlocked()) {
-        // Show browse races button for early access users
+        // Early access users: Show browse races, hide demo simulation
         if (browseRacesBtn) browseRacesBtn.style.display = '';
+        if (demoBtn) demoBtn.style.display = 'none';
         // Update hint text
         if (demoHint) {
-            demoHint.textContent = typeof t === 'function' ? t('upload.demoHintFull') : 'Load a sample trail or browse our curated race database';
+            demoHint.textContent = typeof t === 'function' ? t('upload.demoHintFull') : 'Browse our curated race database';
         }
     } else {
+        // Public users: Show demo simulation, hide browse races
         if (browseRacesBtn) browseRacesBtn.style.display = 'none';
+        if (demoBtn) demoBtn.style.display = '';
     }
 }
 
