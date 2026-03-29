@@ -639,7 +639,7 @@ header h1 {
 
 .feature-pill-tooltip {
     position: absolute;
-    bottom: calc(100% + 10px);
+    top: calc(100% + 10px);
     left: 50%;
     transform: translateX(-50%);
     background: #1a1a2e;
@@ -647,10 +647,10 @@ header h1 {
     border-radius: 8px;
     padding: 10px 14px;
     color: #fff;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 400;
-    white-space: nowrap;
-    max-width: 280px;
+    min-width: 200px;
+    max-width: 320px;
     white-space: normal;
     text-align: center;
     z-index: 100;
@@ -658,18 +658,18 @@ header h1 {
     animation: tooltipFadeIn 0.2s ease;
 }
 
-.feature-pill-tooltip::after {
+.feature-pill-tooltip::before {
     content: '';
     position: absolute;
-    top: 100%;
+    bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-top-color: rgba(0, 212, 255, 0.3);
+    border-bottom-color: rgba(0, 212, 255, 0.3);
 }
 
 @keyframes tooltipFadeIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(5px); }
+    from { opacity: 0; transform: translateX(-50%) translateY(-5px); }
     to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
