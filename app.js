@@ -5428,7 +5428,7 @@ async function exportCrewCard() {
 
         // Add finish row
         const finishTimeDisplay = finishClockTime ? finishClockTime.substring(0, 5) : finishClockTime;
-        const totalElevGain = Math.round(calculateElevationGainBetween(0, gpxData.totalDistance));
+        const totalElevGain = Math.round(gpxData.elevationGain);
         const finishIconMargin = stationCount <= 6 ? '12px' : (stationCount <= 8 ? '10px' : '8px');
         stationsHtml += `
             <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(76,175,80,0.4); border-radius: 10px; border: 2px solid rgba(76,175,80,0.8);">
