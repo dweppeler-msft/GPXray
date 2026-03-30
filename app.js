@@ -4972,7 +4972,10 @@ async function exportShareCard() {
 
         card.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 28px; font-weight: bold; color: #00d4ff; margin-bottom: 5px;">GPXray</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 5px;">
+                    <img src="img/gpxray-icon-mountain.png" style="height: 32px; width: auto;">
+                    <span style="font-family: 'Sora', sans-serif; font-weight: 600; font-size: 28px; color: #00E5FF; letter-spacing: 0.01em;">GPXray</span>
+                </div>
                 <div style="font-size: 14px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; font-weight: 500;">Race Strategy</div>
             </div>
             

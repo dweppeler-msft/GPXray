@@ -56,8 +56,8 @@
     </script>
 </head>
 <body>
-    <!-- Dev Password Gate -->
-    <div class="beta-gate" id="betaGate">
+    <!-- Dev Password Gate (hidden on main branch) -->
+    <div class="beta-gate" id="betaGate" style="display: none;">
         <div class="beta-gate-content">
             <h1>GPXray <span class="beta-badge">DEV</span></h1>
             <p data-i18n="beta.description">Development preview with new features.</p>
@@ -84,11 +84,11 @@
         </div>
     </div>
 
-    <div class="container" id="mainContent" style="display: none;">
+    <div class="container" id="mainContent">
         <header>
             <div class="header-content">
                 <div class="header-title">
-                    <h1><img src="img/gpxray-icon-mountain.png" alt="" class="header-icon"><span class="logo-text">GPXray</span> <span class="beta-badge">DEV</span></h1>
+                    <h1><img src="img/gpxray-icon-mountain.png" alt="" class="header-icon"><span class="logo-text">GPXray</span></h1>
                     <p class="tagline" data-i18n="header.tagline">Know your race before it starts.</p>
                 </div>
                 <div class="header-buttons">
