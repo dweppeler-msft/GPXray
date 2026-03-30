@@ -4050,6 +4050,39 @@ function updateHeroSection(totalTime) {
         heroCheckpoints.innerHTML = '';
         heroCheckpoints.style.display = 'none';
     }
+    
+    // Check and display cutoff warning for race pages
+    const cutoffWarning = document.getElementById('cutoffWarning');
+    const cutoffTimeEl = document.getElementById('cutoffTime');
+    
+    if (cutoffWarning && cutoffTimeEl && currentDistanceConfig && currentDistanceConfig.finishCutoff) {
+        const cutoff = currentDistanceConfig.finishCutoff;
+        cutoffTimeEl.textContent = cutoff;
+        
+        // Calculate finish clock time
+        const startTimeInput = document.getElementById('raceStartTime');
+        const startTimeValue = startTimeInput ? startTimeInput.value : '09:00';
+        const [startH, startM] = startTimeValue.split(':').map(Number);
+        const startMinutes = startH * 60 + startM;
+        const finishMinutes = startMinutes + totalTime;
+        
+        // Parse cutoff time
+        const [cutoffH, cutoffM] = cutoff.split(':').map(Number);
+        const cutoffMinutes = cutoffH * 60 + cutoffM;
+        
+        // Compare and style
+        if (finishMinutes > cutoffMinutes) {
+            cutoffWarning.className = 'cutoff-warning danger';
+            cutoffWarning.querySelector('.cutoff-icon').textContent = '⚠️';
+        } else {
+            cutoffWarning.className = 'cutoff-warning safe';
+            cutoffWarning.querySelector('.cutoff-icon').textContent = '✓';
+        }
+        
+        cutoffWarning.style.display = 'inline-flex';
+    } else if (cutoffWarning) {
+        cutoffWarning.style.display = 'none';
+    }
 }
 
 // Find the main climb (longest continuous ascent window)
@@ -5877,6 +5910,7 @@ async function exportCrewPdf() {
 // ========================================
 
 let currentRaceConfig = null;
+let currentDistanceConfig = null;
 
 // Show race code gate for protected race pages
 function showRaceCodeGate(raceId, raceConfig) {
@@ -6106,6 +6140,7 @@ async function selectRaceDistance(distanceConfig, buttonEl) {
         
         // Set route name
         currentRouteName = `${currentRaceConfig.shortName || currentRaceConfig.name} - ${distanceConfig.name}`;
+        currentDistanceConfig = distanceConfig;
         
         // Parse GPX
         parseGPX(gpxContent);

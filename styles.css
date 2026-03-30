@@ -1719,6 +1719,38 @@ h2 {
     text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
 }
 
+/* Cutoff Warning */
+.cutoff-warning {
+    margin-top: 8px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cutoff-warning.safe {
+    background: rgba(76, 175, 80, 0.15);
+    border: 1px solid rgba(76, 175, 80, 0.4);
+    color: #4CAF50;
+}
+
+.cutoff-warning.danger {
+    background: rgba(244, 67, 54, 0.15);
+    border: 1px solid rgba(244, 67, 54, 0.4);
+    color: #f44336;
+}
+
+.cutoff-icon {
+    font-size: 1rem;
+}
+
+.cutoff-text {
+    letter-spacing: 0.5px;
+}
+
 /* Runner Level Selector */
 .runner-level-selector {
     margin-top: 15px;

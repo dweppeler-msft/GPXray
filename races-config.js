@@ -156,6 +156,7 @@ const RACE_CONFIGS = {
                 gpxUrl: 'races/rureifel-trail-2026-ret11.gpx',
                 raceDate: '2026-04-18',
                 startTime: '10:15',
+                finishCutoff: '20:45',
                 aidStations: [
                     { km: 7.3, name: 'VP1', stopMin: 2 }
                 ],
@@ -170,6 +171,7 @@ const RACE_CONFIGS = {
                 gpxUrl: 'races/rureifel-trail-2026-ret22.gpx',
                 raceDate: '2026-04-18',
                 startTime: '09:10',
+                finishCutoff: '20:45',
                 aidStations: [
                     { km: 8.4, name: 'VP1', stopMin: 2 },
                     { km: 15.0, name: 'VP2', stopMin: 2 }
@@ -185,6 +187,7 @@ const RACE_CONFIGS = {
                 gpxUrl: 'races/rureifel-trail-2026-ret44.gpx',
                 raceDate: '2026-04-18',
                 startTime: '10:25',
+                finishCutoff: '20:45',
                 aidStations: [
                     { km: 16.3, name: 'VP1', stopMin: 3 },
                     { km: 26.4, name: 'VP2', stopMin: 3 },
@@ -202,6 +205,7 @@ const RACE_CONFIGS = {
                 gpxUrl: 'races/rureifel-trail-2026-ret77.gpx',
                 raceDate: '2026-04-18',
                 startTime: '06:15',
+                finishCutoff: '20:45',
                 aidStations: [
                     { km: 18.4, name: 'VP1 Heimbach/Meuchelberg', stopMin: 3 },
                     { km: 31.6, name: 'VP2 Schmidt/Schöne Aussicht', stopMin: 4 },
