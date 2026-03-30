@@ -6276,18 +6276,21 @@ async function selectRaceDistance(distanceConfig, buttonEl) {
         currentRouteName = `${currentRaceConfig.shortName || currentRaceConfig.name} - ${distanceConfig.name}`;
         currentDistanceConfig = distanceConfig;
         
-        // Parse GPX
+        // Clear and load AID stations BEFORE parseGPX (so calculateRacePlan uses correct stations)
+        aidStations = [];
+        if (distanceConfig.aidStations && distanceConfig.aidStations.length > 0) {
+            aidStations = [...distanceConfig.aidStations];
+        }
+        
+        // Parse GPX (this will trigger calculateRacePlan with correct aidStations)
         parseGPX(gpxContent);
         
         // Override elevation gain with official race value if configured
         if (distanceConfig.elevation && gpxData) {
             gpxData.elevationGain = distanceConfig.elevation;
-        }
-        
-        // Load pre-configured AID stations
-        if (distanceConfig.aidStations && distanceConfig.aidStations.length > 0) {
-            aidStations = [...distanceConfig.aidStations];
-            renderAidStations();
+            // Re-render with correct elevation
+            displayStats();
+            calculateRacePlan();
         }
         
         // Set fixed race date and start time if configured
