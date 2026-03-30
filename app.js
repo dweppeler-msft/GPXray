@@ -3725,10 +3725,12 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             default: targetPace = displayFlatPace;
         }
         
-        // Check for AID station at this unit (exact or rounded) - for display purposes
+        // Check for AID station at EXACT km boundary only (e.g., 16.0km at km 16)
+        // Fractional stations are handled separately above
         const aidStation = aidStations.find(s => {
             const stationInUnit = useMetric ? s.km : s.km * KM_TO_MILES;
-            return Math.floor(stationInUnit) === unit || Math.round(stationInUnit) === unit;
+            // Only match if station is exactly at this km (within small tolerance)
+            return Math.abs(stationInUnit - unit) < 0.05;
         });
         const aidStationText = aidStation ? aidStation.name : '-';
         const hasAidStation = aidStation !== undefined;
@@ -3755,6 +3757,10 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             row.classList.add('night-section');
         }
         
+        // Calculate actual pace for this km (from actual split time)
+        const displayDistance = useMetric ? distanceKm : distanceKm * KM_TO_MILES;
+        const actualPace = displayDistance > 0 ? splitTime / displayDistance : 0;
+        
         // Get surface display name and class
         const surfaceDisplay = isSurfaceLoading ? t('general.loading') : getSurfaceName(dominantSurface);
         const surfaceClass = isSurfaceLoading ? 'surface-loading' : `surface-${dominantSurface}`;
@@ -3766,7 +3772,7 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
             <td class="${surfaceClass}">${surfaceDisplay}</td>
             <td class="${hasAidStation ? 'aid-station-cell' : ''}">${aidStationText}</td>
             <td class="stop-time">${stopTime > 0 ? '+' + stopTime + ' min' : '-'}</td>
-            <td>${formatPace(targetPace)} /${unitLabel}</td>
+            <td>${formatPace(actualPace)} /${unitLabel}</td>
             <td>${formatTime(splitTime)}</td>
             <td>${formatTime(cumulativeTime)}</td>
             <td>${clockTime}</td>
