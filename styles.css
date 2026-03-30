@@ -913,6 +913,15 @@ header h1 {
     color: #00d4ff;
 }
 
+.footer-social {
+    display: inline-flex;
+    align-items: center;
+}
+
+.footer-social svg {
+    vertical-align: middle;
+}
+
 .footer-copyright {
     color: #666;
     font-size: 0.8rem;
