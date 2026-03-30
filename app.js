@@ -5036,6 +5036,24 @@ async function exportShareCard() {
             `;
         }
 
+        // Cutoff time warning for Share Card
+        let cutoffHtml = '';
+        if (currentDistanceConfig && currentDistanceConfig.finishCutoff && finishClockTime) {
+            const cutoff = currentDistanceConfig.finishCutoff;
+            const [finishH, finishM] = finishClockTime.split(':').map(Number);
+            const [cutoffH, cutoffM] = cutoff.split(':').map(Number);
+            const finishMins = finishH * 60 + finishM;
+            const cutoffMins = cutoffH * 60 + cutoffM;
+            const isOver = finishMins > cutoffMins;
+            const icon = isOver ? '⚠️' : '✓';
+            const color = isOver ? '#f44336' : '#4CAF50';
+            cutoffHtml = `
+                <div style="text-align: center; margin: 10px 0; font-size: 16px; font-weight: 600; color: ${color};">
+                    ${icon} Cutoff: ${cutoff}
+                </div>
+            `;
+        }
+
         // Sun times
         let sunTimesHtml = '';
         if (sunTimes && !sunTimes.polarNight && !sunTimes.midnightSun) {
@@ -5046,6 +5064,9 @@ async function exportShareCard() {
                 </div>
             `;
         }
+
+        // Combine cutoff with sun times
+        const timesSection = cutoffHtml + sunTimesHtml;
 
         let routeName = currentRouteName || 'Race Strategy';
         if (routeName.length > 35) {
@@ -5080,7 +5101,7 @@ async function exportShareCard() {
                 </div>
             </div>
             
-            ${sunTimesHtml ? `<div style="text-align: center; margin-bottom: 20px;">${sunTimesHtml}</div>` : ''}
+            ${timesSection ? `<div style="text-align: center; margin-bottom: 20px;">${timesSection}</div>` : ''}
             
             ${aidStationsList ? `
                 <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
@@ -5463,6 +5484,21 @@ async function exportCrewCard() {
         const finishTimeDisplay = finishClockTime ? finishClockTime.substring(0, 5) : finishClockTime;
         const totalElevGain = Math.round(gpxData.elevationGain);
         const finishIconMargin = stationCount <= 6 ? '12px' : (stationCount <= 8 ? '10px' : '8px');
+        
+        // Check cutoff for Crew Card
+        let crewCutoffHtml = '';
+        if (currentDistanceConfig && currentDistanceConfig.finishCutoff && finishClockTime) {
+            const cutoff = currentDistanceConfig.finishCutoff;
+            const [finishH, finishM] = finishClockTime.split(':').map(Number);
+            const [cutoffH, cutoffM] = cutoff.split(':').map(Number);
+            const finishMins = finishH * 60 + finishM;
+            const cutoffMins = cutoffH * 60 + cutoffM;
+            const isOver = finishMins > cutoffMins;
+            const icon = isOver ? '⚠️' : '✓';
+            const color = isOver ? '#f44336' : '#90EE90';
+            crewCutoffHtml = `<div style="font-size: ${detailSize}; font-weight: 600; color: ${color}; margin-top: 2px;">${icon} Cutoff: ${cutoff}</div>`;
+        }
+        
         stationsHtml += `
             <div style="display: flex; align-items: center; padding: ${rowPadding}; background: rgba(76,175,80,0.4); border-radius: 10px; border: 2px solid rgba(76,175,80,0.8);">
                 <div style="font-size: ${iconSize}; margin-right: ${finishIconMargin};">🏁</div>
@@ -5470,6 +5506,7 @@ async function exportCrewCard() {
                     <div style="font-size: ${nameSize}; font-weight: 700; margin-bottom: 2px;">FINISH</div>
                     <div style="font-size: ${detailSize}; opacity: 0.8;">${distance.toFixed(1)} ${unitLabel} · 100%</div>
                     <div style="font-size: ${detailSize}; opacity: 0.7;">Total D+ ${totalElevGain}m · ${totalTime.split('(')[0].trim()}</div>
+                    ${crewCutoffHtml}
                 </div>
                 <div style="text-align: right; margin-left: 10px;">
                     <div style="font-size: ${timeSize}; font-weight: 800;">${finishTimeDisplay}</div>
