@@ -165,9 +165,10 @@ header h1 {
 }
 
 .tagline {
-    font-size: 1.2rem;
-    color: #888;
-    font-style: italic;
+    font-size: 13px;
+    opacity: 0.6;
+    margin-top: 2px;
+    font-style: normal;
 }
 
 .history-btn {
@@ -2143,7 +2144,7 @@ h2 {
     }
     
     .tagline {
-        font-size: 1rem;
+        font-size: 12px;
     }
     
     .header-buttons {
