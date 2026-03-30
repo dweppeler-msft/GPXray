@@ -1703,7 +1703,7 @@ h2 {
 }
 
 .hero-label {
-    display: block;
+    display: inline-block;
     font-size: 0.9rem;
     color: #888;
     margin-bottom: 8px;
@@ -1711,14 +1711,25 @@ h2 {
     letter-spacing: 1px;
 }
 
-.hero-label .info-icon {
-    text-transform: none;
+.hero-time > .info-icon {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 16px;
     height: 16px;
     font-size: 11px;
+    font-weight: bold;
+    font-style: italic;
+    font-family: Georgia, serif;
+    color: #00d4ff;
+    background: rgba(0, 212, 255, 0.2);
+    border: 1px solid rgba(0, 212, 255, 0.5);
+    border-radius: 50%;
+    margin-left: 6px;
+    cursor: pointer;
+    vertical-align: middle;
     position: relative;
-    top: -1px;
+    top: -2px;
 }
 
 .hero-value {
