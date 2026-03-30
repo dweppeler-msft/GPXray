@@ -13,7 +13,6 @@ const RACE_CONFIGS = {
         logo: null, // Optional: 'races/zut-logo.png'
         tagline: 'Run where the mountains touch the sky',
         accessCode: 'ZUGSPITZ26', // Access code for race page
-        hidden: true, // Hidden from production - remove to enable
         
         // Branding colors
         branding: {

@@ -41,11 +41,11 @@ const TRANSLATIONS = {
         'upload.demoHintFull': 'Browse our curated race database',
         'upload.privacy': '100% Local Processing – Your GPX data never leaves your device',
         
-        // Beta gate
+        // Dev gate
         'beta.title': 'GPXray',
-        'beta.badge': 'BETA',
-        'beta.description': 'This is a beta version with experimental features.',
-        'beta.placeholder': 'Enter beta password',
+        'beta.badge': 'DEV',
+        'beta.description': 'Development preview with new features.',
+        'beta.placeholder': 'Enter dev password',
         'beta.enter': 'Enter',
         'beta.error': 'Incorrect password',
         'beta.stableHint': "Don't have a password? Visit the",
@@ -318,11 +318,11 @@ const TRANSLATIONS = {
         'upload.demoHintFull': 'Durchsuche unsere Renndatenbank',
         'upload.privacy': '100% lokale Verarbeitung – Deine GPX-Daten verlassen nie dein Gerät',
         
-        // Beta gate
+        // Dev gate
         'beta.title': 'GPXray',
-        'beta.badge': 'BETA',
-        'beta.description': 'Dies ist eine Beta-Version mit experimentellen Funktionen.',
-        'beta.placeholder': 'Beta-Passwort eingeben',
+        'beta.badge': 'DEV',
+        'beta.description': 'Entwicklungsvorschau mit neuen Funktionen.',
+        'beta.placeholder': 'Dev-Passwort eingeben',
         'beta.enter': 'Weiter',
         'beta.error': 'Falsches Passwort',
         'beta.stableHint': 'Kein Passwort? Besuche die',
