@@ -4332,6 +4332,10 @@ function calculateCheckpointTimes() {
     const surfaceToggle = document.getElementById('surfaceEnabled');
     const applySurface = surfaceToggle ? surfaceToggle.checked : false;
     
+    // Get fatigue multiplier (same as splits table)
+    const totalDistanceKm = gpxData.totalDistance;
+    const fatigueMultiplier = getFatigueMultiplier(totalDistanceKm);
+    
     let checkpointsHtml = '';
     
     aidStations.forEach((station, index) => {
@@ -4347,7 +4351,7 @@ function calculateCheckpointTimes() {
                     ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType] : 1.0;
                 const pace = segment.terrainType === 'uphill' ? uphillPace : 
                              segment.terrainType === 'downhill' ? downhillPace : flatPace;
-                timeToStation += segment.distance * pace * surfaceMultiplier;
+                timeToStation += segment.distance * pace * surfaceMultiplier * fatigueMultiplier;
             } else if (segment.startDistance < stationKm) {
                 // Partial segment
                 const partialDist = stationKm - segment.startDistance;
@@ -4355,7 +4359,7 @@ function calculateCheckpointTimes() {
                     ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType] : 1.0;
                 const pace = segment.terrainType === 'uphill' ? uphillPace : 
                              segment.terrainType === 'downhill' ? downhillPace : flatPace;
-                timeToStation += partialDist * pace * surfaceMultiplier;
+                timeToStation += partialDist * pace * surfaceMultiplier * fatigueMultiplier;
                 break;
             }
             
