@@ -204,7 +204,7 @@ const RACE_CONFIGS = {
                 elevation: 2899,
                 gpxUrl: 'races/rureifel-trail-2026-ret77.gpx',
                 raceDate: '2026-04-18',
-                startTime: '06:15',
+                startTime: '06:20',
                 finishCutoff: '20:45',
                 aidStations: [
                     { km: 18.4, name: 'VP1 Heimbach/Meuchelberg', stopMin: 3 },
