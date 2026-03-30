@@ -158,7 +158,7 @@ const RACE_CONFIGS = {
                 startTime: '10:15',
                 finishCutoff: '20:45',
                 aidStations: [
-                    { km: 7.3, name: 'VP1', stopMin: 2 }
+                    { km: 7.3, name: 'VP1 Gut Kallerbend', stopMin: 2 }
                 ],
                 cutoffs: [],
                 description: 'Perfect trail running introduction'
@@ -173,8 +173,8 @@ const RACE_CONFIGS = {
                 startTime: '09:10',
                 finishCutoff: '20:45',
                 aidStations: [
-                    { km: 8.4, name: 'VP1', stopMin: 2 },
-                    { km: 15.0, name: 'VP2', stopMin: 2 }
+                    { km: 8.4, name: 'VP1 Bergstein', stopMin: 2 },
+                    { km: 15.0, name: 'VP2 Obermaubach', stopMin: 2 }
                 ],
                 cutoffs: [],
                 description: 'Challenging half with steep single trails'
@@ -189,10 +189,10 @@ const RACE_CONFIGS = {
                 startTime: '10:25',
                 finishCutoff: '20:45',
                 aidStations: [
-                    { km: 16.3, name: 'VP1', stopMin: 3 },
-                    { km: 26.4, name: 'VP2', stopMin: 3 },
-                    { km: 35.5, name: 'VP3', stopMin: 3 },
-                    { km: 40.9, name: 'VP4', stopMin: 3 }
+                    { km: 16.3, name: 'VP1 Bergstein', stopMin: 3 },
+                    { km: 26.4, name: 'VP2 Obermaubach', stopMin: 3 },
+                    { km: 35.5, name: 'VP3 Rath/Wanderhütte', stopMin: 3 },
+                    { km: 40.9, name: 'VP4 Gut Kallerbend', stopMin: 3 }
                 ],
                 cutoffs: [],
                 description: 'Your first ultra through the Rureifel'
