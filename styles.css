@@ -1711,6 +1711,16 @@ h2 {
     letter-spacing: 1px;
 }
 
+.hero-label .info-icon {
+    text-transform: none;
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+    font-size: 11px;
+    position: relative;
+    top: -1px;
+}
+
 .hero-value {
     display: block;
     font-size: 3.2rem;
