@@ -3372,7 +3372,41 @@ function calculatePacesFromTargetTime() {
     
     // Get fatigue multiplier and work backwards
     const fatigueMultiplier = getFatigueMultiplier(totalDistanceKm);
-    const pureRunningTime = runningTimeTarget / fatigueMultiplier;
+    
+    // Check if surface multipliers are enabled and calculate weighted surface factor
+    const surfaceToggle = document.getElementById('surfaceEnabled');
+    const applySurface = surfaceToggle ? surfaceToggle.checked : false;
+    
+    let weightedSurfaceFactor = 1.0;
+    if (applySurface && segments.length > 0) {
+        // Calculate weighted surface multiplier based on actual segment distribution
+        let totalWeightedTime = 0;
+        let totalBaseTime = 0;
+        
+        for (const segment of segments) {
+            let basePaceRatio;
+            switch (segment.terrainType) {
+                case 'uphill': basePaceRatio = uphillRatio; break;
+                case 'downhill': basePaceRatio = downhillRatio; break;
+                default: basePaceRatio = 1.0;
+            }
+            
+            const surfaceMultiplier = SURFACE_TYPES[segment.surfaceType]
+                ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType]
+                : 1.0;
+            
+            const baseTime = segment.distance * basePaceRatio;
+            totalBaseTime += baseTime;
+            totalWeightedTime += baseTime * surfaceMultiplier;
+        }
+        
+        if (totalBaseTime > 0) {
+            weightedSurfaceFactor = totalWeightedTime / totalBaseTime;
+        }
+    }
+    
+    // Work backwards from target: divide by fatigue and surface factors
+    const pureRunningTime = runningTimeTarget / fatigueMultiplier / weightedSurfaceFactor;
     
     // Calculate base (flat) pace from pure running time
     // Total time = flatDist * flatPace + uphillDist * (flatPace * uphillRatio) + downhillDist * (flatPace * downhillRatio)
