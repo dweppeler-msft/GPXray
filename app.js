@@ -6116,6 +6116,33 @@ async function selectRaceDistance(distanceConfig, buttonEl) {
             renderAidStations();
         }
         
+        // Set fixed race date and start time if configured
+        if (distanceConfig.raceDate || distanceConfig.startTime) {
+            const dateInput = document.getElementById('raceStartDate');
+            const timeInput = document.getElementById('raceStartTime');
+            
+            if (dateInput && distanceConfig.raceDate) {
+                dateInput.value = distanceConfig.raceDate;
+                dateInput.readOnly = true;
+                dateInput.style.opacity = '0.7';
+                dateInput.style.cursor = 'not-allowed';
+                dateInput.title = 'Fixed race date';
+            }
+            
+            if (timeInput && distanceConfig.startTime) {
+                timeInput.value = distanceConfig.startTime;
+                timeInput.readOnly = true;
+                timeInput.style.opacity = '0.7';
+                timeInput.style.cursor = 'not-allowed';
+                timeInput.title = 'Official start time';
+            }
+            
+            // Recalculate sun times for the race date/location
+            if (distanceConfig.raceDate && gpxData) {
+                calculateSunTimes();
+            }
+        }
+        
         // Track selection
         trackEvent('race_distance_selected', { 
             race_id: currentRaceConfig.id, 
