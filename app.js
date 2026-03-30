@@ -6189,6 +6189,11 @@ async function selectRaceDistance(distanceConfig, buttonEl) {
         // Parse GPX
         parseGPX(gpxContent);
         
+        // Override elevation gain with official race value if configured
+        if (distanceConfig.elevation && gpxData) {
+            gpxData.elevationGain = distanceConfig.elevation;
+        }
+        
         // Load pre-configured AID stations
         if (distanceConfig.aidStations && distanceConfig.aidStations.length > 0) {
             aidStations = [...distanceConfig.aidStations];
