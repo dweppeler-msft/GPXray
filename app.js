@@ -5410,10 +5410,7 @@ async function exportCrewCard() {
             </div>
             
             <div style="text-align: center; padding-top: 15px; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.2);">
-                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <img src="img/gpxray-icon-mountain.png" style="height: 22px; width: auto;">
-                    <span style="font-family: 'Sora', sans-serif; font-weight: 600; font-size: 18px; color: #00E5FF; letter-spacing: 0.01em;">GPXray</span>
-                </div>
+                <div style="font-family: 'Sora', sans-serif; font-weight: 600; font-size: 18px; color: #00E5FF; letter-spacing: 0.01em;">GPXray</div>
                 <div style="font-size: 10px; opacity: 0.6; margin-top: 2px;">gpxray.run</div>
             </div>
         `;
