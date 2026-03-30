@@ -195,12 +195,12 @@ const RACE_CONFIGS = {
                 elevation: 2899,
                 gpxUrl: 'races/rureifel-trail-2026-ret77.gpx',
                 aidStations: [
-                    { km: 18.4, name: 'VP1', stopMin: 3 },
-                    { km: 31.6, name: 'VP2', stopMin: 4 },
-                    { km: 47.2, name: 'VP3', stopMin: 4 },
-                    { km: 57.3, name: 'VP4', stopMin: 4 },
-                    { km: 66.4, name: 'VP5', stopMin: 3 },
-                    { km: 71.8, name: 'VP6', stopMin: 3 }
+                    { km: 18.4, name: 'VP1 Heimbach/Meuchelberg', stopMin: 3 },
+                    { km: 31.6, name: 'VP2 Schmidt/Schöne Aussicht', stopMin: 4 },
+                    { km: 47.2, name: 'VP3 Bergstein', stopMin: 4 },
+                    { km: 57.3, name: 'VP4 Obermaubach', stopMin: 4 },
+                    { km: 66.4, name: 'VP5 Rath/Wanderhütte', stopMin: 3 },
+                    { km: 71.8, name: 'VP6 Gut Kallerbend', stopMin: 3 }
                 ],
                 cutoffs: [],
                 description: 'The ultimate Rureifel adventure with Rursee views'
