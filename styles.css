@@ -885,14 +885,16 @@ header h1 {
 }
 
 .footer-logo {
+    font-family: 'Sora', sans-serif;
     font-size: 1.5rem;
-    font-weight: 700;
-    color: #00d4ff;
+    font-weight: 600;
+    color: #00E5FF;
+    letter-spacing: 0.01em;
 }
 
 .footer-tagline {
-    color: #888;
-    font-size: 0.9rem;
+    font-size: 13px;
+    opacity: 0.6;
 }
 
 .footer-links {
