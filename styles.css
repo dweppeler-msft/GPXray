@@ -1751,6 +1751,89 @@ h2 {
     letter-spacing: 0.5px;
 }
 
+/* Pace Info Tooltip */
+.info-icon {
+    cursor: pointer;
+    font-size: 0.7rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    vertical-align: middle;
+}
+
+.info-icon:hover {
+    opacity: 1;
+}
+
+.hero-time {
+    position: relative;
+}
+
+.pace-info-tooltip {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 30, 40, 0.98);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 12px;
+    padding: 15px 20px;
+    min-width: 280px;
+    max-width: 350px;
+    z-index: 100;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    margin-top: 10px;
+}
+
+.pace-info-tooltip.visible {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.pace-info-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #00d4ff;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pace-info-content {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #ccc;
+}
+
+.pace-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pace-info-row:last-child {
+    border-bottom: none;
+}
+
+.pace-info-label {
+    color: #888;
+}
+
+.pace-info-value {
+    font-weight: 600;
+    color: #fff;
+}
+
+.pace-info-value.highlight {
+    color: #00d4ff;
+}
+
 /* Runner Level Selector */
 .runner-level-selector {
     margin-top: 15px;

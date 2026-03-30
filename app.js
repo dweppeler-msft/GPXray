@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEarlyAccess();
     updateEarlyAccessUI();
     setupRunnerLevel();
+    setupPaceInfoTooltip();
     setupFeaturePillTooltips();
     
     // Check for race landing page mode
@@ -268,6 +269,95 @@ function setupRunnerLevel() {
         applyRunnerLevelPaces();
         calculateRacePlan();
     });
+}
+
+// Pace Info Tooltip
+function setupPaceInfoTooltip() {
+    const infoIcon = document.getElementById('paceInfoIcon');
+    const tooltip = document.getElementById('paceInfoTooltip');
+    
+    if (!infoIcon || !tooltip) return;
+    
+    infoIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        updatePaceInfoContent();
+        tooltip.classList.toggle('visible');
+    });
+    
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+        if (!tooltip.contains(e.target) && e.target !== infoIcon) {
+            tooltip.classList.remove('visible');
+        }
+    });
+}
+
+function updatePaceInfoContent() {
+    const content = document.getElementById('paceInfoContent');
+    if (!content) return;
+    
+    const levelSelect = document.getElementById('runnerLevel');
+    const level = levelSelect ? levelSelect.value : 'intermediate';
+    const preset = RUNNER_LEVELS[level] || RUNNER_LEVELS.intermediate;
+    
+    // Format pace as MM:SS
+    const formatPace = (pace) => {
+        const mins = Math.floor(pace);
+        const secs = Math.round((pace - mins) * 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}/km`;
+    };
+    
+    const flatPace = preset.flatPace;
+    const uphillPace = flatPace * preset.uphillRatio;
+    const downhillPace = flatPace * preset.downhillRatio;
+    
+    // Get fatigue multiplier if we have distance
+    let fatigueInfo = '';
+    if (gpxData && gpxData.totalDistance) {
+        const fatigue = getFatigueMultiplier(gpxData.totalDistance);
+        if (fatigue > 1.0) {
+            const pct = Math.round((fatigue - 1) * 100);
+            fatigueInfo = `
+                <div class="pace-info-row">
+                    <span class="pace-info-label">Fatigue Factor</span>
+                    <span class="pace-info-value highlight">+${pct}%</span>
+                </div>
+            `;
+        }
+    }
+    
+    // Check if surface is enabled
+    const surfaceToggle = document.getElementById('surfaceEnabled');
+    let surfaceInfo = '';
+    if (surfaceToggle && surfaceToggle.checked) {
+        surfaceInfo = `
+            <div class="pace-info-row">
+                <span class="pace-info-label">Surface Factors</span>
+                <span class="pace-info-value">Enabled</span>
+            </div>
+        `;
+    }
+    
+    content.innerHTML = `
+        <div class="pace-info-row">
+            <span class="pace-info-label">Runner Level</span>
+            <span class="pace-info-value highlight">${preset.name}</span>
+        </div>
+        <div class="pace-info-row">
+            <span class="pace-info-label">Flat Pace</span>
+            <span class="pace-info-value">${formatPace(flatPace)}</span>
+        </div>
+        <div class="pace-info-row">
+            <span class="pace-info-label">Uphill Pace</span>
+            <span class="pace-info-value">${formatPace(uphillPace)}</span>
+        </div>
+        <div class="pace-info-row">
+            <span class="pace-info-label">Downhill Pace</span>
+            <span class="pace-info-value">${formatPace(downhillPace)}</span>
+        </div>
+        ${fatigueInfo}
+        ${surfaceInfo}
+    `;
 }
 
 // Cookie Consent

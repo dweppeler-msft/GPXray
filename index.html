@@ -287,8 +287,14 @@
                 <div class="hero-main">
                     <div class="hero-primary">
                         <div class="hero-time">
-                            <span class="hero-label" data-i18n="hero.estimatedFinish">Estimated Finish Time</span>
+                            <span class="hero-label" data-i18n="hero.estimatedFinish">Estimated Finish Time <span class="info-icon" id="paceInfoIcon" title="How is this calculated?">ℹ️</span></span>
                             <span class="hero-value" id="heroFinishTime">-</span>
+                            <div class="pace-info-tooltip" id="paceInfoTooltip">
+                                <div class="pace-info-header">Calculation based on:</div>
+                                <div class="pace-info-content" id="paceInfoContent">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
                             <div class="cutoff-warning" id="cutoffWarning" style="display: none;">
                                 <span class="cutoff-icon">⚠️</span>
                                 <span class="cutoff-text">Cutoff: <span id="cutoffTime">-</span></span>
