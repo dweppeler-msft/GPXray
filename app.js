@@ -5014,8 +5014,7 @@ async function exportShareCard() {
             ` : ''}
             
             <div style="position: absolute; bottom: 20px; left: 0; right: 0; text-align: center;">
-                <div style="font-family: 'Sora', sans-serif; font-weight: 600; font-size: 18px; color: #00E5FF; letter-spacing: 0.01em;">GPXray</div>
-                <div style="font-size: 10px; color: #555; margin-top: 2px;">gpxray.run</div>
+                <div style="font-size: 11px; color: #555;">gpxray.run</div>
             </div>
         `;
 
@@ -5411,7 +5410,10 @@ async function exportCrewCard() {
             </div>
             
             <div style="text-align: center; padding-top: 15px; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.2);">
-                <div style="font-family: 'Sora', sans-serif; font-weight: 600; font-size: 18px; color: #00E5FF; letter-spacing: 0.01em;">GPXray</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <img src="img/gpxray-icon-mountain.png" style="height: 22px; width: auto;">
+                    <span style="font-family: 'Sora', sans-serif; font-weight: 600; font-size: 18px; color: #00E5FF; letter-spacing: 0.01em;">GPXray</span>
+                </div>
                 <div style="font-size: 10px; opacity: 0.6; margin-top: 2px;">gpxray.run</div>
             </div>
         `;
