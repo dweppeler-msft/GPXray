@@ -167,7 +167,7 @@ const RACE_CONFIGS = {
                 id: 'ret22',
                 name: 'RET22',
                 distance: 23,
-                elevation: 913,
+                elevation: 807,
                 gpxUrl: 'races/rureifel-trail-2026-ret22.gpx',
                 raceDate: '2026-04-18',
                 startTime: '09:10',
