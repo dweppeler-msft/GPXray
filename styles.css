@@ -1754,14 +1754,30 @@ h2 {
 /* Pace Info Tooltip */
 .info-icon {
     cursor: pointer;
-    font-size: 0.7rem;
-    opacity: 0.7;
-    transition: opacity 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+    font-weight: bold;
+    font-style: italic;
+    font-family: serif;
+    color: #00d4ff;
+    background: rgba(0, 212, 255, 0.15);
+    border: 1px solid rgba(0, 212, 255, 0.4);
+    border-radius: 50%;
+    margin-left: 8px;
+    opacity: 0.8;
+    transition: all 0.2s;
     vertical-align: middle;
 }
 
 .info-icon:hover {
     opacity: 1;
+    background: rgba(0, 212, 255, 0.3);
+    border-color: #00d4ff;
+    transform: scale(1.1);
 }
 
 .hero-time {
