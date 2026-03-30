@@ -3364,12 +3364,21 @@ function calculatePacesFromTargetTime() {
     
     // Get terrain distances
     const { flatDistance, uphillDistance, downhillDistance } = calculateTerrainDistances();
+    const totalDistanceKm = flatDistance + uphillDistance + downhillDistance;
     
-    // Calculate base (flat) pace
+    // Subtract AID station stop times from target time
+    const totalStopTime = aidStations.reduce((sum, station) => sum + (station.stopMin || 0), 0);
+    const runningTimeTarget = targetTimeMinutes - totalStopTime;
+    
+    // Get fatigue multiplier and work backwards
+    const fatigueMultiplier = getFatigueMultiplier(totalDistanceKm);
+    const pureRunningTime = runningTimeTarget / fatigueMultiplier;
+    
+    // Calculate base (flat) pace from pure running time
     // Total time = flatDist * flatPace + uphillDist * (flatPace * uphillRatio) + downhillDist * (flatPace * downhillRatio)
     // Total time = flatPace * (flatDist + uphillDist * uphillRatio + downhillDist * downhillRatio)
     const weightedDistance = flatDistance + (uphillDistance * uphillRatio) + (downhillDistance * downhillRatio);
-    const flatPace = targetTimeMinutes / weightedDistance;
+    const flatPace = pureRunningTime / weightedDistance;
     const uphillPace = flatPace * uphillRatio;
     const downhillPace = flatPace * downhillRatio;
     
