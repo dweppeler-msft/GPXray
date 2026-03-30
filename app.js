@@ -3244,10 +3244,13 @@ function calculateSunTimes(lat, lon, date) {
     const B = toRad(360 / 365 * (dayOfYear - 81));
     const eot = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
     
-    // Time offset for longitude (4 minutes per degree)
-    // Using standard time zones (15° per hour)
-    const timezone = Math.round(lon / 15);
-    const timeOffset = 4 * (lon - timezone * 15) + eot;
+    // Get timezone offset from browser (handles DST automatically)
+    // getTimezoneOffset returns minutes, negative for east of UTC
+    const browserOffsetHours = -date.getTimezoneOffset() / 60;
+    
+    // Time offset for longitude (4 minutes per degree from timezone meridian)
+    const timezoneMeridian = browserOffsetHours * 15;
+    const timeOffset = 4 * (lon - timezoneMeridian) + eot;
     
     // Solar noon in local time
     const solarNoon = 12 * 60 - timeOffset; // in minutes
