@@ -6139,7 +6139,11 @@ async function selectRaceDistance(distanceConfig, buttonEl) {
             
             // Recalculate sun times for the race date/location
             if (distanceConfig.raceDate && gpxData) {
-                calculateSunTimes();
+                try {
+                    calculateSunTimes();
+                } catch (e) {
+                    console.warn('Could not calculate sun times:', e);
+                }
             }
         }
         
