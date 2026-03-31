@@ -121,6 +121,16 @@
       "available": true
     },
     {
+      "id": "ccc-2025",
+      "name": "CCC 2025",
+      "country": "FR",
+      "distance": 99,
+      "elevation": 5677,
+      "category": "ultra",
+      "gpxUrl": "races/ccc_2025_72ff75fdc2.gpx",
+      "available": true
+    },
+    {
       "id": "utmb",
       "name": "UTMB - Ultra-Trail du Mont-Blanc",
       "country": "🇫🇷",
