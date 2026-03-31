@@ -111,6 +111,16 @@
       "available": true
     },
     {
+      "id": "utmb-2025",
+      "name": "UTMB 2025",
+      "country": "FR",
+      "distance": 172,
+      "elevation": 9834,
+      "category": "ultra",
+      "gpxUrl": "races/utmb_2025_variante_pyramides_3d57f3df24.gpx",
+      "available": true
+    },
+    {
       "id": "utmb",
       "name": "UTMB - Ultra-Trail du Mont-Blanc",
       "country": "🇫🇷",
