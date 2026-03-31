@@ -151,6 +151,16 @@
       "available": true
     },
     {
+      "id": "lavaredo-ultra-trail-80k",
+      "name": "Lavaredo Ultra Trail 80K",
+      "country": "IT",
+      "distance": 79,
+      "elevation": 4359,
+      "category": "marathon",
+      "gpxUrl": "races/lavaredo80_k_2025_val_marzon_cortina_8000eae9e2.gpx",
+      "available": true
+    },
+    {
       "id": "utmb",
       "name": "UTMB - Ultra-Trail du Mont-Blanc",
       "country": "🇫🇷",
