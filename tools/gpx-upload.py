@@ -3,20 +3,66 @@
 GPX Upload Tool for GPXray
 Validates GPX files, calculates stats, uploads to Azure Blob Storage,
 and updates races.json database
+
+Supports local files or URLs:
+  python gpx-upload.py local-file.gpx -n "Race Name" --deploy
+  python gpx-upload.py https://example.com/race.gpx -n "Race Name" --deploy
 """
 import argparse
 import json
 import math
 import os
+import re
 import subprocess
 import sys
+import tempfile
+import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from urllib.parse import urlparse, unquote
 
 # Find project root (where races.json is)
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 RACES_JSON = PROJECT_ROOT / 'races.json'
+INBOX_DIR = PROJECT_ROOT / 'inbox'
+
+
+def is_url(path):
+    """Check if path is a URL"""
+    return path.startswith('http://') or path.startswith('https://')
+
+
+def download_gpx(url):
+    """Download GPX file from URL to inbox folder"""
+    print(f"⬇️  Downloading from URL...")
+    
+    # Extract filename from URL
+    parsed = urlparse(url)
+    filename = unquote(Path(parsed.path).name)
+    if not filename.endswith('.gpx'):
+        filename += '.gpx'
+    
+    # Clean filename
+    filename = re.sub(r'[^a-zA-Z0-9_.-]', '_', filename)
+    
+    # Download to inbox
+    INBOX_DIR.mkdir(exist_ok=True)
+    local_path = INBOX_DIR / filename
+    
+    try:
+        # Download with user-agent header (some servers block urllib default)
+        req = urllib.request.Request(url, headers={'User-Agent': 'GPXray/1.0'})
+        with urllib.request.urlopen(req, timeout=30) as response:
+            content = response.read()
+            with open(local_path, 'wb') as f:
+                f.write(content)
+        
+        print(f"✅ Downloaded: {filename}")
+        return local_path
+    except Exception as e:
+        print(f"❌ Download failed: {e}")
+        sys.exit(1)
 
 
 def haversine_distance(lat1, lon1, lat2, lon2):
@@ -229,7 +275,7 @@ def git_deploy(race_name):
 
 def main():
     parser = argparse.ArgumentParser(description='Upload GPX file to GPXray')
-    parser.add_argument('gpx_file', help='Path to GPX file')
+    parser.add_argument('gpx_file', help='Path to GPX file or URL')
     parser.add_argument('--name', '-n', required=True, help='Race name')
     parser.add_argument('--country', '-c', default='🌍', help='Country flag emoji or code (default: 🌍)')
     parser.add_argument('--category', '-t', choices=['short', 'marathon', 'ultra'], default='marathon',
@@ -240,10 +286,16 @@ def main():
     
     args = parser.parse_args()
     
-    filepath = Path(args.gpx_file)
-    if not filepath.exists():
-        print(f"❌ File not found: {filepath}")
-        sys.exit(1)
+    # Handle URL or local file
+    if is_url(args.gpx_file):
+        print(f"\n🌐 URL detected")
+        print("=" * 50)
+        filepath = download_gpx(args.gpx_file)
+    else:
+        filepath = Path(args.gpx_file)
+        if not filepath.exists():
+            print(f"❌ File not found: {filepath}")
+            sys.exit(1)
     
     print(f"\n📂 Processing: {filepath.name}")
     print("=" * 50)
