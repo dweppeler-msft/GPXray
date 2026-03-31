@@ -520,8 +520,8 @@ function setupEarlyAccess() {
         submitBtn.textContent = t('btn.joining');
         
         try {
-            // Submit to Formspree
-            const response = await fetch('https://formspree.io/f/mqegeeap', {
+            // Submit to Formspree (waitlist form)
+            const response = await fetch('https://formspree.io/f/xnjovnpe', {
                 method: 'POST',
                 body: JSON.stringify({
                     email: email,
@@ -2265,7 +2265,7 @@ function setupFeedback() {
             timestamp: new Date().toISOString()
         };
         
-        // Submit to Formspree
+        // Submit to Formspree (feedback form)
         const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mqegeeap';
         
         try {
