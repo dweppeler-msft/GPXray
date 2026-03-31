@@ -15,11 +15,13 @@ let sunTimes = null; // Sunrise/sunset times for race day
 let isDemoMode = false; // Whether demo is currently loaded
 let isSurfaceLoading = false; // Whether surface data is being fetched
 let lastCalculatedPaces = null; // Store last calculated paces for re-rendering
+let lastCachedDDL = null; // Store DDL from API - formulas protected on server
 
 // API Configuration
 // Set to your Azure Function URL in production, or localhost for development
 const API_CONFIG = {
     // Production Azure Function
+    // Custom domain: 'https://api.gpxray.run/api/calculate' (needs SSL binding in Azure Portal)
     calculateEndpoint: 'https://gpxray-etfufedraqdhf2br.germanywestcentral-01.azurewebsites.net/api/calculate',
     // Local dev: 'http://localhost:7071/api/calculate'
     useBackend: true,   // Set to true to use backend API instead of local calculation
@@ -43,60 +45,27 @@ const HISTORY_KEY = 'gpxray_history'; // localStorage key for history
 const KM_TO_MILES = 0.621371;
 const MILES_TO_KM = 1.60934;
 
-// Runner level pace presets (min/km for flat terrain)
-// Uphill and downhill are calculated with multipliers
+// Runner level presets - display names only (calculations are server-side)
 const RUNNER_LEVELS = {
-    beginner: { 
-        name: 'Beginner',
-        flatPace: 8.0,      // 8:00/km flat
-        uphillRatio: 1.5,   // 12:00/km uphill
-        downhillRatio: 0.9, // 7:12/km downhill
-        dft: 6000           // Downhill Fatigue Threshold
-    },
-    intermediate: {
-        name: 'Intermediate', 
-        flatPace: 6.5,      // 6:30/km flat
-        uphillRatio: 1.4,   // 9:06/km uphill
-        downhillRatio: 0.85, // 5:31/km downhill
-        dft: 9000           // Downhill Fatigue Threshold
-    },
-    advanced: {
-        name: 'Advanced',
-        flatPace: 5.5,      // 5:30/km flat
-        uphillRatio: 1.3,   // 7:09/km uphill
-        downhillRatio: 0.82, // 4:31/km downhill
-        dft: 12000          // Downhill Fatigue Threshold
-    },
-    elite: {
-        name: 'Elite',
-        flatPace: 4.5,      // 4:30/km flat
-        uphillRatio: 1.25,  // 5:38/km uphill
-        downhillRatio: 0.8, // 3:36/km downhill
-        dft: 15000          // Downhill Fatigue Threshold
-    }
+    beginner: { name: 'Beginner' },
+    intermediate: { name: 'Intermediate' },
+    advanced: { name: 'Advanced' },
+    elite: { name: 'Elite' }
 };
 
-// Ultra-distance fatigue multiplier
-// Longer races require progressively slower pacing due to cumulative fatigue
-function getFatigueMultiplier(distanceKm) {
-    if (distanceKm <= 21) return 1.0;       // Half marathon and below - no fatigue factor
-    if (distanceKm <= 42) return 1.05;      // Marathon distance - slight fatigue
-    if (distanceKm <= 50) return 1.12;      // 50K
-    if (distanceKm <= 65) return 1.18;      // 50-65K
-    if (distanceKm <= 80) return 1.25;      // 80K range
-    if (distanceKm <= 100) return 1.32;     // 100K
-    if (distanceKm <= 130) return 1.40;     // 100+ km
-    return 1.50;                            // 100 miles+
-}
-
-// Surface type categories and their pace multipliers
-// Multipliers are applied on top of terrain (flat/uphill/downhill) paces
+// Surface type display properties (calculations are server-side)
 const SURFACE_TYPES = {
-    road: { name: 'Road', color: '#4CAF50', multiplier: { flat: 1.0, uphill: 1.0, downhill: 1.0 } },
-    trail: { name: 'Trail', color: '#FF9800', multiplier: { flat: 1.05, uphill: 1.08, downhill: 1.10 } },
-    technical: { name: 'Technical', color: '#9C27B0', multiplier: { flat: 1.15, uphill: 1.20, downhill: 1.25 } },
-    unknown: { name: 'Unknown', color: '#9E9E9E', multiplier: { flat: 1.0, uphill: 1.0, downhill: 1.0 } }
+    road: { name: 'Road', color: '#4CAF50' },
+    trail: { name: 'Trail', color: '#FF9800' },
+    technical: { name: 'Technical', color: '#9C27B0' },
+    unknown: { name: 'Unknown', color: '#9E9E9E' }
 };
+
+// Placeholder - actual calculation done server-side
+function getFatigueMultiplier(distanceKm) {
+    // Returns placeholder value - real fatigue applied by API
+    return 1.0;
+}
 
 // Helper to get translated surface name
 function getSurfaceName(surfaceType) {
@@ -2879,41 +2848,18 @@ function updateItraEstimate() {
     }
 }
 
-// Calculate paces from ITRA score
+// Calculate paces from ITRA score - uses cached values from API
 function calculatePacesFromItra() {
-    if (!gpxData) return null;
-    
-    const itraScore = parseInt(document.getElementById('itraScore')?.value) || 550;
-    const uphillRatio = parseFloat(document.getElementById('itraUphillRatio')?.value) || 1.3;
-    const downhillRatio = parseFloat(document.getElementById('itraDownhillRatio')?.value) || 0.85;
-    
-    const distance = gpxData.totalDistance;
-    const elevation = gpxData.elevationGain;
-    const effortPoints = calculateEffortPoints(distance, elevation);
-    
-    const minutesPerPoint = 3000 / itraScore;
-    const totalRunningMinutes = effortPoints * minutesPerPoint;
-    
-    // Calculate terrain breakdown
-    let flatDist = 0, uphillDist = 0, downhillDist = 0;
-    for (const segment of segments) {
-        switch (segment.terrainType) {
-            case 'flat': flatDist += segment.distance; break;
-            case 'uphill': uphillDist += segment.distance; break;
-            case 'downhill': downhillDist += segment.distance; break;
-        }
+    // Return cached paces if available (set by API)
+    if (lastCalculatedPaces) {
+        return {
+            flatPace: lastCalculatedPaces.flat,
+            uphillPace: lastCalculatedPaces.uphill,
+            downhillPace: lastCalculatedPaces.downhill
+        };
     }
-    
-    // Calculate base flat pace that achieves target time with ratios
-    // totalTime = flatDist * flatPace + uphillDist * flatPace * uphillRatio + downhillDist * flatPace * downhillRatio
-    const weightedDistance = flatDist + (uphillDist * uphillRatio) + (downhillDist * downhillRatio);
-    const flatPace = totalRunningMinutes / weightedDistance;
-    
-    return {
-        flatPace: flatPace,
-        uphillPace: flatPace * uphillRatio,
-        downhillPace: flatPace * downhillRatio
-    };
+    // Default fallback
+    return { flatPace: 6.5, uphillPace: 8.5, downhillPace: 5.5 };
 }
 
 // AID Stations setup
@@ -3472,72 +3418,18 @@ function calculateTerrainDistances() {
     return { flatDistance, uphillDistance, downhillDistance };
 }
 
+// Pace calculation - uses cached values from API
 function calculatePacesFromTargetTime() {
-    // Get target time in minutes
-    const hours = parseInt(document.getElementById('targetHours').value) || 0;
-    const minutes = parseInt(document.getElementById('targetMinutes').value) || 0;
-    const seconds = parseInt(document.getElementById('targetSeconds').value) || 0;
-    const targetTimeMinutes = hours * 60 + minutes + seconds / 60;
-    
-    // Get ratios
-    const uphillRatio = parseFloat(document.getElementById('uphillRatio').value) || 1.2;
-    const downhillRatio = parseFloat(document.getElementById('downhillRatio').value) || 0.9;
-    
-    // Get terrain distances
-    const { flatDistance, uphillDistance, downhillDistance } = calculateTerrainDistances();
-    const totalDistanceKm = flatDistance + uphillDistance + downhillDistance;
-    
-    // Subtract AID station stop times from target time
-    const totalStopTime = aidStations.reduce((sum, station) => sum + (station.stopMin || 0), 0);
-    const runningTimeTarget = targetTimeMinutes - totalStopTime;
-    
-    // Get fatigue multiplier and work backwards
-    const fatigueMultiplier = getFatigueMultiplier(totalDistanceKm);
-    
-    // Check if surface multipliers are enabled and calculate weighted surface factor
-    const surfaceToggle = document.getElementById('surfaceEnabled');
-    const applySurface = surfaceToggle ? surfaceToggle.checked : false;
-    
-    let weightedSurfaceFactor = 1.0;
-    if (applySurface && segments.length > 0) {
-        // Calculate weighted surface multiplier based on actual segment distribution
-        let totalWeightedTime = 0;
-        let totalBaseTime = 0;
-        
-        for (const segment of segments) {
-            let basePaceRatio;
-            switch (segment.terrainType) {
-                case 'uphill': basePaceRatio = uphillRatio; break;
-                case 'downhill': basePaceRatio = downhillRatio; break;
-                default: basePaceRatio = 1.0;
-            }
-            
-            const surfaceMultiplier = SURFACE_TYPES[segment.surfaceType]
-                ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType]
-                : 1.0;
-            
-            const baseTime = segment.distance * basePaceRatio;
-            totalBaseTime += baseTime;
-            totalWeightedTime += baseTime * surfaceMultiplier;
-        }
-        
-        if (totalBaseTime > 0) {
-            weightedSurfaceFactor = totalWeightedTime / totalBaseTime;
-        }
+    // Return cached paces if available (set by API)
+    if (lastCalculatedPaces) {
+        return {
+            flatPace: lastCalculatedPaces.flat,
+            uphillPace: lastCalculatedPaces.uphill,
+            downhillPace: lastCalculatedPaces.downhill
+        };
     }
-    
-    // Work backwards from target: divide by fatigue and surface factors
-    const pureRunningTime = runningTimeTarget / fatigueMultiplier / weightedSurfaceFactor;
-    
-    // Calculate base (flat) pace from pure running time
-    // Total time = flatDist * flatPace + uphillDist * (flatPace * uphillRatio) + downhillDist * (flatPace * downhillRatio)
-    // Total time = flatPace * (flatDist + uphillDist * uphillRatio + downhillDist * downhillRatio)
-    const weightedDistance = flatDistance + (uphillDistance * uphillRatio) + (downhillDistance * downhillRatio);
-    const flatPace = pureRunningTime / weightedDistance;
-    const uphillPace = flatPace * uphillRatio;
-    const downhillPace = flatPace * downhillRatio;
-    
-    return { flatPace, uphillPace, downhillPace };
+    // Default fallback
+    return { flatPace: 6.5, uphillPace: 8.5, downhillPace: 5.5 };
 }
 
 // API-based calculation function
@@ -3692,6 +3584,7 @@ function displayApiResults(result) {
     
     // Update DDL display from API results
     if (ddl) {
+        lastCachedDDL = ddl; // Cache DDL for later use
         const heroDescentLoad = document.getElementById('heroDescentLoad');
         const heroDescentDetail = document.getElementById('heroDescentDetail');
         const heroDescentInsight = document.getElementById('heroDescentInsight');
@@ -3752,129 +3645,32 @@ function calculateRacePlan() {
         return;
     }
     
-    // Try API-based calculation if enabled
-    if (API_CONFIG.useBackend) {
-        calculateRacePlanFromAPI()
-            .then(result => {
-                displayApiResults(result);
-            })
-            .catch(error => {
-                console.warn('API calculation failed, falling back to local:', error.message);
-                calculateRacePlanLocal();
-            });
-        return;
+    // Show loading state
+    const resultsSection = document.getElementById('resultsSection');
+    if (resultsSection) {
+        resultsSection.classList.add('loading');
     }
     
-    // Use local calculation
-    calculateRacePlanLocal();
+    // API-only calculation (no local fallback - formulas are protected)
+    calculateRacePlanFromAPI()
+        .then(result => {
+            displayApiResults(result);
+            if (resultsSection) {
+                resultsSection.classList.remove('loading');
+            }
+        })
+        .catch(error => {
+            console.error('API calculation failed:', error.message);
+            if (resultsSection) {
+                resultsSection.classList.remove('loading');
+            }
+            showNotification('Calculation service temporarily unavailable. Please try again.', 'error');
+        });
 }
 
+// Local calculation removed - all calculations done server-side
 function calculateRacePlanLocal() {
-    let flatPace, uphillPace, downhillPace;
-    
-    if (currentMode === 'manual') {
-        // Get pace values from manual inputs
-        flatPace = getPaceInMinutes(
-            document.getElementById('flatPaceMin'),
-            document.getElementById('flatPaceSec')
-        );
-        uphillPace = getPaceInMinutes(
-            document.getElementById('uphillPaceMin'),
-            document.getElementById('uphillPaceSec')
-        );
-        downhillPace = getPaceInMinutes(
-            document.getElementById('downhillPaceMin'),
-            document.getElementById('downhillPaceSec')
-        );
-    } else if (currentMode === 'target') {
-        // Calculate paces from target time
-        const paces = calculatePacesFromTargetTime();
-        flatPace = paces.flatPace;
-        uphillPace = paces.uphillPace;
-        downhillPace = paces.downhillPace;
-        
-        // Display calculated paces
-        document.getElementById('calculatedPaces').style.display = 'block';
-        document.getElementById('calcFlatPace').textContent = formatPace(flatPace) + ' /km';
-        document.getElementById('calcUphillPace').textContent = formatPace(uphillPace) + ' /km';
-        document.getElementById('calcDownhillPace').textContent = formatPace(downhillPace) + ' /km';
-    } else if (currentMode === 'itra') {
-        // Calculate paces from ITRA score
-        const paces = calculatePacesFromItra();
-        if (!paces) return;
-        flatPace = paces.flatPace;
-        uphillPace = paces.uphillPace;
-        downhillPace = paces.downhillPace;
-        
-        // Hide target mode calculated paces if visible
-        const calcPacesDiv = document.getElementById('calculatedPaces');
-        if (calcPacesDiv) calcPacesDiv.style.display = 'none';
-    }
-    
-    // Calculate distances and times for each terrain type
-    let flatDistance = 0, uphillDistance = 0, downhillDistance = 0;
-    let flatTime = 0, uphillTime = 0, downhillTime = 0;
-    
-    // Check if surface multipliers are enabled
-    const surfaceToggle = document.getElementById('surfaceEnabled');
-    const applySurface = surfaceToggle ? surfaceToggle.checked : false;
-    
-    segments.forEach(segment => {
-        // Get surface multiplier if enabled
-        const surfaceMultiplier = applySurface && SURFACE_TYPES[segment.surfaceType] 
-            ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType]
-            : 1.0;
-        
-        switch (segment.terrainType) {
-            case 'flat':
-                flatDistance += segment.distance;
-                flatTime += segment.distance * flatPace * surfaceMultiplier;
-                break;
-            case 'uphill':
-                uphillDistance += segment.distance;
-                uphillTime += segment.distance * uphillPace * surfaceMultiplier;
-                break;
-            case 'downhill':
-                downhillDistance += segment.distance;
-                downhillTime += segment.distance * downhillPace * surfaceMultiplier;
-                break;
-        }
-    });
-    
-    // Calculate total stop time from AID stations
-    const totalStopTime = aidStations.reduce((sum, station) => sum + (station.stopMin || 0), 0);
-    
-    // Apply ultra-distance fatigue multiplier to running time
-    const runningTime = flatTime + uphillTime + downhillTime;
-    const totalDistanceKm = flatDistance + uphillDistance + downhillDistance;
-    const fatigueMultiplier = getFatigueMultiplier(totalDistanceKm);
-    const adjustedRunningTime = runningTime * fatigueMultiplier;
-    
-    const totalTime = adjustedRunningTime + totalStopTime;
-    
-    // Display results
-    document.getElementById('paceResults').style.display = 'block';
-    document.getElementById('flatDistance').textContent = `${flatDistance.toFixed(2)} km`;
-    document.getElementById('uphillDistance').textContent = `${uphillDistance.toFixed(2)} km`;
-    document.getElementById('downhillDistance').textContent = `${downhillDistance.toFixed(2)} km`;
-    
-    document.getElementById('flatTime').textContent = formatTime(flatTime);
-    document.getElementById('uphillTime').textContent = formatTime(uphillTime);
-    document.getElementById('downhillTime').textContent = formatTime(downhillTime);
-    
-    // Display total time (including stop time if any)
-    if (totalStopTime > 0) {
-        document.getElementById('totalTime').textContent = `${formatTime(totalTime)} (incl. ${totalStopTime} min stops)`;
-    } else {
-        document.getElementById('totalTime').textContent = formatTime(totalTime);
-    }
-    document.getElementById('estimatedTime').textContent = formatTime(totalTime);
-    
-    // Generate splits table
-    generateSplitsTable(flatPace, uphillPace, downhillPace);
-    
-    // Update Hero section
-    updateHeroSection(totalTime);
+    showNotification('Please wait for API connection...', 'error');
 }
 
 // Generate kilometer splits table
@@ -3992,10 +3788,8 @@ function generateSplitsTable(flatPace, uphillPace, downhillPace) {
                     }
                 }
                 
-                // Get surface multiplier (only applied if toggle is on)
-                const surfaceMultiplier = applySurface && SURFACE_TYPES[segment.surfaceType]
-                    ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType]
-                    : 1.0;
+                // Surface multipliers are already applied by API to the paces
+                const surfaceMultiplier = 1.0;
                 
                 // Calculate time for this overlap
                 let basePace;
@@ -4195,9 +3989,8 @@ function renderLegSummary(flatPace, uphillPace, downhillPace, applySurface, star
                 const overlapEnd = Math.min(segment.endDistance, leg.toKm);
                 const overlapDistance = overlapEnd - overlapStart;
                 
-                const surfaceMultiplier = applySurface && SURFACE_TYPES[segment.surfaceType]
-                    ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType]
-                    : 1.0;
+                // Surface multipliers are already applied by API to the paces
+                const surfaceMultiplier = 1.0;
                 
                 let basePace;
                 switch (segment.terrainType) {
@@ -4279,78 +4072,23 @@ function updateHeroSection(totalTime) {
         });
     }
     
-    // Update Dynamic Descent Load (elevation-based muscular stress)
-    // DDL = Σ(elevationDrop × slopeWeight × surfaceWeight × fatigueWeight)
+    // Update Dynamic Descent Load using cached API values (formulas protected on server)
     const heroDescentLoad = document.getElementById('heroDescentLoad');
     const heroDescentDetail = document.getElementById('heroDescentDetail');
     const heroDescentInsight = document.getElementById('heroDescentInsight');
-    if (heroDescentLoad && segments.length > 0 && gpxData) {
-        // Get runner's DFT (Downhill Fatigue Threshold)
-        const levelSelect = document.getElementById('runnerLevel');
-        const level = levelSelect ? levelSelect.value : 'intermediate';
-        const runnerDFT = RUNNER_LEVELS[level]?.dft || 9000;
-        
-        let ddlTotal = 0;
-        let cumulativeDDL = 0;
-        let fatigueOnsetKm = null;  // Where fatigue ratio first exceeds 0.8
-        
-        // Fatigue threshold - after this much DDL, fatigue compounds
-        const fatigueThreshold = 3000;
-        
-        for (const segment of segments) {
-            if (segment.terrainType === 'downhill' && segment.elevationChange < 0) {
-                const gradePercent = Math.abs(segment.grade);
-                const elevationDrop = Math.abs(segment.elevationChange);
-                
-                // Slope weight: steeper = more braking force per meter
-                const slopeWeight = 1 + Math.pow(gradePercent / 20, 1.4);
-                
-                // Surface weight: technical terrain = more instability cost
-                const surfaceMultiplier = SURFACE_TYPES[segment.surfaceType] 
-                    ? SURFACE_TYPES[segment.surfaceType].multiplier.downhill 
-                    : 1.0;
-                const surfaceWeight = surfaceMultiplier;
-                
-                // Fatigue weight: accumulated damage compounds (subtle effect)
-                const fatigueWeight = 1 + (cumulativeDDL / fatigueThreshold) * 0.15;
-                
-                // Calculate segment DDL
-                const segmentDDL = elevationDrop * slopeWeight * surfaceWeight * fatigueWeight;
-                ddlTotal += segmentDDL;
-                cumulativeDDL += segmentDDL;
-                
-                // Check fatigue ratio threshold (onset at 0.8)
-                const km = Math.floor(segment.startDistance);
-                const fatigueRatio = cumulativeDDL / runnerDFT;
-                if (fatigueRatio >= 0.8 && fatigueOnsetKm === null) {
-                    fatigueOnsetKm = km;
-                }
-            }
-        }
-        
-        // Calculate pace loss using quadratic formula
-        // paceLossFactor = 1 + max(0, ratio - 0.8)²
-        const finalFatigueRatio = ddlTotal / runnerDFT;
-        const basePaceSec = (RUNNER_LEVELS[level]?.flatPace || 6.5) * 
-                            (RUNNER_LEVELS[level]?.downhillRatio || 0.85) * 60; // seconds/km
-        const paceLossFactor = 1 + Math.pow(Math.max(0, finalFatigueRatio - 0.8), 2);
-        const adjustedPaceSec = basePaceSec * paceLossFactor;
-        const paceLossSec = Math.round(adjustedPaceSec - basePaceSec);
-        
-        // Calculate pace loss range (±30% for uncertainty)
-        const paceLossMin = Math.round(paceLossSec * 0.7);
-        const paceLossMax = Math.round(paceLossSec * 1.3);
+    if (heroDescentLoad && gpxData && lastCachedDDL) {
+        const ddl = lastCachedDDL;
         
         // Show DDL/km as main value
-        const ddlPerKm = ddlTotal / gpxData.totalDistance;
+        const ddlPerKm = ddl.ddlTotal / gpxData.totalDistance;
         heroDescentLoad.textContent = `${Math.round(ddlPerKm)}/km`;
         
         // Show expected downhill pace loss as detail (with range)
         if (heroDescentDetail) {
-            if (finalFatigueRatio >= 0.8 && paceLossSec >= 5) {
+            if (ddl.fatigueRatio >= 0.8 && ddl.paceLossSeconds >= 5) {
                 const text = typeof t === 'function' 
-                    ? t('ddl.downhillPaceLoss', { min: paceLossMin, max: paceLossMax })
-                    : `Downhill pace loss: +${paceLossMin}-${paceLossMax} sec/km`;
+                    ? t('ddl.downhillPaceLoss', { min: ddl.paceLossRange.min, max: ddl.paceLossRange.max })
+                    : `Downhill pace loss: +${ddl.paceLossRange.min}-${ddl.paceLossRange.max} sec/km`;
                 heroDescentDetail.textContent = text;
             } else {
                 heroDescentDetail.textContent = typeof t === 'function' ? t('ddl.noPaceLoss') : 'No pace loss expected';
@@ -4359,22 +4097,22 @@ function updateHeroSection(totalTime) {
         
         // Generate late-race insight (readable sentence format)
         if (heroDescentInsight) {
-            if (paceLossSec >= 25 && fatigueOnsetKm !== null) {
+            if (ddl.paceLossSeconds >= 25 && ddl.fatigueOnsetKm !== null) {
                 const text = typeof t === 'function'
-                    ? `⚠ ${t('ddl.expectSlower', { km: fatigueOnsetKm, min: paceLossMin, max: paceLossMax })}`
-                    : `⚠ Expect slower descents after KM${fatigueOnsetKm} (+${paceLossMin}-${paceLossMax} sec/km)`;
+                    ? `⚠ ${t('ddl.expectSlower', { km: ddl.fatigueOnsetKm, min: ddl.paceLossRange.min, max: ddl.paceLossRange.max })}`
+                    : `⚠ Expect slower descents after KM${ddl.fatigueOnsetKm} (+${ddl.paceLossRange.min}-${ddl.paceLossRange.max} sec/km)`;
                 heroDescentInsight.textContent = text;
                 heroDescentInsight.className = 'hero-metric-insight warning';
-            } else if (paceLossSec >= 10 && fatigueOnsetKm !== null) {
+            } else if (ddl.paceLossSeconds >= 10 && ddl.fatigueOnsetKm !== null) {
                 const text = typeof t === 'function'
-                    ? t('ddl.expectSlower', { km: fatigueOnsetKm, min: paceLossMin, max: paceLossMax })
-                    : `Expect slower descents after KM${fatigueOnsetKm} (+${paceLossMin}-${paceLossMax} sec/km)`;
+                    ? t('ddl.expectSlower', { km: ddl.fatigueOnsetKm, min: ddl.paceLossRange.min, max: ddl.paceLossRange.max })
+                    : `Expect slower descents after KM${ddl.fatigueOnsetKm} (+${ddl.paceLossRange.min}-${ddl.paceLossRange.max} sec/km)`;
                 heroDescentInsight.textContent = text;
                 heroDescentInsight.className = 'hero-metric-insight';
-            } else if (paceLossSec >= 5 && fatigueOnsetKm !== null) {
+            } else if (ddl.paceLossSeconds >= 5 && ddl.fatigueOnsetKm !== null) {
                 const text = typeof t === 'function'
-                    ? t('ddl.mildSlowdown', { km: fatigueOnsetKm })
-                    : `Mild downhill slowdown after KM${fatigueOnsetKm}`;
+                    ? t('ddl.mildSlowdown', { km: ddl.fatigueOnsetKm })
+                    : `Mild downhill slowdown after KM${ddl.fatigueOnsetKm}`;
                 heroDescentInsight.textContent = text;
                 heroDescentInsight.className = 'hero-metric-insight';
             } else {
@@ -4688,17 +4426,15 @@ function calculateCheckpointTimes() {
         // Calculate time to reach this station
         for (const segment of segments) {
             if (segment.endDistance <= stationKm) {
-                // Full segment before station
-                const surfaceMultiplier = applySurface && SURFACE_TYPES[segment.surfaceType] 
-                    ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType] : 1.0;
+                // Full segment before station - surface multipliers applied by API
+                const surfaceMultiplier = 1.0;
                 const pace = segment.terrainType === 'uphill' ? uphillPace : 
                              segment.terrainType === 'downhill' ? downhillPace : flatPace;
                 timeToStation += segment.distance * pace * surfaceMultiplier * fatigueMultiplier;
             } else if (segment.startDistance < stationKm) {
-                // Partial segment
+                // Partial segment - surface multipliers applied by API
                 const partialDist = stationKm - segment.startDistance;
-                const surfaceMultiplier = applySurface && SURFACE_TYPES[segment.surfaceType] 
-                    ? SURFACE_TYPES[segment.surfaceType].multiplier[segment.terrainType] : 1.0;
+                const surfaceMultiplier = 1.0;
                 const pace = segment.terrainType === 'uphill' ? uphillPace : 
                              segment.terrainType === 'downhill' ? downhillPace : flatPace;
                 timeToStation += partialDist * pace * surfaceMultiplier * fatigueMultiplier;
