@@ -2,15 +2,21 @@
 """
 GPX Upload Tool for GPXray
 Validates GPX files, calculates stats, uploads to Azure Blob Storage,
-and generates the raceDatabase entry for app.js
+and updates races.json database
 """
 import argparse
+import json
 import math
 import os
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
+
+# Find project root (where races.json is)
+SCRIPT_DIR = Path(__file__).parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+RACES_JSON = PROJECT_ROOT / 'races.json'
 
 
 def haversine_distance(lat1, lon1, lat2, lon2):
@@ -141,21 +147,95 @@ def upload_to_blob(filepath, blob_name):
     return result.returncode == 0, result.stderr
 
 
-def generate_race_entry(blob_name, name, country, distance, elevation, category):
-    """Generate raceDatabase entry for app.js"""
-    race_id = name.lower().replace(' ', '-').replace('/', '-')[:20]
+def generate_race_id(name):
+    """Generate race ID from name"""
+    import re
+    race_id = name.lower()
+    race_id = re.sub(r'[^a-z0-9]+', '-', race_id)
+    race_id = race_id.strip('-')[:30]
+    return race_id
+
+
+def load_races_json():
+    """Load races.json"""
+    if not RACES_JSON.exists():
+        return {"races": []}
+    with open(RACES_JSON, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+
+def save_races_json(data):
+    """Save races.json with proper formatting"""
+    with open(RACES_JSON, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write('\n')
+
+
+def add_race_to_json(race_entry):
+    """Add or update race in races.json"""
+    data = load_races_json()
+    races = data.get('races', [])
     
-    return f"""{{ id: '{race_id}', name: '{name}', country: '{country}', distance: {distance}, elevation: {elevation}, category: '{category}', gpxUrl: 'races/{blob_name}', available: true }}"""
+    # Check if race exists
+    existing_idx = None
+    for i, race in enumerate(races):
+        if race['id'] == race_entry['id']:
+            existing_idx = i
+            break
+    
+    if existing_idx is not None:
+        print(f"⚠️  Race '{race_entry['id']}' already exists. Updating...")
+        races[existing_idx] = race_entry
+    else:
+        # Insert at end of available races (before "Coming Soon" races)
+        insert_idx = 0
+        for i, race in enumerate(races):
+            if race.get('available', False):
+                insert_idx = i + 1
+        races.insert(insert_idx, race_entry)
+    
+    data['races'] = races
+    save_races_json(data)
+    return existing_idx is not None
+
+
+def git_deploy(race_name):
+    """Commit and push changes to both remotes"""
+    os.chdir(PROJECT_ROOT)
+    
+    # Add races.json
+    result = subprocess.run('git add races.json', shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        return False, f"git add failed: {result.stderr}"
+    
+    # Commit
+    commit_msg = f"Add race: {race_name}"
+    result = subprocess.run(f'git commit -m "{commit_msg}"', shell=True, capture_output=True, text=True)
+    if result.returncode != 0 and 'nothing to commit' not in result.stdout:
+        return False, f"git commit failed: {result.stderr}"
+    
+    # Push to origin
+    result = subprocess.run('git push origin main', shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        return False, f"git push origin failed: {result.stderr}"
+    
+    # Push to gpxray (production)
+    result = subprocess.run('git push gpxray main', shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        return False, f"git push gpxray failed: {result.stderr}"
+    
+    return True, None
 
 
 def main():
     parser = argparse.ArgumentParser(description='Upload GPX file to GPXray')
     parser.add_argument('gpx_file', help='Path to GPX file')
     parser.add_argument('--name', '-n', required=True, help='Race name')
-    parser.add_argument('--country', '-c', default='🌍', help='Country flag emoji (default: 🌍)')
+    parser.add_argument('--country', '-c', default='🌍', help='Country flag emoji or code (default: 🌍)')
     parser.add_argument('--category', '-t', choices=['short', 'marathon', 'ultra'], default='marathon',
                         help='Race category (default: marathon)')
     parser.add_argument('--no-upload', action='store_true', help='Validate only, do not upload')
+    parser.add_argument('--deploy', '-d', action='store_true', help='Commit and push to GitHub after adding')
     parser.add_argument('--blob-name', '-b', help='Custom blob filename (default: derived from input)')
     
     args = parser.parse_args()
@@ -200,7 +280,7 @@ def main():
     # Generate blob name
     blob_name = args.blob_name or filepath.name.lower().replace(' ', '-')
     
-    # Upload
+    # Upload to blob storage
     if not args.no_upload:
         print(f"\n☁️  Uploading to Azure Blob Storage...")
         success, error = upload_to_blob(filepath, blob_name)
@@ -212,21 +292,46 @@ def main():
     else:
         print(f"\n⏭️  Skipping upload (--no-upload)")
     
-    # Generate code entry
+    # Create race entry
     distance_rounded = round(stats['distance'])
     elevation_rounded = round(stats['elevation_gain'])
     
-    entry = generate_race_entry(
-        blob_name, args.name, args.country,
-        distance_rounded, elevation_rounded, args.category
-    )
+    race_entry = {
+        "id": generate_race_id(args.name),
+        "name": args.name,
+        "country": args.country,
+        "distance": distance_rounded,
+        "elevation": elevation_rounded,
+        "category": args.category,
+        "gpxUrl": f"races/{blob_name}",
+        "available": True
+    }
+    
+    # Update races.json
+    if not args.no_upload:
+        print(f"\n📝 Updating races.json...")
+        was_update = add_race_to_json(race_entry)
+        action = "Updated" if was_update else "Added"
+        print(f"✅ {action} race: {race_entry['name']} ({race_entry['id']})")
+    
+    # Deploy if requested
+    if args.deploy and not args.no_upload:
+        print(f"\n🚀 Deploying to GitHub...")
+        success, error = git_deploy(args.name)
+        if success:
+            print("✅ Pushed to origin and gpxray")
+            print("🌐 Live at https://gpxray.github.io in ~1 minute")
+        else:
+            print(f"❌ Deploy failed: {error}")
+            sys.exit(1)
+    elif not args.no_upload:
+        print("\n💡 Run with --deploy to push changes to GitHub")
     
     print("\n" + "=" * 50)
-    print("📋 Add this to raceDatabase in app.js:")
-    print("-" * 50)
-    print(entry)
-    print("-" * 50)
-    print("\n✨ Done!")
+    print("✨ Done!")
+    print(f"   Race: {args.name}")
+    print(f"   Distance: {distance_rounded} km")
+    print(f"   Elevation: +{elevation_rounded}m")
 
 
 if __name__ == '__main__':
