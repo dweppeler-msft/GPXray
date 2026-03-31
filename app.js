@@ -2791,8 +2791,8 @@ function updateItraLevel(score) {
     levelText.style.color = color;
 }
 
-// Calculate ITRA score from past race
-function calculateItraFromRace() {
+// Calculate ITRA score from past race - uses API to protect formula
+async function calculateItraFromRace() {
     const distance = parseFloat(document.getElementById('pastRaceDistance').value);
     const elevation = parseFloat(document.getElementById('pastRaceElevation').value);
     const hours = parseInt(document.getElementById('pastRaceHours').value) || 0;
@@ -2808,23 +2808,41 @@ function calculateItraFromRace() {
         return;
     }
     
-    const timeInHours = hours + (minutes / 60);
-    const effortPoints = calculateEffortPoints(distance, elevation);
+    const timeInMinutes = hours * 60 + minutes;
     
-    // ITRA formula approximation:
-    // Reference: ~550 index corresponds to ~5.5 min/effort point
-    // Higher score = faster (less time per effort point)
-    const minutesPerPoint = (timeInHours * 60) / effortPoints;
+    // Call API to calculate ITRA score (formula is protected server-side)
+    if (API_CONFIG.useBackend) {
+        try {
+            const response = await fetch(API_CONFIG.calculateEndpoint.replace('/calculate', '/itra'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    distance: distance,
+                    elevation: elevation,
+                    timeMinutes: timeInMinutes
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                document.getElementById('calcItraValue').textContent = result.score;
+                document.getElementById('calculatedItra').style.display = 'flex';
+                
+                // Also update the ITRA level indicator
+                updateItraLevel(result.score);
+                return;
+            }
+        } catch (error) {
+            console.warn('ITRA API failed, using fallback:', error.message);
+        }
+    }
     
-    // Inverse relationship: faster runners have higher scores
-    // Calibration: 550 score ≈ 5.5 min/point, 700 score ≈ 4.3 min/point, 800 score ≈ 3.7 min/point
-    // Score ≈ 3000 / minutesPerPoint (rough approximation)
-    let estimatedScore = Math.round(3000 / minutesPerPoint);
-    
-    // Clamp to realistic range
+    // Fallback to local calculation (simplified, not the real formula)
+    const effortPoints = distance + (elevation / 100);
+    const minutesPerPoint = timeInMinutes / effortPoints;
+    let estimatedScore = Math.round(2800 / minutesPerPoint); // Slightly different from real formula
     estimatedScore = Math.max(350, Math.min(950, estimatedScore));
     
-    // Display result
     document.getElementById('calcItraValue').textContent = estimatedScore;
     document.getElementById('calculatedItra').style.display = 'flex';
 }
@@ -3536,13 +3554,15 @@ async function calculateRacePlanFromAPI() {
     const levelSelect = document.getElementById('runnerLevel');
     const runnerLevel = levelSelect ? levelSelect.value : 'intermediate';
     
-    // Prepare segments data for API (only send what's needed)
+    // Prepare segments data for API (include all data needed for DDL calculation)
     const apiSegments = segments.map(seg => ({
         distance: seg.distance,
         terrainType: seg.terrainType,
         surfaceType: seg.surfaceType || 'trail',
         startDistance: seg.startDistance,
-        endDistance: seg.endDistance
+        endDistance: seg.endDistance,
+        elevationChange: seg.elevationChange || 0,
+        grade: seg.grade || 0
     }));
     
     // Prepare AID stations
@@ -3560,6 +3580,7 @@ async function calculateRacePlanFromAPI() {
         applySurface: applySurface,
         startTime: startTime,
         totalDistance: gpxData.totalDistance,
+        elevationGain: gpxData.elevationGain || 0,
         mode: currentMode
     };
     
@@ -3580,11 +3601,16 @@ async function calculateRacePlanFromAPI() {
             )
         };
     } else if (currentMode === 'target') {
-        const targetHours = parseInt(document.getElementById('targetTimeHours')?.value) || 0;
-        const targetMinutes = parseInt(document.getElementById('targetTimeMinutes')?.value) || 0;
-        payload.targetTime = targetHours * 60 + targetMinutes;
+        const targetHours = parseInt(document.getElementById('targetHours')?.value) || 0;
+        const targetMinutes = parseInt(document.getElementById('targetMinutes')?.value) || 0;
+        const targetSeconds = parseInt(document.getElementById('targetSeconds')?.value) || 0;
+        payload.targetTime = targetHours * 60 + targetMinutes + targetSeconds / 60;
+        payload.uphillRatio = parseFloat(document.getElementById('uphillRatio')?.value) || 1.2;
+        payload.downhillRatio = parseFloat(document.getElementById('downhillRatio')?.value) || 0.9;
     } else if (currentMode === 'itra') {
-        payload.itraScore = parseInt(document.getElementById('itraScore')?.value) || 500;
+        payload.itraScore = parseInt(document.getElementById('itraScore')?.value) || 550;
+        payload.uphillRatio = parseFloat(document.getElementById('itraUphillRatio')?.value) || 1.3;
+        payload.downhillRatio = parseFloat(document.getElementById('itraDownhillRatio')?.value) || 0.85;
     }
     
     // Call API with timeout
@@ -3620,7 +3646,7 @@ async function calculateRacePlanFromAPI() {
 
 // Display results from API response
 function displayApiResults(result) {
-    const { paces, terrain, totalTimeMinutes, fatigueMultiplier, checkpoints, stopTimeMinutes } = result;
+    const { paces, terrain, totalTimeMinutes, fatigueMultiplier, checkpoints, stopTimeMinutes, ddl } = result;
     
     // Display results
     document.getElementById('paceResults').style.display = 'block';
@@ -3640,12 +3666,75 @@ function displayApiResults(result) {
     }
     document.getElementById('estimatedTime').textContent = formatTime(totalTimeMinutes);
     
-    // Display calculated paces if in target mode
-    if (currentMode === 'target') {
-        document.getElementById('calculatedPaces').style.display = 'block';
-        document.getElementById('calcFlatPace').textContent = formatPace(paces.flat) + ' /km';
-        document.getElementById('calcUphillPace').textContent = formatPace(paces.uphill) + ' /km';
-        document.getElementById('calcDownhillPace').textContent = formatPace(paces.downhill) + ' /km';
+    // Display calculated paces if in target or itra mode
+    if (currentMode === 'target' || currentMode === 'itra') {
+        const calcPacesDiv = document.getElementById('calculatedPaces');
+        if (calcPacesDiv) {
+            calcPacesDiv.style.display = 'block';
+            document.getElementById('calcFlatPace').textContent = formatPace(paces.flat) + ' /km';
+            document.getElementById('calcUphillPace').textContent = formatPace(paces.uphill) + ' /km';
+            document.getElementById('calcDownhillPace').textContent = formatPace(paces.downhill) + ' /km';
+        }
+    }
+    
+    // Update ITRA estimated time display if in ITRA mode
+    if (currentMode === 'itra') {
+        const itraResult = document.getElementById('itraResult');
+        const itraTimeEl = document.getElementById('itraEstimatedTime');
+        const itraPaceEl = document.getElementById('itraAvgPace');
+        if (itraResult && itraTimeEl && itraPaceEl) {
+            itraResult.style.display = 'block';
+            itraTimeEl.textContent = formatTime(totalTimeMinutes);
+            const avgPace = totalTimeMinutes / gpxData.totalDistance;
+            itraPaceEl.textContent = `${formatPace(avgPace)} /km`;
+        }
+    }
+    
+    // Update DDL display from API results
+    if (ddl) {
+        const heroDescentLoad = document.getElementById('heroDescentLoad');
+        const heroDescentDetail = document.getElementById('heroDescentDetail');
+        const heroDescentInsight = document.getElementById('heroDescentInsight');
+        
+        if (heroDescentLoad && gpxData) {
+            const ddlPerKm = ddl.ddlTotal / gpxData.totalDistance;
+            heroDescentLoad.textContent = `${Math.round(ddlPerKm)}/km`;
+        }
+        
+        if (heroDescentDetail) {
+            if (ddl.fatigueRatio >= 0.8 && ddl.paceLossSeconds >= 5) {
+                const text = typeof t === 'function' 
+                    ? t('ddl.downhillPaceLoss', { min: ddl.paceLossRange.min, max: ddl.paceLossRange.max })
+                    : `Downhill pace loss: +${ddl.paceLossRange.min}-${ddl.paceLossRange.max} sec/km`;
+                heroDescentDetail.textContent = text;
+            } else {
+                heroDescentDetail.textContent = typeof t === 'function' ? t('ddl.noPaceLoss') : 'No pace loss expected';
+            }
+        }
+        
+        if (heroDescentInsight) {
+            if (ddl.paceLossSeconds >= 25 && ddl.fatigueOnsetKm !== null) {
+                const text = typeof t === 'function'
+                    ? `⚠ ${t('ddl.expectSlower', { km: Math.round(ddl.fatigueOnsetKm), min: ddl.paceLossRange.min, max: ddl.paceLossRange.max })}`
+                    : `⚠ Expect slower descents after KM${Math.round(ddl.fatigueOnsetKm)} (+${ddl.paceLossRange.min}-${ddl.paceLossRange.max} sec/km)`;
+                heroDescentInsight.textContent = text;
+                heroDescentInsight.className = 'hero-metric-insight warning';
+            } else if (ddl.paceLossSeconds >= 10 && ddl.fatigueOnsetKm !== null) {
+                const text = typeof t === 'function'
+                    ? t('ddl.expectSlower', { km: Math.round(ddl.fatigueOnsetKm), min: ddl.paceLossRange.min, max: ddl.paceLossRange.max })
+                    : `Expect slower descents after KM${Math.round(ddl.fatigueOnsetKm)} (+${ddl.paceLossRange.min}-${ddl.paceLossRange.max} sec/km)`;
+                heroDescentInsight.textContent = text;
+                heroDescentInsight.className = 'hero-metric-insight';
+            } else if (ddl.paceLossSeconds >= 5 && ddl.fatigueOnsetKm !== null) {
+                const text = typeof t === 'function'
+                    ? t('ddl.mildSlowdown', { km: Math.round(ddl.fatigueOnsetKm) })
+                    : `Mild downhill slowdown after KM${Math.round(ddl.fatigueOnsetKm)}`;
+                heroDescentInsight.textContent = text;
+                heroDescentInsight.className = 'hero-metric-insight';
+            } else {
+                heroDescentInsight.textContent = '';
+            }
+        }
     }
     
     // Generate splits table using returned paces
@@ -3654,7 +3743,7 @@ function displayApiResults(result) {
     // Update Hero section
     updateHeroSection(totalTimeMinutes);
     
-    console.log('Race plan calculated via API', { fatigueMultiplier, checkpoints });
+    console.log('Race plan calculated via API', { fatigueMultiplier, checkpoints, ddl });
 }
 
 function calculateRacePlan() {
