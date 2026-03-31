@@ -1,0 +1,2 @@
+# Ignore all GPX files - they go to blob storage, not git
+*.gpx

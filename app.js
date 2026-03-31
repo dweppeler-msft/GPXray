@@ -770,6 +770,9 @@ const raceDatabase = [
     { id: 'lowa-speedtrail', name: 'LOWA Ultratrail Fränkische Schweiz - Speedtrail', country: '🇩🇪', distance: 33, elevation: 1100, category: 'short', gpxUrl: 'races/LOWA-Ultratrail-Fraenkische-Schweiz_SPEEDTRAIL-33km_032025.gpx', available: true },
     { id: 'lowa-ultratrail', name: 'LOWA Ultratrail Fränkische Schweiz - Ultratrail', country: '🇩🇪', distance: 66, elevation: 2200, category: 'marathon', gpxUrl: 'races/LOWA-Ultratrail-Fraenkische-Schweiz_ULTRATRAIL-66km_032025.gpx', available: true },
     
+    // Istria 100 (Croatia)
+    { id: 'istria-100', name: 'Istria 100', country: '🇭🇷', distance: 167, elevation: 6785, category: 'ultra', gpxUrl: 'races/istria_100_2025_ccd00863a0.gpx', available: true },
+    
     // ===== COMING SOON =====
     
     // Ultra Trail (100km+)
