@@ -131,6 +131,16 @@
       "available": true
     },
     {
+      "id": "occ-2025",
+      "name": "OCC 2025",
+      "country": "FR",
+      "distance": 56,
+      "elevation": 3347,
+      "category": "marathon",
+      "gpxUrl": "races/occ_2025_4232191729.gpx",
+      "available": true
+    },
+    {
       "id": "utmb",
       "name": "UTMB - Ultra-Trail du Mont-Blanc",
       "country": "🇫🇷",
