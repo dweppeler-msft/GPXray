@@ -161,6 +161,16 @@
       "available": true
     },
     {
+      "id": "lavaredo-ultra-trail-50k",
+      "name": "Lavaredo Ultra Trail 50K",
+      "country": "IT",
+      "distance": 48,
+      "elevation": 2515,
+      "category": "marathon",
+      "gpxUrl": "races/lavaredo50_k_6b9b57cbde.gpx",
+      "available": true
+    },
+    {
       "id": "utmb",
       "name": "UTMB - Ultra-Trail du Mont-Blanc",
       "country": "🇫🇷",
