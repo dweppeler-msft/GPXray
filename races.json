@@ -141,6 +141,16 @@
       "available": true
     },
     {
+      "id": "lavaredo-ultra-trail-120k",
+      "name": "Lavaredo Ultra Trail 120K",
+      "country": "IT",
+      "distance": 120,
+      "elevation": 5647,
+      "category": "ultra",
+      "gpxUrl": "races/lavaredo120_k_f66dabccea.gpx",
+      "available": true
+    },
+    {
       "id": "utmb",
       "name": "UTMB - Ultra-Trail du Mont-Blanc",
       "country": "🇫🇷",
