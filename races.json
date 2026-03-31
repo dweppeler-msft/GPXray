@@ -181,6 +181,16 @@
       "available": true
     },
     {
+      "id": "lavaredo-ultra-trail-10k",
+      "name": "Lavaredo Ultra Trail 10K",
+      "country": "IT",
+      "distance": 10,
+      "elevation": 363,
+      "category": "short",
+      "gpxUrl": "races/lavaredo_10_k_2025_m_22_6_25_67b83acbb3.gpx",
+      "available": true
+    },
+    {
       "id": "utmb",
       "name": "UTMB - Ultra-Trail du Mont-Blanc",
       "country": "🇫🇷",
